@@ -1,106 +1,118 @@
-# MultiUrlManager 🤖
+# MultiUrlManager
 
-[![Use this template](https://img.shields.io/badge/from-kotlin--android--template-brightgreen?logo=dropbox)](https://github.com/logan0817/MultiUrlManager#/generate) ![Pre Merge Checks](https://github.com/logan0817/MultiUrlManager/workflows/Pre%20Merge%20Checks/badge.svg)  ![License](https://img.shields.io/github/license/logan0817/MultiUrlManager.svg) ![Language](https://img.shields.io/github/languages/top/logan0817/MultiUrlManager?color=blue&logo=kotlin)
+MultiUrlManager for Android 的设计初衷主要用于开发时，有多个环境需要打包APK的场景，通过BaseUrlManager提供的BaseUrl动态设置入口，只需打一
+次包，即可轻松随意的切换不同的开发环境或测试环境。在打生产环境包时，关闭BaseUrl动态设置入口即可。
 
-A simple Github template that lets you create an **Android/Kotlin** project and be up and running in a **few seconds**. 
+## 效果展示
+![Image](GIF.gif)
 
-This template is focused on delivering a project with **static analysis** and **continuous integration** already in place.
+> 你也可以直接下载 [演示App](https://raw.githubusercontent.com/jenly1314/BaseUrlManager/master/app/release/app-release.apk) 体验效果
 
-## How to use 👣
+## 引入
 
-Just click on [![Use this template](https://img.shields.io/badge/-Use%20this%20template-brightgreen)](https://github.com/logan0817/MultiUrlManager/generate) button to create a new repo starting from this template.
+### Gradle:
 
-Once created don't forget to update the:
-- [App ID](buildSrc/src/main/java/Coordinates.kt)
-- AndroidManifest ([here](app/src/main/AndroidManifest.xml))
-- Package of the source files
+1. 在Project的 **build.gradle** 或 **setting.gradle** 中添加远程仓库
 
-## Features 🎨
+    ```gradle
+    repositories {
+        //...
+        mavenCentral()
+    }
+    ```
 
-- **100% Kotlin-only template**.
-- 4 Sample modules (Android app, Android library, Kotlin library).
-- Sample Espresso, Instrumentation & JUnit tests.
-- 100% Gradle Kotlin DSL setup.
-- CI Setup with GitHub Actions.
-- Publish to **Maven Central** with Github Actions.
-- Dependency versions managed via `buildSrc`.
-- Kotlin Static Analysis via `ktlint`.
-- Issues Template (bug report + feature request).
-- Pull Request Template.
+2. 在Module的 **build.gradle** 中添加依赖项
 
-## Troubleshooting
+    ```gradle
+    //AndroidX 版本
+    implementation 'com.github.jenly1314:base-url-manager:1.2.0'
+    ```
+## 使用
 
-For help with issues which you might encounter when using this template, please refer to [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+集成步骤代码示例 （示例出自于[app](app)中）
 
-## Gradle Setup 🐘
-
-This template is using [**Gradle Kotlin DSL**](https://docs.gradle.org/current/userguide/kotlin_dsl.html) as well as the [Plugin DSL](https://docs.gradle.org/current/userguide/plugins.html#sec:plugins_block) to setup the build.
-
-Dependencies are centralized inside the Gradle Version Catalog in the [libs.versions.toml](gradle/libs.versions.toml) file in the `gradle` folder.
-
-## CI ⚙️
-
-This template is using [**GitHub Actions**](https://github.com/logan0817/MultiUrlManager/actions) as CI. You don't need to setup any external service and you should have a running CI once you start using this template, just make sure that you turn on the "Read and Write permissions" on the Action Settings of your repository.
-
-There are currently the following workflows available:
-- [Validate Gradle Wrapper](.github/workflows/gradle-wrapper-validation.yml) - Will check that the gradle wrapper has a valid checksum
-- [Pre Merge Checks](.github/workflows/pre-merge.yaml) - Will run the `build`, `check` and `publishToMavenLocal` tasks.
-- [Publish Snapshot](.github/workflows/publish-snapshot.yaml) - Will publish a `-SNAPSHOT` of the libraries to Sonatype.
-- [Publish Release](.github/workflows/publish-release.yaml) - Will publish a new release version of the libraries to Maven Central on tag pushes.
-
-## Publishing 🚀
-
-The template is setup to be **ready to publish** a library/artifact on a Maven Repository.
-
-For every module you want to publish you simply have to add the `publish` plugin:
-
-```
-plugins {
-    publish
-}
+Step.1 在您项目中的AndroidManifest.xml中通过配置meta-data来自定义全局配置
+```xml
+    <!-- 在你项目中添加注册如下配置 -->
+    <activity android:name="com.king.base.baseurlmanager.BaseUrlManagerActivity"
+        android:screenOrientation="portrait"
+        android:theme="@style/BaseUrlManagerTheme"/>
 ```
 
-### To Maven Central
+Step.2 在您项目Application的onCreate方法中初始化BaseUrlManager
 
-In order to use this template to publish on Maven Central, you need to configure some secrets on your repository:
+```java
+    //获取BaseUrlManager实例（适用于v1.1.x版本）
+    mBaseUrlManager = BaseUrlManager.getInstance();
 
-| Secret name | Value |
-| --- | --- | 
-| `ORG_GRADLE_PROJECT_MAVENCENTRAL_USERNAME` | The username you use to access Sonatype's services (such as [Nexus](https://oss.sonatype.org/) and [Jira](https://issues.sonatype.org/)) |
-| `ORG_GRADLE_PROJECT_MAVENCENTRAL_PASSWORD` | The password you use to access Sonatype's services (such as [Nexus](https://oss.sonatype.org/) and [Jira](https://issues.sonatype.org/)) |
-| `ORG_GRADLE_PROJECT_SIGNING_KEY` | The GPG Private key to sign your artifacts. You can obtain it with `gpg --armor --export-secret-keys <your@email.here>` or you can create one key online on [pgpkeygen.com](https://pgpkeygen.com). The key starts with a `-----BEGIN PGP PRIVATE KEY BLOCK-----`. |
-| `ORG_GRADLE_PROJECT_SIGNING_PWD` | The passphrase to unlock your private key (you picked it when creating the key). |
+    //获取BaseUrlManager实例（适用于v1.0.x旧版本）
+    mBaseUrlManager = new BaseUrlManager(this);
 
-The template already attaches `-sources.jar` to your publications via the new AGP publishing DSL.
+    //获取baseUrl
+    String baseUrl = mBaseUrlManager.getBaseUrl();
 
-Once set up, the following workflows will take care of publishing:
+```
 
-- [Publish Snapshot](.github/workflows/publish-snapshot.yaml) - To publish `-SNAPSHOT` versions to Sonatype. The workflow is setup to run either manually (with `workflow_dispatch`) or on every merge.
-- [Publish Release](.github/workflows/publish-release.yaml) - Will publish a new release version of the libraries to Maven Central on tag pushes. You can trigger the workflow also manually if needed.
+Step.3 提供动态配置BaseUrl的入口（通过Intent跳转到BaseUrlManagerActivity界面）
 
-### To Jitpack
+v.1.1.x 新版本写法
+```JAVA
+   BaseUrlManager.getInstance().startBaseUrlManager(this,SET_BASE_URL_REQUEST_CODE);
 
-If you're using [JitPack](https://jitpack.io/), you don't need any further configuration and you can just configure the repo on JitPack.
+```
 
-You probably want to disable the [Publish Snapshot] and [Publish Release](.github/workflows/publish-release.yaml) workflows (delete the files), as Jitpack will take care of that for you.
+v1.0.x 以前版本写法
+```JAVA
+    Intent intent = new Intent(this, BaseUrlManagerActivity.class);
+    //BaseUrlManager界面的标题
+    //intent.putExtra(BaseUrlManagerActivity.KEY_TITLE,"BaseUrl配置");
+    //跳转到BaseUrlManagerActivity界面
+    startActivityForResult(intent,SET_BASE_URL_REQUEST_CODE);
+```
 
-## Project Structure
+Step.4 当配置改变了baseUrl时，在Activity或Fragment的onActivityResult方法中重新获取baseUrl即可
+```java
 
-The project includes three sub-projects, each in their own subdirectories:
+    //方式1：通过BaseUrlManager获取baseUrl
+    String baseUrl = BaseUrlManager.getInstance().getBaseUrl();
+    //方式2：通过data直接获取baseUrl
+    UrlInfo urlInfo = BaseUrlManager.parseActivityResult(data);
+    String baseUrl = urlInfo.getBaseUrl();
 
-- **`app`:** The source for the final Android application.
-- **`library-android`:** The source for an Android library including UI.
+```
 
-The following additional top-level directories configure & support building the app & projects:
+更多使用详情，请查看[app](app)中的源码使用示例或直接查看 [API帮助文档](https://jitpack.io/com/github/jenly1314/BaseUrlManager/latest/javadoc/)
 
-- **`buildSrc`:** Contains shared Gradle logic as [precompiled script plugins](https://docs.gradle.org/current/userguide/custom_plugins.html#sec:precompiled_plugins)
-- **`gradle`:** Contains Gradle Configuration files such as the Gradle Version Catalog and the [Gradle Wrapper](https://docs.gradle.org/current/userguide/gradle_wrapper.html).
+## 相关推荐
 
-Finally, the following hidden top-level directories provide functionality for specific development systems:
+- [RetrofitHelper](https://github.com/jenly1314/RetrofitHelper) 一个为 Retrofit 提供便捷配置多个BaseUrl相关的扩展帮助类。
+- [LogX](http://github.com/jenly1314/LogX) 一个轻量而强大的日志框架；好用不解释。
+- [KVCache](http://github.com/jenly1314/KVCache) 一个便于统一管理的键值缓存库；支持无缝切换缓存实现。
+- [AndroidKTX](http://github.com/AndroidKTX/AndroidKTX) 一个简化 Android 开发的 Kotlin 工具类集合。
+- [AndroidUtil](http://github.com/AndroidUtil/AndroidUtil) 一个整理了Android常用工具类集合，平时在开发的过程中可能会经常用到。
+- [AppUpdater](http://github.com/jenly1314/AppUpdater) 一个专注于App更新，一键傻瓜式集成App版本升级的轻量开源库。
+- [MVVMFrame](https://github.com/jenly1314/MVVMFrame) 一个基于Google官方推出的JetPack构建的MVVM快速开发框架。
+- [AppTemplate](https://github.com/jenly1314/AppTemplate) 一款基于 MVVMFrame 构建的App模板。
 
-- **`.github`:** Defines the [Github Actions](https://github.com/features/actions) CI tasks and templates for new pull requests, issues, etc.
-- **`.idea`:** Sets common initial project settings when the project is opened in [Android Studio](https://developer.android.com/studio) or [IntelliJ IDEA](https://www.jetbrains.com/idea/).
+## 版本日志
 
-## Contributing 🤝
+#### v1.2.0：2022-1-25 (从v1.2.0开始发布至 MavenCentral)
+*  优化细节
 
-Feel free to open a issue or submit a pull request for any bugs/improvements.
+#### v1.1.1：2021-1-28
+*  新增支持长按复制相关功能
+
+#### v1.1.0：2020-12-4
+*  输入的url支持正则校验
+*  后续版本只支持androidx，版本名称不再带有androidx标识
+
+#### v1.0.1：2019-7-5
+*  移除strings.xml资源中的app_name
+*  支持不依赖刷新数据，直接通过onActivityResult获取baseUrl信息
+
+#### v1.0.0：2019-6-11   [支持AndroidX版本](https://github.com/jenly1314/BaseUrlManager/tree/androidx)
+*  BaseUrlManager初始版本
+
+---
+
+![footer](https://jenly1314.github.io/page/footer.svg)

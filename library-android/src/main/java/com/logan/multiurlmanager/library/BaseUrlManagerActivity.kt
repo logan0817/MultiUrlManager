@@ -18,12 +18,11 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.appbar.MaterialToolbar
 import com.logan.multiurlmanager.library.adapter.BaseUrlAdapter
-import com.logan.multiurlmanager.library.R
 import com.logan.multiurlmanager.library.bean.BaseUrl
 import com.logan.multiurlmanager.library.bean.BaseUrlSection
 import java.util.regex.Pattern
+
 
 /**
  * 配置管理界面。
@@ -37,7 +36,6 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     private val recyclerView by lazy { findViewById<RecyclerView>(R.id.recyclerView) }
     private val configKeySpinner by lazy { findViewById<Spinner>(R.id.configKeySpinner) }
     private val etUrl by lazy { findViewById<EditText>(R.id.etUrl) }
-    private val topAppBar by lazy { findViewById<MaterialToolbar>(R.id.topAppBar) }
 
     // baseUrlManager 实例
     private val baseUrlManager: BaseUrlManager? = BaseUrlManager.instance
@@ -51,15 +49,10 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.base_url_manager_activity)
         initUI()
-        initListeners()
     }
 
     private fun initUI() {
         intent.extras?.let { bundle ->
-            val title = bundle.getString(BaseUrlManager.KEY_TITLE)
-            if (!title.isNullOrEmpty()) {
-                topAppBar.title = title
-            }
             regex = bundle.getString(BaseUrlManager.KEY_REGEX) ?: BaseUrlManager.HTTP_URL_REGEX
         }
 
@@ -101,34 +94,6 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         configKeySpinner.adapter = adapter
     }
 
-    private fun initListeners() {
-        topAppBar.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                R.id.actionSave -> {
-                    saveSelected()
-                    true
-                }
-
-                R.id.actionReset -> {
-                    baseUrlManager?.clear()
-                    baseUrlManager?.refreshData()
-                    baseURLAdapter.setNewInstance(getBaseURLSections())
-                    true
-                }
-
-                R.id.actionQuit -> {
-                    onBackPressed()
-                    true
-                }
-
-                else -> false
-            }
-        }
-
-        findViewById<View>(R.id.btnAdd).setOnClickListener {
-            addBaseURL()
-        }
-    }
 
     private fun getBaseURLSections(): MutableList<BaseUrlSection> {
         val baseUrlSections = mutableListOf<BaseUrlSection>()
@@ -198,6 +163,20 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         val count = baseURLAdapter.itemCount
         if (count > 0) {
             recyclerView.smoothScrollToPosition(count - 1)
+        }
+    }
+
+    fun onClick(v: View) {
+        when (v.id) {
+            R.id.btnAdd -> addBaseURL()
+            R.id.btnSave -> saveSelected()
+            R.id.btnQuit -> onBackPressed()
+            R.id.btnReset -> {
+                baseUrlManager?.clear()
+                baseUrlManager?.refreshData()
+                baseURLAdapter.setNewInstance(getBaseURLSections())
+            }
+
         }
     }
 

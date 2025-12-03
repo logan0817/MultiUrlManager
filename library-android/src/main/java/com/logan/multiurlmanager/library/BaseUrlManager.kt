@@ -92,7 +92,6 @@ class BaseUrlManager private constructor(
     }
 
     companion object {
-        const val KEY_TITLE: String = "key_title"
         const val KEY_REGEX: String = "key_regex"
         const val HTTP_URL_REGEX: String =
             "^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"
