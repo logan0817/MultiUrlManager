@@ -1,0 +1,71 @@
+name: Publish Snapshot
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  publish:
+    # remove this check when your secrets are setup and you're ready to publish
+    if: ${{ github.repository == 'logan0817/MultiUrlManager'}}
+    runs-on: [ubuntu-latest]
+
+    # ==============================================================
+    # 💥 1. 核心修改：将所有凭证提升到 Job 级别的 env 块
+    # 确保所有步骤都能继承这些变量，避免认证失败
+    # ==============================================================
+    env:
+      GRADLE_OPTS: -Dorg.gradle.parallel=false
+
+      # Sonatype Central Portal 认证凭证
+      ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRAL_USERNAME }}
+      ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRAL_PASSWORD }}
+
+      # GPG 签名凭证 (注意：这里只放密码，私钥在 Step 3 中处理)
+      ORG_GRADLE_PROJECT_SIGNING_PWD: ${{ secrets.ORG_GRADLE_PROJECT_SIGNING_PWD }}
+      ORG_GRADLE_PROJECT_USE_SNAPSHOT: true
+    steps:
+
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # ==============================================================
+      # 💥 2. 核心修改：设置 Gradle 和 GPG 密钥导入
+      # 使用 setup-gradle 专用 action 安全地导入私钥
+      # ==============================================================
+      - name: Setup Gradle and Import GPG Key
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          # 启用发布操作
+          publish-operation: true
+          # 导入私钥 (假设您已在 Secrets 中配置 GPG_PRIVATE_KEY)
+          gpg-private-key: ${{ secrets.ORG_GRADLE_PROJECT_SIGNING_KEY }}
+          gpg-passphrase: ${{ secrets.ORG_GRADLE_PROJECT_SIGNING_PWD }}
+
+      # ✅ 新增这一步：给 gradlew 添加执行权限
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Publish to Maven Local
+        run: ./gradlew publishToMavenLocal
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+
+          name: 'snapshot-artifacts'
+          path: '~/.m2/repository/'
+
+      # ==============================================================
+      # 💥 3. 核心修改：执行新的发布任务
+      # 假设您已迁移到 com.vanniktech.maven.publish 插件
+      # ==============================================================
+      - name: Publish to the Snapshot Repository
+        run: ./gradlew publishToMavenCentral

@@ -1,0 +1,54 @@
+# GitHub Actions Workflow responsible for cleaning up the template repository from
+# the template-specific files and configurations. This workflow is supposed to be triggered automatically
+# when a new template-based repository has been created.
+
+name: Template Cleanup
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  template-cleanup:
+    name: Template Cleanup
+    runs-on: ubuntu-latest
+    # 确保只在基于模板的新仓库中运行，原仓库 'MultiUrlManager' 跳过
+    if: github.event.repository.name != 'MultiUrlManager'
+    steps:
+
+      # Checkout Repository
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      # Setup Java
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # Setup Gradle
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # ✅ 新增这一步：给 gradlew 添加执行权限
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # Cleanup project
+      - name: Execute Template Cleanup Task
+        run: ./gradlew templateCleanup
+
+      # Commit modified files
+      - name: Commit files
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "Template cleanup"
+
+      # Push changes
+      - name: Push Changes Back to Main
+        uses: ad-m/github-push-action@master # 建议使用 master 分支或最新版本号
+        with:
+          branch: main
+          # 使用内置的 GITHUB_TOKEN，这是推荐且安全的做法
+          github_token: ${{ secrets.GITHUB_TOKEN }}

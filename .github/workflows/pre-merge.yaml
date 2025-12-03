@@ -1,0 +1,40 @@
+name: Pre Merge Checks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - "*"
+
+jobs:
+  gradle:
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
+    steps:
+
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: "17"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # ✅ 新增这一步：给 gradlew 添加执行权限
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run CI Checks
+        # 运行 'check' (包含 lint, test) 和 'build'
+        # --continue 确保一个模块失败后，其他模块仍能继续测试
+        run: ./gradlew build check --continue
+      # ⚠️ 注意：移除了 publishToMavenLocal
+      # publishToMavenLocal 经常在 CI 中被 artifact 缓存取代，
+      # 且 'build' 任务通常已足够验证项目的健康状态。
+      # run: ./gradlew build publishToMavenLocal --continue

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?android:attr/selectableItemBackground"
+    android:paddingVertical="5dp"
+    android:paddingLeft="15dp"
+    android:paddingRight="15dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:layout_toLeftOf="@+id/ivSelect"
+        android:orientation="vertical">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvUrl"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="marquee"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:textColor="@color/base_url_item_url_color"
+            android:textIsSelectable="true"
+            android:textSize="16sp"
+            tools:text="http://192.168.100.100:8888/" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvUrlRemark"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="marquee"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:textColor="@color/base_url_item_url_remark_color"
+            android:textIsSelectable="true"
+            android:textSize="13sp"
+            tools:text="Remark" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/ivSelect"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="6dp"
+        android:orientation="vertical"
+        android:padding="10dp"
+        android:src="@drawable/ic_circle_checkbox_base_url_selector" />
+
+</RelativeLayout>
