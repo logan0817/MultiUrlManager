@@ -16,6 +16,7 @@ class App : Application() {
     fun initBaseUrlManagerByConfigFile() {
         //加载base_urls_config.json配置
         BaseUrlManager.builder(this).build()
+        BaseUrlManager.instance?.getBaseUrl("customKey")
     }
 
     fun initBaseUrlManagerBuyCode() {

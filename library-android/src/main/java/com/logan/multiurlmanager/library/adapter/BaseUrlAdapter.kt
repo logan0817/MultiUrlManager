@@ -19,13 +19,11 @@ import com.logan.multiurlmanager.library.bean.BaseUrlSection
 class BaseUrlAdapter(var listData: MutableList<BaseUrlSection>) :
     RecyclerView.Adapter<BaseUrlAdapter.BaseUrlViewHolder>() {
 
-    // --- 视图类型常量 ---
     companion object {
         private const val TYPE_HEADER = 0
         private const val TYPE_NORMAL = 1
     }
 
-    // --- 内部 ViewHolder 类 ---
     abstract class BaseUrlViewHolder(view: View) : RecyclerView.ViewHolder(view)
 
     class HeaderViewHolder(view: View) : BaseUrlViewHolder(view) {
@@ -94,7 +92,7 @@ class BaseUrlAdapter(var listData: MutableList<BaseUrlSection>) :
     }
 
     /**
-     * 更新选中状态的逻辑保持不变。
+     * 更新选中状态的逻辑
      */
     fun setSelected(baseUrl: BaseUrl?) {
         val configKey = baseUrl?.configKey
