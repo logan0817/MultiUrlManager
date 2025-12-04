@@ -22,10 +22,10 @@ class App : Application() {
         BaseUrlManager.builder(this)
             .setDefaultProvider {
                 listOf(
-                    BaseUrl(configKey = "searchApiDomain", url = "https://www.douyin.com/", select = true, remark = "douyin Environment"),
-                    BaseUrl(configKey = "searchApiDomain", url = "https://www.kuaishou.com//", select = false, remark = "kuaishou Environment"),
-                    BaseUrl(configKey = "mailDomain", url = "https://mail.google.com/", select = false, remark = "mail google Environment"),
-                    BaseUrl(configKey = "mailDomain", url = "https://mail.qq.com/", select = true, remark = "mail qq Environment")
+                    BaseUrl(configKey = "videoApiDomain", url = "https://www.douyin.com/", select = true, remark = "douyin Environment"),
+                    BaseUrl(configKey = "videoApiDomain", url = "https://www.kuaishou.com//", select = false, remark = "kuaishou Environment"),
+                    BaseUrl(configKey = "mailDomain", url = "https://mail.google.com/", select = true, remark = "mail google Environment"),
+                    BaseUrl(configKey = "mailDomain", url = "https://mail.qq.com/", select = false, remark = "mail qq Environment")
                 )
             }
             .setFileConfigKey(BaseUrlConfigLoader.DEBUG_CONFIG_KEY)

@@ -5,7 +5,7 @@
     <color name="base_url_color_primaryDark">#0076aa</color>
     <color name="base_url_color_accent">#0086aa</color>
 
-    <color name="base_url_toolbar_bg_color">#ffffff</color>
+    <color name="base_url_toolbar_bg_color">@color/base_url_color_primaryDark</color>
     <color name="base_url_toolbar_title_color">#333333</color>
 
     <color name="base_url_bg_color">#ffffff</color>

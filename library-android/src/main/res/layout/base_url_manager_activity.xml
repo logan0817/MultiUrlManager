@@ -4,8 +4,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/base_url_bg_color"
-    android:fitsSystemWindows="true"
     android:orientation="vertical">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/base_url_toolbar_bg_color"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+        app:theme="@style/ThemeOverlay.App.Toolbar"
+        app:titleTextColor="@android:color/white" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
@@ -56,61 +64,4 @@
         android:textAllCaps="false"
         android:textColor="@color/base_url_btn_add_text_color"
         android:textSize="15sp" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btnSave"
-            style="?android:attr/borderlessButtonStyle"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_marginLeft="15dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginRight="15dp"
-            android:layout_marginBottom="15dp"
-            android:layout_weight="1"
-            android:background="@color/base_url_btn_add_bg_color"
-            android:onClick="onClick"
-            android:text="@string/base_url_save"
-            android:textAllCaps="false"
-            android:textColor="@color/base_url_btn_add_text_color"
-            android:textSize="15sp" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btnReset"
-            style="?android:attr/borderlessButtonStyle"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_marginLeft="15dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginRight="15dp"
-            android:layout_marginBottom="15dp"
-            android:layout_weight="1"
-            android:background="@color/base_url_btn_add_bg_color"
-            android:onClick="onClick"
-            android:text="@string/base_url_reset"
-            android:textAllCaps="false"
-            android:textColor="@color/base_url_btn_add_text_color"
-            android:textSize="15sp" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btnQuit"
-            style="?android:attr/borderlessButtonStyle"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_marginLeft="15dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginRight="15dp"
-            android:layout_marginBottom="15dp"
-            android:layout_weight="1"
-            android:background="@color/base_url_btn_add_bg_color"
-            android:onClick="onClick"
-            android:text="@string/base_url_quit"
-            android:textAllCaps="false"
-            android:textColor="@color/base_url_btn_add_text_color"
-            android:textSize="15sp" />
-    </LinearLayout>
 </LinearLayout>

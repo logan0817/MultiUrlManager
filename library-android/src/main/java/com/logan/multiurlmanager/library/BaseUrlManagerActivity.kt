@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.view.animation.AnimationUtils
 import android.view.inputmethod.InputMethodManager
@@ -13,7 +15,12 @@ import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.Spinner
 import android.widget.Toast
+import android.widget.Toolbar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -36,6 +43,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     private val recyclerView by lazy { findViewById<RecyclerView>(R.id.recyclerView) }
     private val configKeySpinner by lazy { findViewById<Spinner>(R.id.configKeySpinner) }
     private val etUrl by lazy { findViewById<EditText>(R.id.etUrl) }
+    private val btnAdd by lazy { findViewById<View>(R.id.btnAdd) }
 
     // baseUrlManager 实例
     private val baseUrlManager: BaseUrlManager? = BaseUrlManager.instance
@@ -47,11 +55,55 @@ class BaseUrlManagerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.base_url_manager_activity)
+        setupInsets()
         initUI()
+        initListeners()
+    }
+
+    private fun setupInsets() {
+        val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
+        ViewCompat.setOnApplyWindowInsetsListener(toolbar) { view, windowInsets ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.updatePadding(top = insets.top)
+            WindowInsetsCompat.CONSUMED
+        }
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = resources.getString(R.string.base_url_title)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.base_url_top_app_bar_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                onBackPressedDispatcher.onBackPressed()
+                true
+            }
+
+            R.id.actionSave -> {
+                saveSelected()
+                true // 返回 true 表示事件已处理
+            }
+
+            R.id.actionReset -> {
+                baseUrlManager?.clear()
+                baseUrlManager?.refreshData()
+                baseURLAdapter.setNewInstance(getBaseURLSections())
+                true
+            }
+
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     private fun initUI() {
+
         intent.extras?.let { bundle ->
             regex = bundle.getString(BaseUrlManager.KEY_REGEX) ?: BaseUrlManager.HTTP_URL_REGEX
         }
@@ -94,6 +146,11 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         configKeySpinner.adapter = adapter
     }
 
+    private fun initListeners() {
+        btnAdd.setOnClickListener {
+            addBaseURL()
+        }
+    }
 
     private fun getBaseURLSections(): MutableList<BaseUrlSection> {
         val baseUrlSections = mutableListOf<BaseUrlSection>()
@@ -163,20 +220,6 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         val count = baseURLAdapter.itemCount
         if (count > 0) {
             recyclerView.smoothScrollToPosition(count - 1)
-        }
-    }
-
-    fun onClick(v: View) {
-        when (v.id) {
-            R.id.btnAdd -> addBaseURL()
-            R.id.btnSave -> saveSelected()
-            R.id.btnQuit -> onBackPressed()
-            R.id.btnReset -> {
-                baseUrlManager?.clear()
-                baseUrlManager?.refreshData()
-                baseURLAdapter.setNewInstance(getBaseURLSections())
-            }
-
         }
     }
 

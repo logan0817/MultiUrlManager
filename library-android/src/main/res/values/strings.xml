@@ -4,5 +4,4 @@
 	<string name="base_url_add">Add</string>
 	<string name="base_url_save">Save</string>
 	<string name="base_url_reset">Reset</string>
-	<string name="base_url_quit">Quit</string>
 </resources>

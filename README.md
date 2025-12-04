@@ -1,7 +1,7 @@
 # MultiUrlManager
 
-MultiUrlManager for Android 的设计初衷主要用于开发时，有多个环境需要打包APK的场景，通过BaseUrlManager提供的BaseUrl动态设置入口，只需打一
-次包，即可轻松随意的切换不同的开发环境或测试环境。在打生产环境包时，关闭BaseUrl动态设置入口即可。
+MultiUrlManager for Android 的设计初衷主要用于开发时，有多个环境或多个域名都需要打包APK的场景，通过BaseUrlManager提供的BaseUrl动态设置入口，只需打一
+次包，即可轻松随意的切换不同的开发环境和测试环境的不同域名。在打生产环境包时，关闭BaseUrl动态设置入口即可。
 
 ## 效果展示
 ![Image](GIF.gif)
