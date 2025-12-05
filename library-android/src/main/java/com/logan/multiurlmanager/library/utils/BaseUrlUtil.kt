@@ -19,33 +19,29 @@ object BaseUrlUtil {
     private val gson = Gson()
     private val baseUrlType = object : TypeToken<BaseUrl>() {}.type
 
-    private inline fun SharedPreferences.edit(commit: Boolean = false, action: SharedPreferences.Editor.() -> Unit) {
+    private inline fun SharedPreferences.edit(action: SharedPreferences.Editor.() -> Unit) {
         val editor = edit()
         editor.action()
-        if (commit) {
-            editor.commit()
-        } else {
-            editor.apply()
-        }
+        editor.apply()
     }
 
     fun put(context: Context, baseUrl: BaseUrl) {
         if (baseUrl.configKey.isNullOrBlank() || baseUrl.url.isNullOrBlank()) return
         val json = gson.toJson(baseUrl)
-        getSharedPreferences(context).edit(commit = true) {
+        getSharedPreferences(context).edit {
             putString("${baseUrl.configKey}-${baseUrl.url}", json)
         }
     }
 
     fun remove(context: Context, baseUrl: BaseUrl) {
         if (baseUrl.configKey.isNullOrBlank() || baseUrl.url.isNullOrBlank()) return
-        getSharedPreferences(context).edit(commit = true) {
+        getSharedPreferences(context).edit {
             remove("${baseUrl.configKey}-${baseUrl.url}")
         }
     }
 
     fun clear(context: Context) {
-        getSharedPreferences(context).edit(commit = true) { clear() }
+        getSharedPreferences(context).edit { clear() }
     }
 
     fun getBaseURL(context: Context, configKey: String): BaseUrl? {

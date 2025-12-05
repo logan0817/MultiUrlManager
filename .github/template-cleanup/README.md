@@ -8,5 +8,5 @@ This is your new Kotlin Android Project! Happy hacking!
 
 - [x] Create a new template project.
 - [ ] Choose a [LICENSE](https://github.com/%REPOSITORY%/community/license/new?branch=main).
-- [ ] Set your `ORG_GRADLE_PROJECT_MAVENCENTRAL_USERNAME`, `ORG_GRADLE_PROJECT_MAVENCENTRAL_PASSWORD`, `ORG_GRADLE_PROJECT_SIGNING_KEY` and `ORG_GRADLE_PROJECT_SIGNING_PWD` secrets in [Settings](https://github.com/%REPOSITORY%/settings/secrets/actions).
+- [ ] Set your `ORG_GRADLE_PROJECT_MAVENCENTRAL_USERNAME`, `ORG_GRADLE_PROJECT_MAVENCENTRAL_PASSWORD`, `ORG_GRADLE_PROJECT_SIGNING_KEY` and `ORG_GRADLE_PROJECT_SIGNING_PASSWORD` secrets in [Settings](https://github.com/%REPOSITORY%/settings/secrets/actions).
 - [ ] Code some cool apps and libraries 🚀.

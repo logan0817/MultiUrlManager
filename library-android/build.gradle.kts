@@ -6,6 +6,7 @@ plugins {
     id("com.android.library")
     id("kotlin-parcelize")
     kotlin("android")
+    id("signing")
     alias(libs.plugins.vanniktech.maven.publish)
 }
 
@@ -71,20 +72,21 @@ dependencies {
 mavenPublishing {
 
     // 1. 定义安全的属性读取 Provider
-    val groupProvider = project.provider { project.group.toString() }
-    val versionProvider = project.provider { project.version.toString() }
+    val GROUP: String by project
+    val VERSION: String by project
+    val USE_SNAPSHOT: String? by project
 
     publishToMavenCentral(automaticRelease = true)
     // 2. 配置 GAV 坐标 (使用 Provider)
     coordinates(
-        groupProvider.get(), // Group ID
-        artifactId = "library-android", // Artifact ID
-        versionProvider.get()
+        GROUP,
+        artifactId = "multiurlmanager",
+        if (USE_SNAPSHOT.toBoolean()) "$VERSION-SNAPSHOT" else VERSION
     )
 
     pom {
-        name = "Flocon Datastores Integration"
-        description = "A template for Kotlin Android projects"
+        name = "Multi URL Manager Android Library"
+        description = "A comprehensive library for managing multiple URL configurations in Android applications."
         inceptionYear = "2025"
         url = "https://github.com/logan0817/MultiUrlManager/"
 
@@ -114,4 +116,34 @@ mavenPublishing {
             url = "https://github.com/logan0817/MultiUrlManager/issues"
         }
     }
+}
+
+signing {
+    // 1. 读取由 GitHub Actions 传入的属性
+    val signingKeyId = project.findProperty("signingKeyId") as String?
+    val signingPassword = project.findProperty("signingPassword") as String?
+    val signingKey = project.findProperty("signingKey") as String?
+    val signingKeyPlaceholder = project.findProperty("signingKeyPlaceholder") as String? // 读取占位符
+
+    val actualSigningKey = if (signingKey.isNullOrEmpty() || signingKeyPlaceholder.isNullOrEmpty()) {
+        signingKey // 如果没有占位符，则使用原始密钥 (本地环境)
+    } else {
+        // 关键：将占位符 '§' 替换回换行符 '\n'，恢复多行私钥
+        signingKey.replace(signingKeyPlaceholder, "\n")
+    }
+
+    // 2. 只有在所有 GPG 签名属性都存在时，才启用 useInMemoryPgpKeys
+    if (!signingKeyId.isNullOrEmpty() && !signingPassword.isNullOrEmpty() && !actualSigningKey.isNullOrEmpty()) {
+        logger.lifecycle("✅ GPG Configuration Found: Using in-memory keys for CI/CD signing.")
+        useInMemoryPgpKeys(signingKeyId, actualSigningKey, signingPassword)
+    } else {
+        logger.lifecycle("⚠️ GPG Configuration Missing: Signing will likely be skipped or fail in CI/CD.")
+        // 在 CI 环境中，强制在没有密钥时失败
+        if (System.getenv("CI") == "true") {
+            throw IllegalStateException("GitHub Actions failed to inject GPG signing properties (signingKeyId, signingKey, signingPassword). Cannot perform publication.")
+        }
+    }
+
+    // 3. 告诉 signing 插件为所有 Publication 签名
+    sign(publishing.publications)
 }

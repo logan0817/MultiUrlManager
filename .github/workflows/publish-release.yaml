@@ -1,69 +1,77 @@
 name: Publish Release
 on:
   push:
-    tags:
-      - '*'
+    branches:
+      - master
   workflow_dispatch:
 
 jobs:
   publish:
-    # remove this check when your secrets are setup and you're ready to publish
+    # 当您的密钥设置完毕并准备好发布时，请移除或修改此条件检查
     if: ${{ github.repository == 'logan0817/MultiUrlManager'}}
     runs-on: [ubuntu-latest]
+
     # ==============================================================
-    # 💥 1. 核心修改：将所有凭证提升到 Job 级别的 env 块
+    # ✅ 部署环境
+    # ==============================================================
+    environment: logan0817Environments
+
+    # ==============================================================
+    # 💥 1. 核心：将 Sonatype Central 认证凭证提升到 Job 级别的 env 块
     # ==============================================================
     env:
       GRADLE_OPTS: -Dorg.gradle.parallel=false
 
-      # Sonatype Central Portal 认证凭证
+      # --- 插件默认识别的驼峰命名 (vanniktech/gradle-maven-publish) ---
       ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRAL_USERNAME }}
       ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRAL_PASSWORD }}
 
-      # GPG 签名凭证 (密码)
-      ORG_GRADLE_PROJECT_SIGNING_PWD: ${{ secrets.ORG_GRADLE_PROJECT_SIGNING_PWD }}
+      # --- 备用/传统识别的全大写命名 ---
+      ORG_GRADLE_PROJECT_MAVENCENTRAL_USERNAME: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRAL_USERNAME }}
+      ORG_GRADLE_PROJECT_MAVENCENTRAL_PASSWORD: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRAL_PASSWORD }}
 
     steps:
 
-      - name: Checkout Repo
+      - name: Checkout Repo (检出代码)
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: Setup Java (设置 Java 17 环境)
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
       # ==============================================================
-      # 💥 2. 核心修改：设置 Gradle 和 GPG 密钥导入
-      # 使用 setup-gradle action 安全地导入 GPG 私钥
+      # 💥 2. 关键：将多行 GPG 密钥转换为单行环境变量
       # ==============================================================
-      - name: Setup Gradle and Import GPG Key
+      - name: Export GPG Key as Single Line Property
+        id: gpg_export
+        run: |
+          # 替换换行符为占位符 '§'
+          FLATTENED_KEY=$(echo "${{ secrets.ORG_GRADLE_PROJECT_SIGNING_KEY }}" | tr '\n' '§')
+          echo "signingKey=$FLATTENED_KEY" >> $GITHUB_OUTPUT
+        shell: bash
+
+      # ==============================================================
+      # 💥 3. 核心：设置 Gradle 环境
+      #    - 仅设置环境，不进行 GPG 密钥导入。
+      # ==============================================================
+      - name: Setup Gradle (仅设置 Gradle)
         uses: gradle/actions/setup-gradle@v4
         with:
-          # 启用发布操作
           publish-operation: true
-          # 导入私钥 (假设您已在 Secrets 中配置 GPG_PRIVATE_KEY)
-          gpg-private-key: ${{ secrets.ORG_GRADLE_PROJECT_SIGNING_KEY }}
-          gpg-passphrase: ${{ secrets.ORG_GRADLE_PROJECT_SIGNING_PWD }}
 
-      # ✅ 新增这一步：给 gradlew 添加执行权限
+      # ✅ 赋予 gradlew 执行权限
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Publish to Maven Local
-        run: ./gradlew publishToMavenLocal
-
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-
-          name: 'release-artifacts'
-          path: '~/.m2/repository/'
-
       # ==============================================================
-      # 💥 3. 核心修改：执行新的发布任务
-      # Release 版本使用 publishToMavenCentral
+      # 💥 4. 核心：执行发布任务，手动传入所有 GPG 签名属性
+      #    - 关键修复：所有 -P 参数的值都用双引号 (") 包裹，防止 shell 误解析密钥中的特殊字符。
       # ==============================================================
-      - name: Publish to the Snapshot Repository
-        run: ./gradlew publishToMavenCentral
+      - name: Publish to Maven Central (发布到 Maven Central)
+        run: ./gradlew publishToMavenCentral \
+          "-PsigningKeyId=${{ secrets.ORG_GRADLE_PROJECT_SIGNING_KEY_ID }}" \
+          "-PsigningPassword=${{ secrets.ORG_GRADLE_PROJECT_SIGNING_PASSWORD }}" \
+          "-PsigningKey=${{ steps.gpg_export.outputs.signingKey }}" \
+          "-PsigningKeyPlaceholder=§"

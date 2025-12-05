@@ -7,6 +7,7 @@ on:
 
 jobs:
   publish:
+    environment: logan0817Environments
     # remove this check when your secrets are setup and you're ready to publish
     if: ${{ github.repository == 'logan0817/MultiUrlManager'}}
     runs-on: [ubuntu-latest]
@@ -22,8 +23,6 @@ jobs:
       ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRAL_USERNAME }}
       ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRAL_PASSWORD }}
 
-      # GPG 签名凭证 (注意：这里只放密码，私钥在 Step 3 中处理)
-      ORG_GRADLE_PROJECT_SIGNING_PWD: ${{ secrets.ORG_GRADLE_PROJECT_SIGNING_PWD }}
       ORG_GRADLE_PROJECT_USE_SNAPSHOT: true
     steps:
 
@@ -47,7 +46,7 @@ jobs:
           publish-operation: true
           # 导入私钥 (假设您已在 Secrets 中配置 GPG_PRIVATE_KEY)
           gpg-private-key: ${{ secrets.ORG_GRADLE_PROJECT_SIGNING_KEY }}
-          gpg-passphrase: ${{ secrets.ORG_GRADLE_PROJECT_SIGNING_PWD }}
+          gpg-passphrase: ${{ secrets.ORG_GRADLE_PROJECT_SIGNING_PASSWORD }}
 
       # ✅ 新增这一步：给 gradlew 添加执行权限
       - name: Grant execute permission for gradlew

@@ -1,5 +1,6 @@
 package com.logan.multiurlmanager.library
 
+import android.annotation.SuppressLint
 import android.content.Context
 import com.logan.multiurlmanager.library.bean.BaseUrl
 import com.logan.multiurlmanager.library.utils.BaseUrlConfigLoader
@@ -91,6 +92,7 @@ class BaseUrlManager private constructor(
         }
     }
 
+    @SuppressLint("StaticFieldLeak")
     companion object {
         const val KEY_REGEX: String = "key_regex"
         const val HTTP_URL_REGEX: String =

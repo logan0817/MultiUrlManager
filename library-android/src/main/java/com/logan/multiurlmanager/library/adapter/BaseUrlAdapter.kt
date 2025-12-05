@@ -1,5 +1,6 @@
 package com.logan.multiurlmanager.library.adapter
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -92,6 +93,7 @@ class BaseUrlAdapter(var listData: MutableList<BaseUrlSection>) :
     /**
      * 更新选中状态的逻辑
      */
+    @SuppressLint("NotifyDataSetChanged")
     fun setSelected(baseUrl: BaseUrl?) {
         val configKey = baseUrl?.configKey
         listData.filter { it.baseUrl?.configKey == configKey }.forEach {
@@ -100,6 +102,7 @@ class BaseUrlAdapter(var listData: MutableList<BaseUrlSection>) :
         notifyDataSetChanged()
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     fun setNewInstance(list: MutableList<BaseUrlSection>?) {
         if (list === listData) {
             return

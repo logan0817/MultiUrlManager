@@ -3,9 +3,9 @@
     <style name="BaseUrlManagerTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <item name="colorPrimary">@color/base_url_color_primary</item>
-        <item name="colorPrimaryDark">@color/base_url_color_primaryDark</item>
-        <item name="colorAccent">@color/base_url_color_accent</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
     </style>
     <style name="ThemeOverlay.App.Toolbar" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
         <item name="android:textColorPrimary">@android:color/white</item>
