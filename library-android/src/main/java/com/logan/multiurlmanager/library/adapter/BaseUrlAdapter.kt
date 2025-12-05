@@ -79,11 +79,9 @@ class BaseUrlAdapter(var listData: MutableList<BaseUrlSection>) :
                 normalHolder.tvUrl.text = baseUrl?.url
                 normalHolder.tvUrlRemark.text = baseUrl?.remark
 
-                // 对应 BRVAH 的 holder.setVisible
                 val isRemarkVisible = !baseUrl?.remark.isNullOrBlank()
                 normalHolder.tvUrlRemark.visibility = if (isRemarkVisible) View.VISIBLE else View.GONE
 
-                // 设置点击事件，保持原逻辑
                 normalHolder.itemView.setOnClickListener {
                     setSelected(baseUrl)
                 }
@@ -99,7 +97,6 @@ class BaseUrlAdapter(var listData: MutableList<BaseUrlSection>) :
         listData.filter { it.baseUrl?.configKey == configKey }.forEach {
             it.baseUrl?.select = (it.baseUrl?.url == baseUrl?.url)
         }
-        // 使用原生 Adapter 的通知方法
         notifyDataSetChanged()
     }
 
