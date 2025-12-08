@@ -13,12 +13,20 @@ class App : Application() {
         initBaseUrlManagerBuyCode()
     }
 
+    /**
+     * Method 1: Using base_urls_config.json configuration
+     * 方式一：使用base_urls_config.json配置
+     * */
     fun initBaseUrlManagerByConfigFile() {
-        //加载base_urls_config.json配置
+        //Load the base_urls_config.json configuration. - 加载base_urls_config.json配置
         BaseUrlManager.builder(this).build()
         BaseUrlManager.instance?.getBaseUrl("customKey")
     }
 
+    /**
+     * Method 2: Using code configuration (base_urls_config.json will be ignored, code configuration has higher priority)
+     * 方式二：使用代码配置，base_urls_config.json会失效。代码配置优先级高
+     * */
     fun initBaseUrlManagerBuyCode() {
         BaseUrlManager.builder(this)
             .setDefaultProvider {

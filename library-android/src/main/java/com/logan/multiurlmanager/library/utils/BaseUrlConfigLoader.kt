@@ -10,6 +10,7 @@ import java.io.InputStreamReader
 
 
 /**
+ * Responsible for loading the default BaseUrl list from Assets or other configuration sources.
  * 负责从 Assets 或其他配置源加载默认 BaseUrl 列表。
  *
  * @author logan
@@ -28,6 +29,11 @@ object BaseUrlConfigLoader {
     private val listType = object : TypeToken<List<BaseUrl>>() {}.type
 
     /**
+     * Load the corresponding configuration list based on the passed JSON key name.
+     * @param context Context.
+     * @param configKeyName The key name of the configuration to load in the JSON file (e.g., "debug_defaults").
+     * @return A list of corresponding BaseUrls; return an empty list if the key does not exist or parsing fails.
+     *
      * 根据传入的 JSON 键名加载对应的配置列表。
      * @param context Context。
      * @param configKeyName 要加载的配置在 JSON 文件中的键名（如 "debug_defaults"）。

@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:background="@color/base_url_toolbar_bg_color"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-        app:theme="@style/ThemeOverlay.App.Toolbar"
+        app:theme="@style/BaseUrlManagerTheme.Toolbar"
         app:titleTextColor="@android:color/white" />
 
     <androidx.recyclerview.widget.RecyclerView

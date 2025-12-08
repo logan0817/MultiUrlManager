@@ -31,6 +31,7 @@ import java.util.regex.Pattern
 
 
 /**
+ * Configuration Management Interface
  * 配置管理界面。
  *
  * @author logan
@@ -44,7 +45,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     private val etUrl by lazy { findViewById<EditText>(R.id.etUrl) }
     private val btnAdd by lazy { findViewById<View>(R.id.btnAdd) }
 
-    // baseUrlManager 实例
+    // baseUrlManager instance
     private val baseUrlManager: BaseUrlManager? = BaseUrlManager.instance
 
     private lateinit var baseURLAdapter: BaseUrlAdapter
@@ -87,7 +88,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
 
             R.id.actionSave -> {
                 saveSelected()
-                true // 返回 true 表示事件已处理
+                true
             }
 
             R.id.actionReset -> {
@@ -133,13 +134,13 @@ class BaseUrlManagerActivity : AppCompatActivity() {
                 position: Int,
                 id: Long
             ) {
-                // 获取被选中的字符串内容
+                // Get the content of the selected string. - 获取被选中的字符串内容
                 val selectedItem = parent.getItemAtPosition(position).toString()
-                Log.d("configKeySpinner", "您选择了: $selectedItem (位置: $position)")
+                Log.d("configKeySpinner", "You selected: $selectedItem (position: $position)")
             }
 
             override fun onNothingSelected(parent: AdapterView<*>) {
-                // 当没有任何项被选中时
+                // When no item is selected
             }
         }
         configKeySpinner.adapter = adapter
@@ -165,12 +166,13 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     }
 
     /**
+     * Save selected URL
      * 保存选中的 Url
      */
     private fun saveSelected() {
         val manager = baseUrlManager ?: return
         val urls = baseURLAdapter.listData.filter { !it.isHeader }.map { it.baseUrl!! }
-        // 1. 设置 BaseUrl 映射
+        // 1. Set BaseUrl mapping - 设置 BaseUrl 映射
         manager.updateBaseURL(urls)
         manager.refreshData()
 
@@ -183,6 +185,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     }
 
     /**
+     * Add URL
      * 添加 Url
      */
     private fun addBaseURL() {
@@ -248,6 +251,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         }
 
         /**
+         * Parse the results in onActivityResult
          * 解析 onActivityResult 中的结果
          */
         fun parseActivityResult(data: Intent?): List<BaseUrl>? {

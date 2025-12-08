@@ -1,7 +1,8 @@
 package com.logan.multiurlmanager.library.bean
 
 /**
- * 封装baseURL的SectionEntity子类实现
+ * Section implementation that encapsulates baseURL
+ * 封装baseURL的Section实现
  *
  * @author logan
  * @date 2025/12/02

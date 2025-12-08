@@ -37,9 +37,31 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="89b883f3-e222-4a59-b59a-4098f0eae758" name="Changes" comment="Package and test APK&#10;Update README">
-      <change afterPath="$PROJECT_DIR$/README_EN.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.14.3/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.14.3/executionHistory/executionHistory.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.14.3/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.14.3/executionHistory/executionHistory.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.14.3/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.14.3/fileHashes/fileHashes.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.14.3/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.14.3/fileHashes/fileHashes.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.14.3/fileHashes/resourceHashesCache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.14.3/fileHashes/resourceHashesCache.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/logan/multiurlmanager/App.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/logan/multiurlmanager/App.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_main.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_main.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/styles.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values/styles.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/buildSrc/.gradle/8.14.3/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/buildSrc/.gradle/8.14.3/executionHistory/executionHistory.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/buildSrc/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/buildSrc/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/library-android/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/library-android/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/library-android/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/library-android/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/library-android/src/main/java/com/logan/multiurlmanager/library/BaseUrlManager.kt" beforeDir="false" afterPath="$PROJECT_DIR$/library-android/src/main/java/com/logan/multiurlmanager/library/BaseUrlManager.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/library-android/src/main/java/com/logan/multiurlmanager/library/BaseUrlManagerActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/library-android/src/main/java/com/logan/multiurlmanager/library/BaseUrlManagerActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/library-android/src/main/java/com/logan/multiurlmanager/library/IBaseUrlManager.kt" beforeDir="false" afterPath="$PROJECT_DIR$/library-android/src/main/java/com/logan/multiurlmanager/library/IBaseUrlManager.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/library-android/src/main/java/com/logan/multiurlmanager/library/adapter/BaseUrlAdapter.kt" beforeDir="false" afterPath="$PROJECT_DIR$/library-android/src/main/java/com/logan/multiurlmanager/library/adapter/BaseUrlAdapter.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/library-android/src/main/java/com/logan/multiurlmanager/library/bean/BaseUrl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/library-android/src/main/java/com/logan/multiurlmanager/library/bean/BaseUrl.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/library-android/src/main/java/com/logan/multiurlmanager/library/bean/BaseUrlSection.kt" beforeDir="false" afterPath="$PROJECT_DIR$/library-android/src/main/java/com/logan/multiurlmanager/library/bean/BaseUrlSection.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/library-android/src/main/java/com/logan/multiurlmanager/library/utils/BaseUrlConfigLoader.kt" beforeDir="false" afterPath="$PROJECT_DIR$/library-android/src/main/java/com/logan/multiurlmanager/library/utils/BaseUrlConfigLoader.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/library-android/src/main/java/com/logan/multiurlmanager/library/utils/BaseUrlUtil.kt" beforeDir="false" afterPath="$PROJECT_DIR$/library-android/src/main/java/com/logan/multiurlmanager/library/utils/BaseUrlUtil.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/library-android/src/main/res/layout/base_url_manager_activity.xml" beforeDir="false" afterPath="$PROJECT_DIR$/library-android/src/main/res/layout/base_url_manager_activity.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/library-android/src/main/res/values/styles.xml" beforeDir="false" afterPath="$PROJECT_DIR$/library-android/src/main/res/values/styles.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

@@ -7,6 +7,7 @@ import com.google.gson.reflect.TypeToken
 import com.logan.multiurlmanager.library.bean.BaseUrl
 
 /**
+ * BaseUrl is a utility class for information persistence, implemented based on SharedPreferences and Gson.
  * BaseUrl 信息持久化工具类，基于 SharedPreferences 和 Gson 实现。
  *
  * @author logan
@@ -54,6 +55,9 @@ object BaseUrlUtil {
     }
 
     /**
+     * * Loads all dynamic BaseUrl configurations.
+     * * Returns a Map<Key, BaseUrl>, where the Value is the deserialized BaseUrl object.
+     *
      * 加载所有动态 BaseUrl 配置。
      * 返回 Map<Key, BaseUrl>，其中 Value 是反序列化后的 BaseUrl 对象。
      */

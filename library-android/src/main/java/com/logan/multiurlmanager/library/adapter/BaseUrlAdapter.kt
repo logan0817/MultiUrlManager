@@ -11,6 +11,9 @@ import com.logan.multiurlmanager.library.bean.BaseUrl
 import com.logan.multiurlmanager.library.bean.BaseUrlSection
 
 /**
+ * Adapter for the configuration list (native implementation).
+ * Responsible for displaying the BaseUrl list and managing the selection state.
+ *
  * 配置列表的适配器 (原生实现)。
  * 负责显示 BaseUrl 列表并管理选中状态。
  *
@@ -42,6 +45,7 @@ class BaseUrlAdapter(var listData: MutableList<BaseUrlSection>) :
     override fun getItemCount(): Int = listData.size
 
     /**
+     * Manually manage the Header and Normal view types.
      * 手动管理 Header 和 Normal 视图类型。
      */
     override fun getItemViewType(position: Int): Int {
@@ -91,6 +95,7 @@ class BaseUrlAdapter(var listData: MutableList<BaseUrlSection>) :
     }
 
     /**
+     * Logic for updating the selected state
      * 更新选中状态的逻辑
      */
     @SuppressLint("NotifyDataSetChanged")

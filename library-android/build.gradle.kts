@@ -44,7 +44,6 @@ android {
         warningsAsErrors = true
         abortOnError = true
         disable.add("GradleDependency")
-        // 忽略 AGP 版本检查，因为我们受限于 CI 环境
         disable.add("AndroidGradlePluginVersion")
     }
 }

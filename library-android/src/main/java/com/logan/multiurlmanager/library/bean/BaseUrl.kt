@@ -4,6 +4,7 @@ import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
 /**
+ * Information and data categories
  * 信息数据类
  *
  * @author logan
