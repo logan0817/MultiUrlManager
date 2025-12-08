@@ -31,7 +31,7 @@ MultiUrlManager for Android 的设计初衷主要用于开发时，每个环境�
 2. 在Module的 **build.gradle** 中添加依赖项
 
     ```gradle
-    implementation 'io.github.logan0817:multiurlmanager:1.0.1'
+    implementation 'io.github.logan0817:multiurlmanager:1.0.2'
     ```
    
 

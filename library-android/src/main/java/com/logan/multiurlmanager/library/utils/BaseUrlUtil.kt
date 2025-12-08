@@ -1,5 +1,6 @@
 package com.logan.multiurlmanager.library.utils
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import com.google.gson.Gson
@@ -20,29 +21,34 @@ object BaseUrlUtil {
     private val gson = Gson()
     private val baseUrlType = object : TypeToken<BaseUrl>() {}.type
 
-    private inline fun SharedPreferences.edit(action: SharedPreferences.Editor.() -> Unit) {
+    @SuppressLint("ApplySharedPref")
+    private inline fun SharedPreferences.edit(commit: Boolean = false, action: SharedPreferences.Editor.() -> Unit) {
         val editor = edit()
         editor.action()
-        editor.apply()
+        if (commit) {
+            editor.commit()
+        } else {
+            editor.apply()
+        }
     }
 
     fun put(context: Context, baseUrl: BaseUrl) {
         if (baseUrl.configKey.isNullOrBlank() || baseUrl.url.isNullOrBlank()) return
         val json = gson.toJson(baseUrl)
-        getSharedPreferences(context).edit {
+        getSharedPreferences(context).edit(commit = true) {
             putString("${baseUrl.configKey}-${baseUrl.url}", json)
         }
     }
 
     fun remove(context: Context, baseUrl: BaseUrl) {
         if (baseUrl.configKey.isNullOrBlank() || baseUrl.url.isNullOrBlank()) return
-        getSharedPreferences(context).edit {
+        getSharedPreferences(context).edit(commit = true) {
             remove("${baseUrl.configKey}-${baseUrl.url}")
         }
     }
 
     fun clear(context: Context) {
-        getSharedPreferences(context).edit { clear() }
+        getSharedPreferences(context).edit(commit = true) { clear() }
     }
 
     fun getBaseURL(context: Context, configKey: String): BaseUrl? {

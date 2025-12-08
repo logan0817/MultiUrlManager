@@ -31,7 +31,7 @@ MultiUrlManager for Android is primarily designed for scenarios where **multiple
 2. Add the dependency to your Module's **build.gradle**
 
     ```gradle
-    implementation 'io.github.logan0817:multiurlmanager:1.0.1'
+    implementation 'io.github.logan0817:multiurlmanager:1.0.2'
     ```
 
 
