@@ -1,0 +1,17 @@
+Alias:   MultiUrlManager
+
+Password： MultiUrlManager
+
+valiate  200 years
+
+first and last name   MultiUrlManager
+
+organizatal unit      MultiUrlManager
+
+organization          MultiUrlManager
+
+city or locaality     MultiUrlManager
+
+state or Province     MultiUrlManager
+
+Country Code(XX)     MultiUrlManager

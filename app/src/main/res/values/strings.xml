@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">MultiUrlManager</string>
+    <string name="setup_baseurl">Set BaseUrl</string>
+    <string name="multiurlmanager_desc">MultiUrlManager was primarily designed for scenarios where multiple environments need to be packaged into an APK during development. Through the BaseUrl dynamic setting entry provided by BaseUrlManager, different development or testing environments can be easily switched with a single package build. When building a production environment package, the BaseUrl dynamic setting entry can be disabled.</string>
+    <string name="current_settings">Current settings:</string>
+</resources>
