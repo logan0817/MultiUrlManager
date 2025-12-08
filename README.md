@@ -1,3 +1,5 @@
+如果您想查看英文文档，请点击这里：[English Document](./README_EN.md)
+
 # 本项目参考 jenly1314 开源库 [BaseUrlManager](https://github.com/jenly1314/BaseUrlManager)
 如果你的项目BaseUrlManager能满足需求，可以直接使用BaseUrlManager。
 
@@ -12,6 +14,26 @@ MultiUrlManager for Android 的设计初衷主要用于开发时，每个环境�
 <img src="GIF.gif" width="350" />
 
 > 你也可以直接下载 [演示App](https://raw.githubusercontent.com/logan0817/MultiUrlManager/master/app/release/app-release.apk) 体验效果
+
+## 引入
+
+### Gradle:
+
+1. 在Project的 **build.gradle** 或 **setting.gradle** 中添加远程仓库
+
+    ```gradle
+    repositories {
+        //...
+        mavenCentral()
+    }
+    ```
+
+2. 在Module的 **build.gradle** 中添加依赖项
+
+    ```gradle
+    implementation 'io.github.logan0817:multiurlmanager:1.0.0'
+    ```
+   
 
 ## 使用
 
