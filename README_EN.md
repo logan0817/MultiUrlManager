@@ -20,6 +20,7 @@ MultiUrlManager for Android is primarily designed for scenarios where **multiple
 ### Gradle:
 
 1. Add the remote repository to your Project's **build.gradle** or **setting.gradle**
+   [![Maven Central](https://img.shields.io/maven-central/v/io.github.logan0817/multiurlmanager.svg?label=Latest%20Release)](https://central.sonatype.com/artifact/io.github.logan0817/multiurlmanager)
 
     ```gradle
     repositories {
@@ -31,7 +32,7 @@ MultiUrlManager for Android is primarily designed for scenarios where **multiple
 2. Add the dependency to your Module's **build.gradle**
 
     ```gradle
-    implementation 'io.github.logan0817:multiurlmanager:1.0.2'
+    implementation 'io.github.logan0817:multiurlmanager:1.0.2' // Replace with the latest version shown by the badge above
     ```
 
 
