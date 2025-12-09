@@ -41,12 +41,14 @@ MultiUrlManager for Android 的设计初衷主要用于开发时，每个环境�
 
 Step.1 在您项目中的AndroidManifest.xml中通过配置meta-data来自定义全局配置
 ```xml
-    <!-- 在你项目中添加注册如下配置可以覆盖默认样式，也可以直接使用默认样式 -->
+    <!-- 在你项目中添加注册如下配置 -->
     <activity
         android:name="com.logan.multiurlmanager.library.BaseUrlManagerActivity"
         android:exported="false"
         android:theme="@style/BaseUrlManagerTheme"
         android:windowSoftInputMode="adjustPan" />
+
+    <!-- 如果需要更新样式参考  android:theme="@style/AppBaseUrlManagerTheme" -->    
 ```
 
 Step.2 在您项目Application的onCreate方法中初始化BaseUrlManager

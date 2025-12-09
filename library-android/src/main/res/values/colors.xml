@@ -4,20 +4,16 @@
     <color name="base_url_color_primary">#0086aa</color>
     <color name="base_url_color_primaryDark">#0076aa</color>
     <color name="base_url_color_accent">#0086aa</color>
-
+    <color name="base_url_color_page_title">#ffffff</color>
     <color name="base_url_toolbar_bg_color">@color/base_url_color_primaryDark</color>
-    <color name="base_url_toolbar_title_color">#333333</color>
-
     <color name="base_url_bg_color">#ffffff</color>
-
     <color name="base_url_edit_url_text_color">#333333</color>
     <color name="base_url_btn_add_text_color">#ffffff</color>
     <color name="base_url_btn_add_bg_color">#5D5F67</color>
-
+    <color name="base_url_item_bg_color">#00000000</color>
     <color name="base_url_item_url_color">#333333</color>
     <color name="base_url_item_url_remark_color">#aaa</color>
-
-    <color name="base_url_item_header_key_text_color">#f4f5f7</color>
-    <color name="base_url_item_header_key_bg_color">#ffff8800</color>
+    <color name="base_url_item_header_key_bg_color">#f4f5f7</color>
+    <color name="base_url_item_header_key_text_color">#ffff8800</color>
 
 </resources>

@@ -21,12 +21,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <!--  默认样式-->
         <activity
             android:name="com.logan.multiurlmanager.library.BaseUrlManagerActivity"
             android:exported="false"
             android:theme="@style/BaseUrlManagerTheme"
             android:windowSoftInputMode="adjustPan" />
+
+        <!--  自定义样式-->
+        <!--<activity
+            android:name="com.logan.multiurlmanager.library.BaseUrlManagerActivity"
+            android:exported="false"
+            android:theme="@style/AppBaseUrlManagerTheme"
+            android:windowSoftInputMode="adjustPan" />-->
     </application>
 
 </manifest>

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -27,7 +28,14 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         setupInsets()
         binding.btnSettings.setOnClickListener {
-            BaseUrlManagerActivity.startBaseUrlManager(this@MainActivity, SET_BASE_URL_REQUEST_CODE)
+//            BaseUrlManagerActivity.startBaseUrlManager(this@MainActivity, SET_BASE_URL_REQUEST_CODE)
+            BaseUrlManagerActivity.startBaseUrlManager(
+                this@MainActivity, SET_BASE_URL_REQUEST_CODE, bundleOf(
+                    BaseUrlManagerActivity.KEY_TITLE to "BaseUrl Configuration",
+                    BaseUrlManagerActivity.KEY_REGEX to BaseUrlManagerActivity.HTTP_URL_REGEX,
+                )
+            )
+
         }
         val configInfoText = BaseUrlUtil.loadDynamicBaseUrlConfigs(context = this)
             .map { it.value }

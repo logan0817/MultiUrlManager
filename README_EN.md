@@ -47,6 +47,8 @@ Step.1 Configure global settings in your project's AndroidManifest.xml via meta-
         android:exported="false"
         android:theme="@style/BaseUrlManagerTheme"
         android:windowSoftInputMode="adjustPan" />
+
+        <!-- If you need to update the style, refer to android:theme="@style/AppBaseUrlManagerTheme" -->
 ```
 
 Step.2 Initialize BaseUrlManager in your Application's onCreate method

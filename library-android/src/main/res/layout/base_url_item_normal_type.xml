@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?android:attr/selectableItemBackground"
+    android:background="?attr/base_url_item_bg_color"
     android:paddingVertical="5dp"
     android:paddingLeft="15dp"
     android:paddingRight="15dp">
@@ -23,7 +23,7 @@
             android:ellipsize="marquee"
             android:maxLines="1"
             android:singleLine="true"
-            android:textColor="@color/base_url_item_url_color"
+            android:textColor="?attr/base_url_item_url_color"
             android:textIsSelectable="true"
             android:textSize="16sp"
             tools:text="http://192.168.100.100:8888/" />
@@ -36,13 +36,13 @@
             android:ellipsize="marquee"
             android:maxLines="1"
             android:singleLine="true"
-            android:textColor="@color/base_url_item_url_remark_color"
+            android:textColor="?attr/base_url_item_url_remark_color"
             android:textIsSelectable="true"
             android:textSize="13sp"
             tools:text="Remark" />
     </LinearLayout>
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/ivSelect"
         android:layout_width="40dp"
         android:layout_height="40dp"

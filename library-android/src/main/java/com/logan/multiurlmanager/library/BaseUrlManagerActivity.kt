@@ -49,7 +49,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     private val baseUrlManager: BaseUrlManager? = BaseUrlManager.instance
 
     private lateinit var baseURLAdapter: BaseUrlAdapter
-    private var regex: String? = BaseUrlManager.HTTP_URL_REGEX
+    private var regex: String = HTTP_URL_REGEX
     private val inputMethodManager: InputMethodManager?
         get() = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
 
@@ -71,7 +71,10 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         }
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = resources.getString(R.string.base_url_title)
+        intent.extras?.let { bundle ->
+            val title  = bundle.getString(KEY_TITLE) ?: resources.getString(R.string.base_url_title)
+            supportActionBar?.title = title
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -105,7 +108,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     private fun initUI() {
 
         intent.extras?.let { bundle ->
-            regex = bundle.getString(BaseUrlManager.KEY_REGEX) ?: BaseUrlManager.HTTP_URL_REGEX
+            regex = bundle.getString(KEY_REGEX) ?: HTTP_URL_REGEX
         }
 
         recyclerView.apply {
@@ -181,7 +184,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
             putParcelableArrayListExtra(KEY_URLS_INFO, selectDomains)
         }
         setResult(RESULT_OK, intent)
-        onBackPressed()
+        onBackPressedDispatcher.onBackPressed()
     }
 
     /**
@@ -227,12 +230,17 @@ class BaseUrlManagerActivity : AppCompatActivity() {
 
     companion object {
 
+        const val KEY_TITLE: String = "key_title"
+        const val KEY_REGEX: String = "key_regex"
+        const val HTTP_URL_REGEX: String = "^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"
+
         const val KEY_URLS_INFO: String = "key_urls_info"
 
         @JvmOverloads
         fun startBaseUrlManager(activity: Activity, requestCode: Int, bundle: Bundle? = null) {
             val intent = Intent(activity, BaseUrlManagerActivity::class.java).apply {
                 if (bundle != null && bundle.size() > 0) {
+                    putExtra(KEY_TITLE, "")
                     putExtras(bundle)
                 }
             }
@@ -244,6 +252,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
             val context = fragment.context ?: return
             val intent = Intent(context, BaseUrlManagerActivity::class.java).apply {
                 if (bundle != null && bundle.size() > 0) {
+                    putExtra(KEY_TITLE, "")
                     putExtras(bundle)
                 }
             }

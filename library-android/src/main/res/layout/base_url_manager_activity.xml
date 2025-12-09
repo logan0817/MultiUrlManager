@@ -3,17 +3,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/base_url_bg_color"
+    android:background="?attr/base_url_bg_color"
     android:orientation="vertical">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/base_url_toolbar_bg_color"
+        android:background="?attr/base_url_toolbar_bg_color"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
         app:theme="@style/BaseUrlManagerTheme.Toolbar"
-        app:titleTextColor="@android:color/white" />
+        app:titleTextColor="?attr/base_url_color_page_title" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
@@ -45,7 +45,7 @@
             android:paddingRight="10dp"
             android:paddingBottom="10dp"
             android:singleLine="true"
-            android:textColor="@color/base_url_edit_url_text_color"
+            android:textColor="?attr/base_url_edit_url_text_color"
             android:textSize="16sp" />
     </LinearLayout>
 
@@ -58,9 +58,9 @@
         android:layout_marginTop="10dp"
         android:layout_marginRight="15dp"
         android:layout_marginBottom="15dp"
-        android:background="@color/base_url_btn_add_bg_color"
+        android:background="?attr/base_url_btn_add_bg_color"
         android:text="@string/base_url_add"
         android:textAllCaps="false"
-        android:textColor="@color/base_url_btn_add_text_color"
+        android:textColor="?attr/base_url_btn_add_text_color"
         android:textSize="15sp" />
 </LinearLayout>

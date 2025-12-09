@@ -98,9 +98,6 @@ class BaseUrlManager private constructor(
 
     @SuppressLint("StaticFieldLeak")
     companion object {
-        const val KEY_REGEX: String = "key_regex"
-        const val HTTP_URL_REGEX: String =
-            "^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"
 
         var instance: BaseUrlManager? = null
             private set

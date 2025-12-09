@@ -7,4 +7,27 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
+
+    <style name="AppTheme.Toolbar" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
+        <item name="android:textColorPrimary">@android:color/white</item>
+    </style>
+
+    <style name="AppBaseUrlManagerTheme" parent="BaseUrlManagerTheme">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="base_url_bg_color">#f4f4f4</item>
+        <item name="base_url_color_page_title">#ffff8800</item>
+        <item name="base_url_toolbar_bg_color">@color/tip_text_color</item>
+        <item name="base_url_edit_url_text_color">@color/base_url_edit_url_text_color</item>
+        <item name="base_url_btn_add_text_color">@color/base_url_btn_add_text_color</item>
+        <item name="base_url_btn_add_bg_color">@color/base_url_btn_add_bg_color</item>
+        <item name="base_url_item_bg_color">@color/base_url_item_bg_color</item>
+        <item name="base_url_item_url_color">@color/base_url_item_url_color</item>
+        <item name="base_url_item_url_remark_color">@color/base_url_item_url_remark_color</item>
+        <item name="base_url_item_header_key_bg_color">@color/base_url_item_header_key_bg_color</item>
+        <item name="base_url_item_header_key_text_color">@color/colorPrimary</item>
+    </style>
 </resources>
