@@ -40,7 +40,7 @@ MultiUrlManager for Android is primarily designed for scenarios where **multiple
 
 Integration steps and code example (Example taken from [app](app))
 
-Step.1 Configure global settings in your project's AndroidManifest.xml via meta-data
+Step 1: Customize the style by configuring the theme in your project's AndroidManifest.xml.
 ```xml
     <!-- Add the following registration configuration to your project -->
     <activity
