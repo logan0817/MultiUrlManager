@@ -2,6 +2,7 @@ package com.logan.multiurlmanager
 
 import android.app.Application
 import com.logan.multiurlmanager.library.BaseUrlManager
+import com.logan.multiurlmanager.library.BuildConfig
 import com.logan.multiurlmanager.library.bean.BaseUrl
 import com.logan.multiurlmanager.library.utils.BaseUrlConfigLoader
 
@@ -19,8 +20,22 @@ class App : Application() {
      * */
     fun initBaseUrlManagerByConfigFile() {
         //Load the base_urls_config.json configuration. - 加载base_urls_config.json配置
-        BaseUrlManager.builder(this).build()
-        BaseUrlManager.instance?.getBaseUrl("customKey")
+        BaseUrlManager.builder(this)
+            .setFileConfigKey(
+                if (BuildConfig.DEBUG) {
+                    BaseUrlConfigLoader.DEBUG_CONFIG_KEY
+                    //setFileConfigKey("CUSTOM_CONFIG_KEY")
+                } else {
+                    BaseUrlConfigLoader.RELEASE_CONFIG_KEY
+                    //setFileConfigKey("CUSTOM_CONFIG_KEY")
+                }
+            )
+            .build()
+
+        // Get baseUrl
+        val videoApiDomainUrl = BaseUrlManager.instance?.getBaseUrl("videoApiDomain")
+        val mailDomainBaseUrl = BaseUrlManager.instance?.getBaseUrl("mailDomain")
+        val customKeyDmomainUrl = BaseUrlManager.instance?.getBaseUrl("customKey")
     }
 
     /**
@@ -37,10 +52,12 @@ class App : Application() {
                     BaseUrl(configKey = "mailDomain", url = "https://mail.qq.com/", select = false, remark = "mail qq Environment")
                 )
             }
-            .setFileConfigKey(BaseUrlConfigLoader.DEBUG_CONFIG_KEY)
-//            .setFileConfigKey(BaseUrlConfigLoader.RELEASE_CONFIG_KEY)
-//            .setFileConfigKey("CUSTOM_CONFIG_KEY")
             .build()
+
+        // Get baseUrl
+        val videoApiDomainUrl = BaseUrlManager.instance?.getBaseUrl("videoApiDomain")
+        val mailDomainBaseUrl = BaseUrlManager.instance?.getBaseUrl("mailDomain")
+        val customKeyDmomainUrl = BaseUrlManager.instance?.getBaseUrl("customKey")
     }
 
 }

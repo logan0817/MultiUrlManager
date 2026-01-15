@@ -55,25 +55,30 @@ Step 1: Customize the style by configuring the theme in your project's AndroidMa
 Step.2 Initialize BaseUrlManager in your Application's onCreate method
 
 ### Method 1: Using base_urls_config.json configuration
-```java
-// Initialize BaseUrlManager, which defaults to loading the base_urls_config.json configuration [Modify according to the demo content]
-// The default data can contain multiple environments. Two keys are provided by default: DEBUG_CONFIG_KEY and RELEASE_CONFIG_KEY, representing two environments.
-// You can also add a custom CUSTOM_CONFIG_KEY in the config file and use setFileConfigKey to select the corresponding environment for default data switching during packaging.
-    BaseUrlManager.builder(this)
-            .setFileConfigKey(BaseUrlConfigLoader.DEBUG_CONFIG_KEY)
-//            .setFileConfigKey(BaseUrlConfigLoader.RELEASE_CONFIG_KEY)
-//            .setFileConfigKey("CUSTOM_CONFIG_KEY")
+
+    // Initialize BaseUrlManager, which defaults to loading the base_urls_config.json configuration [Modify according to the demo content]
+    // The default data can contain multiple environments. Two keys are provided by default: DEBUG_CONFIG_KEY and RELEASE_CONFIG_KEY, representing two environments.
+    // You can also add a custom CUSTOM_CONFIG_KEY in the config file and use setFileConfigKey to select the corresponding environment for default data switching during packaging.
+        BaseUrlManager.builder(this)
+            .setFileConfigKey(
+                if (BuildConfig.DEBUG) {
+                    BaseUrlConfigLoader.DEBUG_CONFIG_KEY
+                    //setFileConfigKey("CUSTOM_CONFIG_KEY")
+                } else {
+                    BaseUrlConfigLoader.RELEASE_CONFIG_KEY
+                    //setFileConfigKey("CUSTOM_CONFIG_KEY")
+                }
+            )
             .build()
-
-// Get baseUrl
-   String baseUrl = BaseUrlManager.instance?.getBaseUrl("mailDomain")
-   String baseUrl = BaseUrlManager.instance?.getBaseUrl("customKey")
-
-```
+    
+       // Get baseUrl
+       val videoApiDomainUrl = BaseUrlManager.instance?.getBaseUrl("videoApiDomain")
+       val mailDomainBaseUrl = BaseUrlManager.instance?.getBaseUrl("mailDomain")
+       val customKeyDmomainUrl = BaseUrlManager.instance?.getBaseUrl("customKey")
 
 ### Method 2: Using code configuration (base_urls_config.json will be ignored, code configuration has higher priority)
-```java
-// Initialize BaseUrlManager
+
+    // Initialize BaseUrlManager
     BaseUrlManager.builder(this)
         .setDefaultProvider {
             listOf(
@@ -81,15 +86,14 @@ Step.2 Initialize BaseUrlManager in your Application's onCreate method
                     BaseUrl(configKey = "videoApiDomain", url = "https://www.kuaishou.com//", select = false, remark = "kuaishou Environment"),
                     BaseUrl(configKey = "mailDomain", url = "https://mail.google.com/", select = true, remark = "mail google Environment"),
                     BaseUrl(configKey = "mailDomain", url = "https://mail.qq.com/", select = false, remark = "mail qq Environment")
-                )
+               )
             }
             .build()
-
-// Get baseUrl
-   String baseUrl = BaseUrlManager.instance?.getBaseUrl("customKey")
-   String baseUrl = BaseUrlManager.instance?.getBaseUrl("mailDomain")
-
-```
+    
+    // Get baseUrl
+       val videoApiDomainUrl = BaseUrlManager.instance?.getBaseUrl("videoApiDomain")
+       val mailDomainBaseUrl = BaseUrlManager.instance?.getBaseUrl("mailDomain")
+       val customKeyDmomainUrl = BaseUrlManager.instance?.getBaseUrl("customKey")
 
 Step.3 Provide an entry point for dynamic BaseUrl configuration (Jump to BaseUrlManagerActivity via Intent)
 

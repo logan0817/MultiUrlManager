@@ -55,24 +55,29 @@ Step.1 在您项目中的AndroidManifest.xml中通过配置theme来自定义样�
 Step.2 在您项目Application的onCreate方法中初始化BaseUrlManager
 
 ### 方式一：使用base_urls_config.json配置
-```java
+
     //初始化BaseUrlManager ，默认加载 base_urls_config.json 配置[参考demo内容修改即可]
     //默认数据可以有多个环境，默认提供了两个key：DEBUG_CONFIG_KEY、RELEASE_CONFIG_KEY代表两个环境。
     // 你也可以参考在config文件中添加自定义 CUSTOM_CONFIG_KEY，可以通过setFileConfigKey来使用对应环境来实现打包时候默认数据切换。
-    BaseUrlManager.builder(this)
-            .setFileConfigKey(BaseUrlConfigLoader.DEBUG_CONFIG_KEY)
-//            .setFileConfigKey(BaseUrlConfigLoader.RELEASE_CONFIG_KEY)
-//            .setFileConfigKey("CUSTOM_CONFIG_KEY")
+        BaseUrlManager.builder(this)
+            .setFileConfigKey(
+                if (BuildConfig.DEBUG) {
+                    BaseUrlConfigLoader.DEBUG_CONFIG_KEY
+                    //setFileConfigKey("CUSTOM_CONFIG_KEY")
+                } else {
+                    BaseUrlConfigLoader.RELEASE_CONFIG_KEY
+                    //setFileConfigKey("CUSTOM_CONFIG_KEY")
+                }
+            )
             .build()
 
-    //获取baseUrl
-    String baseUrl = BaseUrlManager.instance?.getBaseUrl("mailDomain")
-    String baseUrl = BaseUrlManager.instance?.getBaseUrl("customKey")
+        // Get baseUrl
+       val videoApiDomainUrl = BaseUrlManager.instance?.getBaseUrl("videoApiDomain")
+       val mailDomainBaseUrl = BaseUrlManager.instance?.getBaseUrl("mailDomain")
+       val customKeyDmomainUrl = BaseUrlManager.instance?.getBaseUrl("customKey")
 
-```
 
 ### 方式二：使用代码配置，base_urls_config.json会失效。代码配置优先级高
-```java
     //初始化BaseUrlManager
     BaseUrlManager.builder(this)
         .setDefaultProvider {
@@ -85,11 +90,10 @@ Step.2 在您项目Application的onCreate方法中初始化BaseUrlManager
             }
             .build()
 
-    //获取baseUrl
-    String baseUrl = BaseUrlManager.instance?.getBaseUrl("customKey")
-    String baseUrl = BaseUrlManager.instance?.getBaseUrl("mailDomain")
-
-```
+        // Get baseUrl
+       val videoApiDomainUrl = BaseUrlManager.instance?.getBaseUrl("videoApiDomain")
+       val mailDomainBaseUrl = BaseUrlManager.instance?.getBaseUrl("mailDomain")
+       val customKeyDmomainUrl = BaseUrlManager.instance?.getBaseUrl("customKey")
 
 Step.3 提供动态配置BaseUrl的入口（通过Intent跳转到BaseUrlManagerActivity界面）
 
