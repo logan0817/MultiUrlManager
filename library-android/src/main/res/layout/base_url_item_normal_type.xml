@@ -23,7 +23,7 @@
             android:ellipsize="marquee"
             android:maxLines="1"
             android:singleLine="true"
-            android:textColor="?attr/base_url_item_url_color"
+            android:textColor="?attr/base_url_item_url_text_color"
             android:textIsSelectable="true"
             android:textSize="16sp"
             tools:text="http://192.168.100.100:8888/" />
@@ -36,7 +36,7 @@
             android:ellipsize="marquee"
             android:maxLines="1"
             android:singleLine="true"
-            android:textColor="?attr/base_url_item_url_remark_color"
+            android:textColor="?attr/base_url_item_url_remark_text_color"
             android:textIsSelectable="true"
             android:textSize="13sp"
             tools:text="Remark" />

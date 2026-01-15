@@ -13,7 +13,7 @@
         android:background="?attr/base_url_toolbar_bg_color"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
         app:theme="@style/BaseUrlManagerTheme.Toolbar"
-        app:titleTextColor="?attr/base_url_color_page_title" />
+        app:titleTextColor="?attr/base_url_page_title_text_color" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
