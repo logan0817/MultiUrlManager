@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -63,10 +64,12 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     }
 
     private fun setupInsets() {
+        val rootView = findViewById<View>(R.id.root_layout)
         val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
         ViewCompat.setOnApplyWindowInsetsListener(toolbar) { view, windowInsets ->
             val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
             view.updatePadding(top = insets.top)
+            rootView.updatePadding(bottom = insets.bottom)
             WindowInsetsCompat.CONSUMED
         }
         setSupportActionBar(toolbar)
@@ -106,7 +109,6 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     }
 
     private fun initUI() {
-
         intent.extras?.let { bundle ->
             regex = bundle.getString(KEY_REGEX) ?: HTTP_URL_REGEX
         }

@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="BaseUrlManagerTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
         <item name="windowActionBar">false</item>
@@ -6,6 +6,7 @@
         <item name="colorPrimary">@color/base_url_color_primary</item>
         <item name="colorPrimaryDark">@color/base_url_color_primaryDark</item>
         <item name="colorAccent">@color/base_url_color_accent</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
         <item name="base_url_bg_color">@color/base_url_bg_color</item>
         <item name="base_url_page_title_text_color">@color/base_url_page_title_text_color</item>
         <item name="base_url_toolbar_bg_color">@color/base_url_toolbar_bg_color</item>

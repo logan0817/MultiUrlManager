@@ -32,7 +32,7 @@ MultiUrlManager for Android 的设计初衷主要用于开发时，每个环境�
    [![Maven Central](https://img.shields.io/maven-central/v/io.github.logan0817/multiurlmanager.svg?label=Latest%20Release)](https://central.sonatype.com/artifact/io.github.logan0817/multiurlmanager)
 
     ```gradle
-   implementation 'io.github.logan0817:multiurlmanager:1.0.3' // 替换为上方徽章显示的最新版本
+   implementation 'io.github.logan0817:multiurlmanager:1.0.6' // 替换为上方徽章显示的最新版本
     ```
    
 
