@@ -1,6 +1,6 @@
 # CI 与发布
 
-工作流源文件：[ci.yml](../.github/workflows/ci.yml)、[release.yml](../.github/workflows/release.yml)。这些是可执行流程定义，尚未完成首次云端验收；本地静态检查不能替代 GitHub、模拟器、缓存和凭据环境的实际运行。
+工作流源文件：[ci.yml](../.github/workflows/ci.yml)、[release.yml](../.github/workflows/release.yml)。普通 CI 已在云端执行，具体提交是否通过以 [GitHub Actions 的对应运行](https://github.com/logan0817/MultiUrlManager/actions/workflows/ci.yml) 为准。发布工作流尚未执行真实上传或正式发布；本地静态检查不能替代凭据与发布环境的实际验收。
 
 ## 普通验证
 
@@ -14,7 +14,7 @@ quality 显式初始化 SDK 命令路径，并创建仅包含 `android-36` 平�
 | device / API 24、36 | 下载同轮候选，校验身份与摘要，安装应用/库/混淆消费 APK，执行仪器测试及 Debug/Release 真实旧库覆盖升级 | 各 35 分钟 |
 | required | 总是汇总 quality、device 的结果；失败、取消、跳过均不通过 | 5 分钟 |
 
-设备矩阵 `fail-fast: false`，收集两端结果，不在设备 job 重建应用。Google 官方 SDK 仓库列出的 `google_apis;x86_64` API 24/36 镜像已核对存在；云端可下载和启动仍需实测。
+设备矩阵 `fail-fast: false`，收集两端结果，不在设备 job 重建应用。`google_apis;x86_64` API 24/36 镜像已在云端完成下载、启动和测试执行；不能把设备启动成功视为测试通过，仍须核对该提交全部套件与 required 的终态。
 
 仓库维护者可把 `CI / required` 作为预期的分支保护入口，实际 GitHub UI 显示名以首次运行结果为准；首次启用需核对再配置。工作流不会自行修改分支规则、合并队列、环境审批或仓库权限。
 
