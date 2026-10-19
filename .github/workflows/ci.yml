@@ -44,6 +44,18 @@ jobs:
           accept-android-sdk-licenses: false
       - name: 安装构建需要的 SDK 组件
         run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools'
+      - name: 固定构建可见的 SDK 平台
+        run: |
+          # Lint 会读取最高已安装平台，不能让运行器新增平台改变项目的 API 36 基线。
+          build_sdk="$RUNNER_TEMP/multiurl-sdk"
+          mkdir -p "$build_sdk/platforms"
+          test -d "$ANDROID_HOME/platforms/android-36"
+          ln -s "$ANDROID_HOME/platforms/android-36" "$build_sdk/platforms/android-36"
+          for component in build-tools platform-tools licenses; do
+            test -d "$ANDROID_HOME/$component"
+            ln -s "$ANDROID_HOME/$component" "$build_sdk/$component"
+          done
+          printf 'ANDROID_HOME=%s\nANDROID_SDK_ROOT=%s\n' "$build_sdk" "$build_sdk" >> "$GITHUB_ENV"
       - name: 构建、测试和本地 Maven 候选
         run: >-
           bash ./gradlew --stacktrace
