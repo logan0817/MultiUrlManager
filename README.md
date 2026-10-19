@@ -26,7 +26,7 @@ Android 多业务 Base URL 管理库。在应用内维护开发、测试、生�
 
 ## 安装
 
-支持 Android **API 24+**，库使用 Java 17 字节码。本仓库使用 JDK 17、Gradle Wrapper 8.14.3、AGP 8.13.0、compileSdk/targetSdk 36。宿主还需提供 AndroidX Activity Result 所需的 Activity/Fragment 依赖；常规 AppCompat 工程可直接使用下面的入口。
+支持 Android **API 24+**，库使用 Java 17 字节码。本仓库使用 JDK 17、Gradle Wrapper 8.14.3、AGP 8.13.0、compileSdk/targetSdk 36。
 
 在宿主 `settings.gradle.kts` 中配置仓库：
 
@@ -44,10 +44,10 @@ dependencyResolutionManagement {
 ```kotlin
 dependencies {
     implementation("io.github.logan0817:multiurlmanager:1.1.0")
-    // 下方示例 Activity 使用 AppCompat，宿主直接声明该依赖。
-    implementation("androidx.appcompat:appcompat:1.7.1")
 }
 ```
+
+库的内置管理页使用 AppCompat，其依赖由 Gradle 自动解析；宿主页面无需继承 `AppCompatActivity`，也无需统一改用 AppCompat 主题。若宿主代码直接使用 AppCompat 或 AndroidX Activity Result API，应显式声明对应依赖；下文会单独说明示例所需配置。
 
 上述 `1.1.0` 已可从 [Maven Central 公开仓库](https://repo.maven.apache.org/maven2/io/github/logan0817/multiurlmanager/1.1.0/)获取，无需本地 Maven 仓库。仓库内的 [独立消费工程](fixtures/consumer)默认用于本轮本地 publication 验证；参与开发时的构建与验证命令见 [开发说明](docs/development.md)。
 
@@ -105,15 +105,15 @@ class App : Application() {
 }
 ```
 
-在宿主 `AndroidManifest.xml` 的 `application` 上注册；已有 Application 时直接在其 `onCreate()` 中初始化。下方入口 Activity 需要 AppCompat 主题，已有兼容主题可沿用：
+在宿主 `AndroidManifest.xml` 的 `application` 上注册；已有 Application 时直接在其 `onCreate()` 中初始化。这里同时注册第 4 步的示例入口 Activity，并仅为它设置 AppCompat 主题；宿主已有的应用主题保持原配置：
 
 ```xml
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:name="com.example.demo.App"
-        android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
+        android:name="com.example.demo.App">
         <activity
             android:name="com.example.demo.SettingsEntryActivity"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
             android:exported="false" />
     </application>
 </manifest>
@@ -143,7 +143,17 @@ val optionalUrl: String? = manager.getBaseUrl("files", "https://files.example.co
 
 ### 4. 打开内置管理页
 
-以下 Activity 可直接作为宿主配置入口；把它加入宿主 manifest，并从自己的按钮或开发者菜单进入。
+下面选用 `AppCompatActivity` 演示 Activity Result 接入，不要求宿主页面使用这一基类。仅在采用此示例且尚未声明 AppCompat 时，在宿主应用模块添加以下依赖；已有依赖可沿用项目兼容版本，无需重复添加或固定为示例版本：
+
+```kotlin
+dependencies {
+    implementation("androidx.appcompat:appcompat:1.7.1")
+}
+```
+
+已有 `ComponentActivity` 或 AndroidX `Fragment` 可直接注册 `BaseUrlManagerContract`，并显式声明所使用的 Activity/Fragment 依赖；只需打开管理页时，也可通过普通 `Activity` 的 `startActivity(Intent(this, BaseUrlManagerActivity::class.java))` 启动。
+
+以下 Activity 可直接作为宿主配置入口；按第 2 步注册后，从自己的按钮或开发者菜单进入。AppCompat 主题只用于此示例入口；库的管理页已在自身 manifest 中单独配置主题。
 
 ```kotlin
 package com.example.demo

@@ -26,7 +26,7 @@ Use **Add** in the toolbar to open the address form and **Save** at the bottom t
 
 ## Installation
 
-Requires Android **API 24+**. The library uses Java 17 bytecode. This repository uses JDK 17, Gradle Wrapper 8.14.3, AGP 8.13.0 and compileSdk/targetSdk 36. The host also needs AndroidX Activity/Fragment dependencies for Activity Result; a standard AppCompat project can use the example below.
+Requires Android **API 24+**. The library uses Java 17 bytecode. This repository uses JDK 17, Gradle Wrapper 8.14.3, AGP 8.13.0 and compileSdk/targetSdk 36.
 
 Configure repositories in the host's `settings.gradle.kts`:
 
@@ -44,10 +44,10 @@ Add the dependency to the host app module's `build.gradle.kts`:
 ```kotlin
 dependencies {
     implementation("io.github.logan0817:multiurlmanager:1.1.0")
-    // The entry Activity below directly uses AppCompat.
-    implementation("androidx.appcompat:appcompat:1.7.1")
 }
 ```
+
+The built-in editor uses AppCompat, whose dependency is resolved automatically by Gradle. Host screens do not need to extend `AppCompatActivity` or share an AppCompat application theme. If host code directly uses AppCompat or AndroidX Activity Result APIs, explicitly declare the corresponding dependencies; the example-specific setup is explained below.
 
 Version `1.1.0` is available from the [public Maven Central repository](https://repo.maven.apache.org/maven2/io/github/logan0817/multiurlmanager/1.1.0/); no local Maven repository is needed. The repository's standalone [consumer fixture](fixtures/consumer) defaults to verifying the current local publication. See [development instructions](docs/development.md) for contributor build and validation commands.
 
@@ -105,15 +105,15 @@ class App : Application() {
 }
 ```
 
-Register the Application in the host's `AndroidManifest.xml`. If your app already has one, initialize in its existing `onCreate()`:
+Register the Application in the host's `AndroidManifest.xml`. If your app already has one, initialize in its existing `onCreate()`. This also registers the example entry Activity from step 4, with an AppCompat theme scoped to that Activity. Keep your existing application theme:
 
 ```xml
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:name="com.example.demo.App"
-        android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
+        android:name="com.example.demo.App">
         <activity
             android:name="com.example.demo.SettingsEntryActivity"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
             android:exported="false" />
     </application>
 </manifest>
@@ -143,7 +143,17 @@ val optionalUrl: String? = manager.getBaseUrl("files", "https://files.example.co
 
 ### 4. Open the built-in screen
 
-This Activity can serve as a host configuration entry. Register it in the host manifest and open it from your own button or developer menu.
+The example below uses `AppCompatActivity` to demonstrate Activity Result integration; host screens can use a different base class. Add the following dependency to the host app module only if you adopt this example and have not already declared AppCompat. An existing compatible project version can be retained; there is no need to add it twice or pin it to this example version:
+
+```kotlin
+dependencies {
+    implementation("androidx.appcompat:appcompat:1.7.1")
+}
+```
+
+An existing `ComponentActivity` or AndroidX `Fragment` can register `BaseUrlManagerContract` directly; explicitly declare the Activity/Fragment dependencies used by your code. To simply open the editor, a plain `Activity` can use `startActivity(Intent(this, BaseUrlManagerActivity::class.java))`.
+
+This Activity can serve as a host configuration entry. Register it as shown in step 2 and open it from your own button or developer menu. The AppCompat theme applies only to this example entry; the library editor declares its own theme in its manifest.
 
 ```kotlin
 package com.example.demo
