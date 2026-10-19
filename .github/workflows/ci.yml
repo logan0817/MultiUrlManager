@@ -38,6 +38,11 @@ jobs:
       - name: 静态检查工作流
         run: python3 scripts/ci/check-workflows.py
       - name: 准备固定 SDK 组件
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          packages: platform-tools
+          accept-android-sdk-licenses: false
+      - name: 安装构建需要的 SDK 组件
         run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools'
       - name: 构建、测试和本地 Maven 候选
         run: >-
