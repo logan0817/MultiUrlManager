@@ -44,7 +44,13 @@ JVM 测试关注 URL、单选、环境和失败结果，并直接用真实配置
 
 ## 发布前本地审核记录
 
-2026-10-19 提交前审查后的最终本地结果：JVM **23 项**、Python **29 项**、API 24 页面 **14 项**、存储迁移 **16 项**、R8 消费 **1 项**通过。真实 1.0.6 AAR 的 Debug/Release 覆盖升级各 **9 个阶段**通过，包含迁移后编辑及新进程重读；该流程通过与 CI 相同的候选 manifest 和设备驱动执行，日志为 `build/verification/release-review/precommit-device-api24.log`。Debug/Release 打包 JSON 与源码逐字节相同，相关 Lint、ABI、publication、原生 actionlint、文档及最终差异检查通过。当前设备仅有 API 24 模拟器，API 36 的本次新回归由提交后的云端矩阵验证；下表保留 10 月 16 日既有验证范围，不能替代本次输入的 CI 结果。
+2026-10-19 提交前审查后的最终本地结果：JVM **23 项**、Python **29 项**、API 24 页面 **14 项**、存储迁移 **16 项**、R8 消费 **1 项**通过。真实 1.0.6 AAR 的 Debug/Release 覆盖升级各 **9 个阶段**通过，包含迁移后编辑及新进程重读；该流程通过与 CI 相同的候选 manifest 和设备驱动执行，日志为 `build/verification/release-review/precommit-device-api24.log`。Debug/Release 打包 JSON 与源码逐字节相同，相关 Lint、ABI、publication、原生 actionlint、文档及最终差异检查通过。该阶段设备仅有 API 24 模拟器；后续云端与 Android 16 真机结果见下文。下表保留 10 月 16 日既有验证范围，不能替代最新候选的结果。
+
+2026-10-19 Android 16 原真机补验使用以下可追溯输入：首轮 Demo、存储与 R8 消费包从 `eb0a5e4` 同源构建并复用本机原测试证书，避免云端 Debug 证书不同而卸载用户 Demo；Debug/Release 升级夹具直接使用 [CI run 39200952925](https://github.com/logan0817/MultiUrlManager/actions/runs/39200952925) 的原始候选，归档 SHA-256 与内部 48 项文件摘要核验通过。真实旧库的 Debug/Release 各 9 个阶段通过，包含旧固定 JSON 默认、用户自定义记录和旧代码 provider 三类场景的旧库写入、覆盖安装新版、再启动重读。Release 为真实 release 变体、测试证书签名，不能替代线上宿主和生产分发渠道验收。存储 16 项通过；其持久化实现未在后续页面修正中变化。
+
+本次真机检查发现并修复页面销毁时地址表单和提示弹窗未释放的 `WindowLeaked`；页面统一释放所持窗口，销毁回调不清空重建页面使用的表单状态。测试保留真实 Espresso 点击、返回码、持久化和表单恢复断言，补充旧表单窗口已分离检查。另针对系统转场期间输入未送达窗口增加有界空闲等待，成功保存后等待 Activity 自然销毁，避免测试框架重复启动辅助 Activity 导致约 45 秒的清理等待。此前失败日志保留，不能用专项通过替代完整套件；一次主题恢复测试还记录了设备触摸屏的弹窗外点击，因此自动测试期间需避免与人工操作交叉。
+
+最终页面完整 **14 项通过（43.629 秒）**，包含深浅色、横屏、切环境逐帧可见性和表单重建，最终日志未再出现本应用的 `WindowLeaked`。修复后重新发布本地 AAR 并重建独立 minified 消费包，真机 R8 消费 **1 项通过**。Demo 原配置已逐字节恢复；真机原始日志、包摘要和恢复核对记录仅保留于忽略目录 `build/verification/device-api36-20261019`，不把含无关设备信息的日志提交或上传。
 
 2026-10-16 对当前工作区执行了以下检查。它们证明本地候选的对应范围，不代表云端 CI 或正式发布已经通过。
 
@@ -76,7 +82,7 @@ API 36 独立 R8 消费测试起初在 `ConsumerActivity` 启动时等待 45 秒
 
 参考同账户 KToast、FlowBus 后，新增离线 `verifyCentralDeploymentName` 与 `prepareCentralBundle`，本机签名复用标准 `signing.gnupg.*` 属性与 GPG agent；上传仍只消费已通过 CI 的固定候选。Central 默认上传验收到 `VALIDATED`，正式发布必须另选 `publish` 并给出 deployment ID。实际 publication 模型与本地 Maven 任务通过；离线签名使用临时测试密钥验证，未使用生产私钥或 token。操作说明见 [CI 与发布](ci-and-release.md)。
 
-云端 CI、冷热缓存/fork/取消/merge_group 演练、环境保护和正式发布仍需在获得对应授权后验收；不为这些操作创建提交、推送或发布。
+普通云端 CI 已通过：[eb0a5e4 对应运行](https://github.com/logan0817/MultiUrlManager/actions/runs/39200952925) 的 quality、API 24/36 设备矩阵和 required 均成功。冷热缓存/fork/取消/merge_group 专项演练、发布环境保护、真实 Central 上传与正式发布仍未验收；普通 CI 成功不代表发布流程已完成。
 
 本地验证日志位于忽略的 `build/verification/release-review`，正式 PR 应引用对应 CI run 和可追溯候选，不能以未提交工作区日志代替提交身份。历史各轮范围见 [更新记录](../CHANGELOG.md)。
 

@@ -92,8 +92,11 @@ class MainActivityTest {
             onView(withText("https://order-backup.dev.example.com/")).perform(click())
             addAddress("https://new.dev.example.com")
             scenario.recreate()
+            waitForWindowIdle()
             onView(withId(LibraryR.id.btnSave)).perform(click())
             assertEquals(Activity.RESULT_OK, scenario.result.resultCode)
+            // 等待自然销毁，避免 close 与 finish 竞争启动测试框架的辅助 Activity。
+            eventually { assertEquals(androidx.lifecycle.Lifecycle.State.DESTROYED, scenario.state) }
             assertEquals("https://order-backup.dev.example.com/", manager.getUrl("order"))
             assertTrue(manager.snapshot().urls.any { it.url == "https://new.dev.example.com/" })
         }
@@ -119,8 +122,11 @@ class MainActivityTest {
             InstrumentationRegistry.getInstrumentation().waitForIdleSync()
             onView(withText("https://order.test.example.com/")).check(matches(isDisplayed()))
             assertEquals(baseline, manager.snapshot())
+            waitForWindowIdle()
             onView(withId(LibraryR.id.btnSave)).perform(click())
             assertEquals(Activity.RESULT_OK, scenario.result.resultCode)
+            // 等待自然销毁，避免 close 与 finish 竞争启动测试框架的辅助 Activity。
+            eventually { assertEquals(androidx.lifecycle.Lifecycle.State.DESTROYED, scenario.state) }
             assertEquals("test", manager.snapshot().environmentId)
             assertEquals("https://login.test.example.com/", manager.getUrl("login"))
         }
@@ -135,8 +141,11 @@ class MainActivityTest {
             InstrumentationRegistry.getInstrumentation().waitForIdleSync()
             onView(withText("https://order.example.com/")).check(matches(isDisplayed()))
             assertEquals(baseline, manager.snapshot())
+            waitForWindowIdle()
             onView(withId(LibraryR.id.btnSave)).perform(click())
             assertEquals(Activity.RESULT_OK, scenario.result.resultCode)
+            // 等待自然销毁，避免 close 与 finish 竞争启动测试框架的辅助 Activity。
+            eventually { assertEquals(androidx.lifecycle.Lifecycle.State.DESTROYED, scenario.state) }
             assertEquals("production", manager.snapshot().environmentId)
             assertEquals("https://order.example.com/", manager.getUrl("order"))
             assertEquals("https://login.example.com/", manager.getUrl("login"))
@@ -195,6 +204,7 @@ class MainActivityTest {
             onView(withText(LibraryR.string.base_url_delete)).perform(click())
             onView(withText(android.R.string.ok)).perform(click())
             scenario.recreate()
+            waitForWindowIdle()
             onView(withId(LibraryR.id.btnSave)).perform(click())
             eventually { onView(withText(LibraryR.string.base_url_validation_error)).check(matches(isDisplayed())) }
             assertEquals(baseline, manager.snapshot())
@@ -225,13 +235,19 @@ class MainActivityTest {
 
     @Test fun addressFormSurvivesRecreationAndRemembersBusinessKey() {
         ActivityScenario.launch(BaseUrlManagerActivity::class.java).use { scenario ->
+            waitForWindowIdle()
             onView(withId(LibraryR.id.actionAdd)).perform(click())
             onView(withId(LibraryR.id.configKeySpinner)).perform(click())
             androidx.test.espresso.Espresso.onData(org.hamcrest.Matchers.equalTo("login"))
                 .inRoot(androidx.test.espresso.matcher.RootMatchers.isPlatformPopup()).perform(click())
             onView(withId(LibraryR.id.etUrl)).perform(replaceText("https://login-new.example.com"), closeSoftKeyboard())
             onView(withId(LibraryR.id.etRemark)).perform(replaceText("kept remark"), closeSoftKeyboard())
+            lateinit var previousFormWindow: android.view.View
+            onView(withId(LibraryR.id.etUrl)).inRoot(isDialog()).check { view, _ ->
+                previousFormWindow = view.rootView
+            }
             scenario.recreate()
+            assertTrue("重建应释放旧表单窗口", !previousFormWindow.isAttachedToWindow)
             onView(withId(LibraryR.id.etUrl)).inRoot(isDialog())
                 .check(matches(withText("https://login-new.example.com")))
                 .perform(closeSoftKeyboard())
@@ -399,6 +415,13 @@ class MainActivityTest {
             bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
         }
         bitmap.recycle()
+    }
+
+    private fun waitForWindowIdle() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        // 厂商启动转场仍可能截获触摸；主线程空闲不代表系统窗口已可交互。
+        instrumentation.waitForIdleSync()
+        instrumentation.uiAutomation.waitForIdle(500, 5000)
     }
 
     private fun addAddress(url: String) {

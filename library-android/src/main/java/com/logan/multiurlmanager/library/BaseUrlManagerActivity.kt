@@ -63,6 +63,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     private var bindingSpinner = false
     private var customRegex: Pattern? = null
     private var configurationError = false
+    private val dialogs = mutableSetOf<AlertDialog>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -188,6 +189,16 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         // 暂停回调到页面；异步结果仍保存在 ViewModel，由下一次 onStart 消费。
         editor.observer = null
         super.onStop()
+    }
+
+    override fun onDestroy() {
+        // 重建只释放旧窗口，表单状态由 ViewModel 保留；移除回调避免清空新页面的表单。
+        dialogs.forEach { dialog ->
+            dialog.setOnDismissListener(null)
+            dialog.dismiss()
+        }
+        dialogs.clear()
+        super.onDestroy()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -324,12 +335,12 @@ class BaseUrlManagerActivity : AppCompatActivity() {
                                 }
                             }
                         }
-                        .show()
+                        .create().showManaged()
                     2 -> (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
                         .setPrimaryClip(ClipData.newPlainText(value.configKey, value.url))
                 }
             }
-            .show()
+            .create().showManaged()
     }
 
     private fun businessKeys(): List<String> {
@@ -391,10 +402,6 @@ class BaseUrlManagerActivity : AppCompatActivity() {
             .setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(if (original == null) R.string.base_url_add else R.string.base_url_save, null)
             .create()
-        dialog.setOnDismissListener {
-            // 旋转触发的关闭保留表单；用户主动关闭后不应在重建时重新弹出。
-            if (!isChangingConfigurations) editor.form = null
-        }
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val edited = try {
@@ -431,7 +438,10 @@ class BaseUrlManagerActivity : AppCompatActivity() {
             }
         }
         dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-        dialog.show()
+        dialog.showManaged {
+            // 用户主动关闭后不应在重建时重新弹出；销毁页面时不会调用此回调。
+            editor.form = null
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -468,7 +478,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
                         })
                         renderUrls()
                     }
-                    .show()
+                    .create().showManaged()
             }
             true
         }
@@ -533,7 +543,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
                             editor.original = editor.draft?.let(StateCodec::encode)
                             render()
                         }
-                        .show()
+                        .create().showManaged()
                 } else if (result.reason == SaveResult.Reason.STORAGE) {
                     showStorageError()
                 } else {
@@ -559,7 +569,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
                     state.observer?.invoke()
                 }
             }
-            .show()
+            .create().showManaged()
     }
 
     private fun cancelEditing() {
@@ -573,14 +583,22 @@ class BaseUrlManagerActivity : AppCompatActivity() {
             .setMessage(R.string.base_url_discard_confirm)
             .setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(R.string.base_url_discard) { _, _ -> finish() }
-            .show()
+            .create().showManaged()
+    }
+
+    private fun AlertDialog.showManaged(onDismiss: () -> Unit = {}) {
+        dialogs.add(this)
+        setOnDismissListener {
+            if (dialogs.remove(this)) onDismiss()
+        }
+        show()
     }
 
     private fun showError(message: String) {
         AlertDialog.Builder(this)
             .setMessage(message)
             .setPositiveButton(android.R.string.ok, null)
-            .show()
+            .create().showManaged()
     }
 
     companion object {
