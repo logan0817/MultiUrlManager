@@ -67,7 +67,8 @@ def main():
                         report.write(f'{package}: {error}\n')
                     print(f'{name} cleanup: {error}', file=sys.stderr)
             try:
-                result = subprocess.run(['adb', 'logcat', '-d', '-t', '3000'], capture_output=True, text=True, timeout=30)
+                # 每套件开始已清空日志；保留可用缓冲区，避免系统噪音挤掉较早的失败现场。
+                result = subprocess.run(['adb', 'logcat', '-d'], capture_output=True, text=True, timeout=30)
                 (args.reports / f'{name}-logcat.txt').write_text(result.stdout + result.stderr)
             except (OSError, subprocess.TimeoutExpired) as error:
                 (args.reports / f'{name}-diagnostic-error.txt').write_text(str(error))

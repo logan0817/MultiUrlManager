@@ -10,6 +10,7 @@ import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
 import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
 import androidx.test.espresso.matcher.ViewMatchers.Visibility
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
@@ -156,12 +157,15 @@ class MainActivityTest {
                     var frames = 0
                     val callback = object : android.view.Choreographer.FrameCallback {
                         override fun doFrame(frameTimeNanos: Long) {
-                            val visibleCandidates = (0 until list.childCount).count { index ->
-                                val child = list.getChildAt(index)
+                            // 小屏和长 URL 换行会改变可见条数，只检查实际进入视口的候选。
+                            val candidates = (0 until list.childCount).map(list::getChildAt).filter { child ->
                                 child.findViewById<android.view.View>(LibraryR.id.tvUrl) != null &&
-                                    child.visibility == android.view.View.VISIBLE && child.alpha >= 0.99f && child.height > 0
+                                    child.height > 0 && child.bottom > list.paddingTop &&
+                                    child.top < list.height - list.paddingBottom
                             }
-                            if (visibleCandidates < 3) fadedFrames.incrementAndGet()
+                            if (!list.isShown || list.alpha < 0.99f || candidates.isEmpty() || candidates.any {
+                                    it.visibility != android.view.View.VISIBLE || it.alpha < 0.99f
+                                }) fadedFrames.incrementAndGet()
                             if (++frames < 30) android.view.Choreographer.getInstance().postFrameCallback(this)
                             else finished.countDown()
                         }
@@ -172,6 +176,11 @@ class MainActivityTest {
                 assertEquals("Environment switch faded or removed visible candidates", 0, fadedFrames.get())
                 instrumentation.waitForIdleSync()
                 val target = baseline.environments[position]
+                scenario.onActivity { activity ->
+                    val adapter = activity.findViewById<androidx.recyclerview.widget.RecyclerView>(LibraryR.id.recyclerView).adapter
+                        as com.logan.multiurlmanager.library.adapter.BaseUrlAdapter
+                    assertEquals(target.urls, adapter.listData.mapNotNull { it.baseUrl })
+                }
                 onView(withText(target.urls.first { it.configKey == "order" && it.select }.url))
                     .check(matches(isDisplayed()))
                 assertEquals(baseline, manager.snapshot())
@@ -223,9 +232,11 @@ class MainActivityTest {
             onView(withId(LibraryR.id.etUrl)).perform(replaceText("https://login-new.example.com"), closeSoftKeyboard())
             onView(withId(LibraryR.id.etRemark)).perform(replaceText("kept remark"), closeSoftKeyboard())
             scenario.recreate()
-            onView(withId(LibraryR.id.etUrl)).check(matches(withText("https://login-new.example.com")))
-            onView(withId(LibraryR.id.etRemark)).check(matches(withText("kept remark")))
-            onView(withId(android.R.id.button1)).perform(click())
+            onView(withId(LibraryR.id.etUrl)).inRoot(isDialog())
+                .check(matches(withText("https://login-new.example.com")))
+                .perform(closeSoftKeyboard())
+            onView(withId(LibraryR.id.etRemark)).inRoot(isDialog()).check(matches(withText("kept remark")))
+            onView(withId(android.R.id.button1)).inRoot(isDialog()).perform(click())
             onView(withText("https://order-backup.dev.example.com/")).perform(click())
             onView(withId(LibraryR.id.actionAdd)).perform(click())
             onView(withId(LibraryR.id.configKeySpinner)).check(matches(
@@ -252,7 +263,11 @@ class MainActivityTest {
                     InstrumentationRegistry.getInstrumentation().targetContext.getString(LibraryR.string.base_url_duplicate))))
             onView(withId(LibraryR.id.etUrl)).perform(replaceText("https://order-edited.example.com/"), closeSoftKeyboard())
             scenario.recreate()
-            onView(withId(android.R.id.button1)).perform(click())
+            // 重建后等待恢复的 Dialog，避免 Espresso 先选中底层无焦点 Activity。
+            onView(withId(LibraryR.id.etUrl)).inRoot(isDialog())
+                .check(matches(withText("https://order-edited.example.com/")))
+                .perform(closeSoftKeyboard())
+            onView(withId(android.R.id.button1)).inRoot(isDialog()).perform(click())
             scenario.onActivity { activity ->
                 val adapter = activity.findViewById<androidx.recyclerview.widget.RecyclerView>(LibraryR.id.recyclerView).adapter
                     as com.logan.multiurlmanager.library.adapter.BaseUrlAdapter
@@ -315,8 +330,10 @@ class MainActivityTest {
                 instrumentation.runOnMainSync {
                     androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO)
                 }
-                onView(withId(LibraryR.id.etUrl)).check(matches(withText("https://night.example.com/")))
-                onView(withId(android.R.id.button2)).perform(click())
+                onView(withId(LibraryR.id.etUrl)).inRoot(isDialog())
+                    .check(matches(withText("https://night.example.com/")))
+                    .perform(closeSoftKeyboard())
+                onView(withId(android.R.id.button2)).inRoot(isDialog()).perform(click())
             }
         } finally {
             instrumentation.runOnMainSync {
