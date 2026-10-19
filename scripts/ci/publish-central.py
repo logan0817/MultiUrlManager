@@ -50,6 +50,9 @@ def payload_files(maven, version):
 def verify_deployment_identity(status, deployment, version):
     expected = f'pkg:maven/io.github.logan0817/multiurlmanager@{version}'
     purls = status.get('purls')
+    # PUBLISHED 后组件元数据可能被清理；此时仍须在 main 中逐文件验证公开仓库。
+    if status.get('deploymentId') == deployment and status.get('deploymentState') == 'PUBLISHED' and purls == []:
+        return
     # Central 可同时报告基础坐标与 AAR 类型坐标；两者都必须属于同一受测版本。
     if (status.get('deploymentId') != deployment or not isinstance(purls, list) or not purls
             or any(not isinstance(purl, str) or purl not in (expected, expected + '?type=aar') for purl in purls)

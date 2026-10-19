@@ -10,7 +10,7 @@ Android 多业务 Base URL 管理库。在应用内维护开发、测试、生�
 - **兼容旧项目**：保留 1.0.x 的固定数组 JSON 与主要入口，旧地址迁移时保留；行为差异见下文。
 - **原生 Android 页面**：支持深浅色、中英文、主题定制和 Activity Result。
 
-当前为 **1.1.0 待正式发布候选**，已上传 Central 并通过 `VALIDATED` 验收，尚未公开发布。候选提交 `063c92c` 已通过 [完整 CI 与 API 24/36 云端验证](https://github.com/logan0817/MultiUrlManager/actions/runs/39211596505)，此前功能实现已通过 Android 16 真机验证。[发布记录](docs/ci-and-release.md#110-上传验收记录)说明受测文件、签名与部署身份；以下新 API 请先通过本地 Maven 候选接入。
+**1.1.0 已于 2026-10-19 正式发布到 Maven Central**。发布提交 `063c92c` 已通过 [完整 CI 与 API 24/36 云端验证](https://github.com/logan0817/MultiUrlManager/actions/runs/39211596505)，此前功能实现已通过 Android 16 真机验证。公开产物、签名与校验和均已核对，详情见[发布记录](docs/ci-and-release.md#110-上传验收记录)。可直接按下方说明从 Maven Central 接入。
 
 ## 页面预览
 
@@ -28,23 +28,13 @@ Android 多业务 Base URL 管理库。在应用内维护开发、测试、生�
 
 支持 Android **API 24+**，库使用 Java 17 字节码。本仓库使用 JDK 17、Gradle Wrapper 8.14.3、AGP 8.13.0、compileSdk/targetSdk 36。宿主还需提供 AndroidX Activity Result 所需的 Activity/Fragment 依赖；常规 AppCompat 工程可直接使用下面的入口。
 
-在本仓库根目录生成当前版本的本地 Maven 候选：
-
-```sh
-bash ./gradlew :library-android:publishReleasePublicationToCiRepository
-```
-
-在宿主 `settings.gradle.kts` 的仓库中加入生成目录，替换为本机真实绝对路径：
+在宿主 `settings.gradle.kts` 中配置仓库：
 
 ```kotlin
 dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven {
-            url = uri("/path/to/MultiUrlManager/build/ci/maven")
-            content { includeGroup("io.github.logan0817") }
-        }
     }
 }
 ```
@@ -59,7 +49,7 @@ dependencies {
 }
 ```
 
-上述 `1.1.0` 依赖当前需要本地 Maven 仓库；正式发布并确认公开可下载后，可移除本地仓库并从 Maven Central 获取。仓库提供解析真实 AAR/POM 的 [独立消费工程](fixtures/consumer)，本地构建与验证命令见 [开发说明](docs/development.md)。
+上述 `1.1.0` 已可从 [Maven Central 公开仓库](https://repo.maven.apache.org/maven2/io/github/logan0817/multiurlmanager/1.1.0/)获取，无需本地 Maven 仓库。仓库内的 [独立消费工程](fixtures/consumer)默认用于本轮本地 publication 验证；参与开发时的构建与验证命令见 [开发说明](docs/development.md)。
 
 ## 快速接入
 

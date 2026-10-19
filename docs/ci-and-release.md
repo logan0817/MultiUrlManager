@@ -1,6 +1,6 @@
 # CI 与发布
 
-工作流源文件：[ci.yml](../.github/workflows/ci.yml)、[release.yml](../.github/workflows/release.yml)。普通 CI 已在云端执行，具体提交是否通过以 [GitHub Actions 的对应运行](https://github.com/logan0817/MultiUrlManager/actions/workflows/ci.yml) 为准。1.1.0 已在本机上传到 Central 并通过 `VALIDATED` 验收，见[本次记录](#110-上传验收记录)。GitHub 发布工作流尚未执行真实上传或正式发布，云端 release environment 与 secrets 仍待配置和验收。
+工作流源文件：[ci.yml](../.github/workflows/ci.yml)、[release.yml](../.github/workflows/release.yml)。普通 CI 已在云端执行，具体提交是否通过以 [GitHub Actions 的对应运行](https://github.com/logan0817/MultiUrlManager/actions/workflows/ci.yml) 为准。1.1.0 已在本机上传并正式发布到 Central，公开文件与签名核对通过，见[本次记录](#110-上传验收记录)。GitHub 发布工作流尚未执行真实上传或正式发布，云端 release environment 与 secrets 仍待配置和验收。
 
 ## 普通验证
 
@@ -46,7 +46,7 @@ quality 在 publication 完成后、独立消费前运行 `python3 scripts/ci/ch
 
 发布 workflow 仅允许从 main 发起。无凭据的 source job 验证 tag、版本、祖先关系与 CI 来源；经环境审批后 publish job 下载所选 CI 的同一候选，重新核验 manifest，使用临时 GPG 目录签名，并通过 [Central Portal API](https://central.sonatype.org/publish/publish-portal-api/) 上传固定文件，不重新编译。
 
-`upload` 采用 USER_MANAGED，批次名为 `io.github.logan0817-MultiUrlManager-<version>`，实际坐标仍为 `io.github.logan0817:multiurlmanager:<version>`。取得 deployment ID 后轮询状态，在 VALIDATED 核对 ID、坐标和部署文件与受测候选一致，然后结束。Central 可同时返回同一坐标的基础 purl 与 `?type=aar` purl，校验接受二者及其组合，仍拒绝空值、重复、其他类型、业务库或版本。审核完成后，再以 `action=publish`、同一 tag 和该 deployment ID 调度工作流；重新核验候选与部署内容后才调用正式发布 API。PUBLISHED 后逐个下载公开 AAR/POM/JAR/module 对比 SHA-256。[Central 官方 API](https://central.sonatype.org/publish/publish-portal-api/) 明确区分上传、VALIDATED 和正式发布。
+`upload` 采用 USER_MANAGED，批次名为 `io.github.logan0817-MultiUrlManager-<version>`，实际坐标仍为 `io.github.logan0817:multiurlmanager:<version>`。取得 deployment ID 后轮询状态，在 VALIDATED 核对 ID、坐标和部署文件与受测候选一致，然后结束。Central 可同时返回同一坐标的基础 purl 与 `?type=aar` purl，校验接受二者及其组合，仍拒绝重复、其他类型、业务库或版本；VALIDATED 的坐标为空也会失败。审核完成后，再以 `action=publish`、同一 tag 和该 deployment ID 调度工作流；重新核验候选与部署内容后才调用正式发布 API。PUBLISHED 响应可能不再提供组件 purl，此时仍要求原 deployment ID 一致，并逐个下载公开 AAR/POM/JAR/module 与受测候选对比 SHA-256；文件不可用或内容不一致均失败，不能只依据状态成功。[Central 官方 API](https://central.sonatype.org/publish/publish-portal-api/) 明确区分上传、VALIDATED 和正式发布。
 
 普通 CI 不含生产凭据，候选签名前后内容不改动。临时签名材料随临时目录删除；`release-status` artifact 只保留公开签名包、完整指纹、deployment ID、公开状态与验证结果，不包含私钥或口令。
 
@@ -82,7 +82,7 @@ bash ./gradlew prepareCentralBundle \
   --no-configuration-cache
 ```
 
-该任务只生成 `build/central/multiurlmanager-<version>.zip`，逐文件核对 GPG 签名及完整指纹，并为文件和签名生成 MD5/SHA-1/SHA-256/SHA-512。可用 `SIGNING_FINGERPRINT` 环境变量代替 `signing.gnupg.keyName`；GPG 程序可用 `GPG_EXECUTABLE` 指定。它不重新构建、不读取 Central token、不联网上传，也不会将本地 manifest 当作成功云端 CI 的证明；不能绕过正式发布的 main CI 来源检查。当前候选版本为 `1.1.0`，已在本次独立上传操作中达到 VALIDATED，尚未正式发布；若以后改为 SNAPSHOT，任务会在签名前拒绝执行。已存在的 ZIP 不自动覆盖，须先核对旧包。
+该任务只生成 `build/central/multiurlmanager-<version>.zip`，逐文件核对 GPG 签名及完整指纹，并为文件和签名生成 MD5/SHA-1/SHA-256/SHA-512。可用 `SIGNING_FINGERPRINT` 环境变量代替 `signing.gnupg.keyName`；GPG 程序可用 `GPG_EXECUTABLE` 指定。它不重新构建、不读取 Central token、不联网上传，也不会将本地 manifest 当作成功云端 CI 的证明；不能绕过正式发布的 main CI 来源检查。1.1.0 已通过独立上传和正式发布操作完成发行；若以后改为 SNAPSHOT，任务会在签名前拒绝执行。已存在的 ZIP 不自动覆盖，须先核对旧包。
 
 本机入口使用 GPG agent，不读取传统 `signing.keyId`、`signing.password`、`signing.secretKeyRingFile`，也不把 `signing.gnupg.passphrase` 当作口令来源。云端口令仅经 stdin 传入隔离签名进程，不写入命令行或日志。[Gradle 签名文档](https://docs.gradle.org/8.14.3/userguide/signing_plugin.html) 说明了标准 GPG 配置与 agent 的关系。
 
@@ -98,7 +98,13 @@ bash ./gradlew prepareCentralBundle \
 
 上传仅执行一次，后续验证使用原 deployment ID 恢复查询；下载核验遇到一次 TLS EOF，查询重试后完成。实测发现并修复了 Central 返回基础与 AAR 两条 purl 时的过严断言，32 项本地脚本回归通过；后续脚本修复的云端结果以其对应提交的 CI 为准。原 tag 与受测 Maven 文件保持不变。
 
-当前未执行正式 publish；公开 Maven Central 解析与宿主消费仍须在获授权发布后验证。云端 `release.yml` 的环境保护、secrets 和签名上传链路仍未实测；本机上传结果不代表这些云端配置已完成。
+2026-10-19，发布脚本修复提交 `ac8cb24` 通过 [CI run 39217165952 / attempt 1](https://github.com/logan0817/MultiUrlManager/actions/runs/39217165952) 的 quality、API 24/36 和 required 后，获授权对原 deployment 执行一次正式 publish，最终返回 PUBLISHED。从 [Maven Central 公开目录](https://repo.maven.apache.org/maven2/io/github/logan0817/multiurlmanager/1.1.0/) 下载的 50 个文件与原签名包逐字节一致，5 份公开签名验签通过。
+
+本次 PUBLISHED 响应的 purls 为空，errors 中包含 `Deployment components info not found`；公开文件实际可下载且全部一致。因此发布后恢复路径允许已发布状态缺少组件列表，仍强制核对原 deployment ID 与全部公开 Maven 产物；新增接受元数据缺失、拒绝公开文件篡改两项回归，本地脚本共 34 项通过。此状态差异不用于放宽 VALIDATED 阶段或跳过公开下载验证。
+
+公开依赖消费验证另建独立宿主，移除本地 Maven 仓库，并将 `io.github.logan0817` 限定从 `https://repo.maven.apache.org/maven2/` 解析。实际解析坐标为 `io.github.logan0817:multiurlmanager:1.1.0`，AAR SHA-256 为 `d4237ddba47f663b2c73f80f3a18e380fdea0b62d87ab5eda10813ca39a6e897`，与公开文件及受测候选一致。Debug、R8 minified、minified 仪器 APK 和中英文共 10 份 README 示例编译通过（107 个任务，1 分 11 秒）。连接原 Android 16 真机（API 36）后，安装上述公开依赖构建的 minified 应用及仪器 APK，持久化重读和管理页启动完整 1 项通过（2.273 秒），并通过严格终态解析。测试后已停止专用消费包并返回首页；此前完整页面与迁移结果见 [开发验证记录](development.md)。
+
+云端 `release.yml` 的环境保护、secrets 和签名上传链路仍未实测；本机发布结果不代表这些云端配置已完成。
 
 ## 中断与恢复
 
@@ -106,7 +112,7 @@ bash ./gradlew prepareCentralBundle \
 
 Central 校验失败时保留 status.json 调查；PUBLISHED 但公开下载暂不可用时只能补查询/核验，不能覆盖已发布版本。已发布内容不可修改，修正使用新版本号。恢复流程会核验部署中的文件与所选 CI 候选相同，并下载 `.asc` 逐文件验证签名身份后才继续发布；恢复 upload/publish 仍需要 `SIGNING_KEY_BASE64` 和 `SIGNING_FINGERPRINT`。
 
-流程不创建 tag、GitHub Release、公开演示 APK 或修改分支规则。演示 APK 签名和外部发布范围应单独明确。首次正式发布后仍需用干净宿主仅依赖 Maven Central 解析正式坐标，保存依赖传递与设备消费证据；公开文件摘要一致不代替完整宿主集成。
+流程不创建 tag、GitHub Release、公开演示 APK 或修改分支规则。演示 APK 签名和外部发布范围应单独明确。首次正式发布后应使用独立宿主仅依赖 Maven Central 解析正式坐标，保存依赖传递与设备消费证据；1.1.0 的公开解析与构建结果见上文，公开文件摘要一致不代替完整宿主集成。
 
 ## 云端验收清单
 

@@ -10,7 +10,7 @@ An Android library for managing base URLs across services and environments. Main
 - **Legacy integration**: 1.0.x fixed-array JSON and major entry points remain available, and migration preserves saved addresses. Behavior changes are explained below.
 - **Native Android screen**: light/dark modes, English/Chinese resources, theme customization and Activity Result support.
 
-The **1.1.0 release candidate has been uploaded to Central and reached `VALIDATED`; it has not been publicly published**. Candidate commit `063c92c` passed [the complete CI run and API 24/36 cloud matrix](https://github.com/logan0817/MultiUrlManager/actions/runs/39211596505); the preceding implementation passed Android 16 physical-device checks. See the [upload verification record](docs/ci-and-release.md#110-上传验收记录) for the tested files, signing identity and deployment. Evaluate the APIs below through the local Maven repository.
+**1.1.0 was published to Maven Central on 2026-10-19**. Release commit `063c92c` passed [the complete CI run and API 24/36 cloud matrix](https://github.com/logan0817/MultiUrlManager/actions/runs/39211596505); the preceding implementation passed Android 16 physical-device checks. Public artifacts, signatures and checksums have been verified; see the [release record](docs/ci-and-release.md#110-上传验收记录). Follow the instructions below to install directly from Maven Central.
 
 ## Screenshots
 
@@ -28,23 +28,13 @@ Use **Add** in the toolbar to open the address form and **Save** at the bottom t
 
 Requires Android **API 24+**. The library uses Java 17 bytecode. This repository uses JDK 17, Gradle Wrapper 8.14.3, AGP 8.13.0 and compileSdk/targetSdk 36. The host also needs AndroidX Activity/Fragment dependencies for Activity Result; a standard AppCompat project can use the example below.
 
-Generate the current local Maven candidate from the repository root:
-
-```sh
-bash ./gradlew :library-android:publishReleasePublicationToCiRepository
-```
-
-Add the generated directory to the host's `settings.gradle.kts`, replacing the path with its actual absolute location:
+Configure repositories in the host's `settings.gradle.kts`:
 
 ```kotlin
 dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven {
-            url = uri("/path/to/MultiUrlManager/build/ci/maven")
-            content { includeGroup("io.github.logan0817") }
-        }
     }
 }
 ```
@@ -59,7 +49,7 @@ dependencies {
 }
 ```
 
-The `1.1.0` dependency above currently requires the local Maven repository. After publication and verification of public downloads, remove the local repository to resolve it from Maven Central. A standalone [consumer fixture](fixtures/consumer) resolves the actual AAR/POM; see [development instructions](docs/development.md) for build and validation commands.
+Version `1.1.0` is available from the [public Maven Central repository](https://repo.maven.apache.org/maven2/io/github/logan0817/multiurlmanager/1.1.0/); no local Maven repository is needed. The repository's standalone [consumer fixture](fixtures/consumer) defaults to verifying the current local publication. See [development instructions](docs/development.md) for contributor build and validation commands.
 
 ## Quick start
 

@@ -35,6 +35,7 @@ class CentralStagesTest(unittest.TestCase):
         self.state = 'VALIDATED'
         self.signature_error = None
         self.purls = ['pkg:maven/io.github.logan0817/multiurlmanager@1.1.0']
+        self.public_content_error = False
 
     def remote(self, path, *args, **kwargs):
         self.calls.append(path)
@@ -55,7 +56,8 @@ class CentralStagesTest(unittest.TestCase):
                 patch.object(central, 'verify_deployment_signatures', side_effect=self.signature_error), \
                 patch.object(central.time, 'sleep'), \
                 patch.object(central.urllib.request, 'urlopen', side_effect=lambda url, **kw:
-                             io.BytesIO((self.target / url.rsplit('/', 1)[-1]).read_bytes())):
+                             io.BytesIO(b'tampered' if self.public_content_error else
+                                        (self.target / url.rsplit('/', 1)[-1]).read_bytes())):
             central.main()
 
     def test_upload_stops_at_validated_without_publishing(self):
@@ -94,6 +96,8 @@ class CentralStagesTest(unittest.TestCase):
                    [base, base + '?type=jar'], [base, base + '?type=aar&classifier=sources'])
         for state in ('VALIDATED', 'PUBLISHED'):
             for purls in invalid:
+                if state == 'PUBLISHED' and purls == []:
+                    continue
                 with self.subTest(state=state, purls=purls):
                     self.state = state
                     self.purls = purls
@@ -101,6 +105,22 @@ class CentralStagesTest(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, 'ID 或坐标'):
                         self.run_stage('publish')
                     self.assertEqual(len(self.calls), 1)
+
+    def test_published_without_component_metadata_requires_public_files(self):
+        self.state = 'PUBLISHED'
+        self.purls = []
+        self.run_stage('publish')
+        self.assertEqual(len(self.calls), 1)
+        self.assertTrue(Path('build/ci/release/public-verification.txt').is_file())
+
+    def test_published_without_metadata_rejects_public_content_mismatch(self):
+        self.state = 'PUBLISHED'
+        self.purls = []
+        self.public_content_error = True
+        with self.assertRaisesRegex(RuntimeError, '公开产物摘要不匹配'):
+            self.run_stage('publish')
+        self.assertEqual(len(self.calls), 1)
+        self.assertFalse(Path('build/ci/release/public-verification.txt').exists())
 
     def test_publish_verifies_then_publishes_once_without_upload(self):
         self.run_stage('publish')
@@ -117,9 +137,13 @@ class CentralStagesTest(unittest.TestCase):
     def test_wrong_deployment_id_rejected_even_if_already_published(self):
         self.state = 'PUBLISHED'
         self.environment['DEPLOYMENT_ID'] = '11111111-1111-1111-1111-111111111111'
-        with self.assertRaisesRegex(ValueError, 'ID 或坐标'):
-            self.run_stage('publish')
-        self.assertEqual(len(self.calls), 1)
+        for purls in (self.purls, []):
+            with self.subTest(purls=purls):
+                self.purls = purls
+                self.calls.clear()
+                with self.assertRaisesRegex(ValueError, 'ID 或坐标'):
+                    self.run_stage('publish')
+                self.assertEqual(len(self.calls), 1)
 
     def test_rejects_pom_with_wrong_coordinates_and_extra_payload(self):
         maven = Path('build/ci/candidate/maven')
