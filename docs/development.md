@@ -86,7 +86,7 @@ API 36 独立 R8 消费测试起初在 `ConsumerActivity` 启动时等待 45 秒
 
 参考同账户 KToast、FlowBus 后，新增离线 `verifyCentralDeploymentName` 与 `prepareCentralBundle`，本机签名复用标准 `signing.gnupg.*` 属性与 GPG agent；上传仍只消费已通过 CI 的固定候选。Central 默认上传验收到 `VALIDATED`，正式发布必须另选 `publish` 并给出 deployment ID。实际 publication 模型与本地 Maven 任务通过；离线签名使用临时测试密钥验证，未使用生产私钥或 token。操作说明见 [CI 与发布](ci-and-release.md)。
 
-普通云端 CI 已通过：[eb0a5e4 对应运行](https://github.com/logan0817/MultiUrlManager/actions/runs/39200952925) 的 quality、API 24/36 设备矩阵和 required 均成功。该阶段尚未验收冷热缓存/fork/取消/merge_group 专项演练、发布环境保护及真实 Central 上传发布；后续 1.1.0 已在本机完成正式发布和公开文件核验，见 [发布记录](ci-and-release.md#110-上传验收记录)。云端发布环境保护与凭据链路仍未实测，普通 CI 成功不代表云端发布配置已完成。
+普通云端 CI 已通过：[eb0a5e4 对应运行](https://github.com/logan0817/MultiUrlManager/actions/runs/39200952925) 的 quality、API 24/36 设备矩阵和 required 均成功。该阶段尚未验收冷热缓存/fork/取消/merge_group 专项演练、发布环境保护及真实 Central 上传发布；后续 1.1.0 已在本机完成正式发布和公开文件核验，见 [发布记录](ci-and-release.md#110-上传验收记录)。当前已明确采用本机发布，可选云端发布环境保护与凭据链路尚未启用，不作为本机发版的前置条件。
 
 2026-10-19 正式发布后，另建仅从公开 Maven Central 解析本库的独立宿主，实际 AAR 摘要与原受测候选一致；Debug、R8 minified、仪器 APK 和中英文 10 份 README 示例编译通过。连接原 Android 16 真机（API 36）后，公开依赖 minified 消费测试完整 1 项通过（2.273 秒），覆盖持久化重读和管理页启动；严格仪器终态校验通过，测试后停止专用消费包并返回首页。发布恢复脚本共 34 项测试、13 份文档检查通过；公开文件与部署身份见 [发布记录](ci-and-release.md#110-上传验收记录)。
 
