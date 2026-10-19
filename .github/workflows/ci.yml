@@ -64,7 +64,8 @@ jobs:
         env:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          export RELEASE_VERSION="$(sed -n 's/^APP_VERSION_NAME=//p' gradle.properties)"
+          RELEASE_VERSION="$(sed -n 's/^APP_VERSION_NAME=//p' gradle.properties)"
+          export RELEASE_VERSION
           python3 scripts/ci/artifacts.py create --candidate build/ci/candidate --sha "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" --aapt "$ANDROID_HOME/build-tools/36.0.0/aapt"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
