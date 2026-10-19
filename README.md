@@ -10,7 +10,7 @@ Android 多业务 Base URL 管理库。在应用内维护开发、测试、生�
 - **兼容旧项目**：保留 1.0.x 的固定数组 JSON 与主要入口，旧地址迁移时保留；行为差异见下文。
 - **原生 Android 页面**：支持深浅色、中英文、主题定制和 Activity Result。
 
-当前工作区为 **1.1.0-SNAPSHOT 开发版**，尚未完成正式发布与云端验收。以下新 API 请通过本地 Maven 候选接入，不要假设 Maven Central 已存在该开发版本。
+当前工作区为 **1.1.0 待发布候选**，尚未上传或正式发布到 Maven Central。此前功能提交已通过 Android 16 真机与 API 24/36 云端验证；本候选的结果以 [对应提交的 CI](https://github.com/logan0817/MultiUrlManager/actions/workflows/ci.yml) 为准。以下新 API 请先通过本地 Maven 候选接入。
 
 ## 页面预览
 
@@ -53,13 +53,13 @@ dependencyResolutionManagement {
 
 ```kotlin
 dependencies {
-    implementation("io.github.logan0817:multiurlmanager:1.1.0-SNAPSHOT")
+    implementation("io.github.logan0817:multiurlmanager:1.1.0")
     // 下方示例 Activity 使用 AppCompat，宿主直接声明该依赖。
     implementation("androidx.appcompat:appcompat:1.7.1")
 }
 ```
 
-正式发布后，将版本改为实际发布的版本并从 Maven Central 获取。仓库提供解析真实 AAR/POM 的 [独立消费工程](fixtures/consumer)，本地构建与验证命令见 [开发说明](docs/development.md)。
+上述 `1.1.0` 依赖当前需要本地 Maven 仓库；正式发布并确认公开可下载后，可移除本地仓库并从 Maven Central 获取。仓库提供解析真实 AAR/POM 的 [独立消费工程](fixtures/consumer)，本地构建与验证命令见 [开发说明](docs/development.md)。
 
 ## 快速接入
 

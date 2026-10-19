@@ -10,7 +10,7 @@ An Android library for managing base URLs across services and environments. Main
 - **Legacy integration**: 1.0.x fixed-array JSON and major entry points remain available, and migration preserves saved addresses. Behavior changes are explained below.
 - **Native Android screen**: light/dark modes, English/Chinese resources, theme customization and Activity Result support.
 
-This checkout is **1.1.0-SNAPSHOT under development**. Formal publication and cloud acceptance are not complete. Evaluate the APIs below through the local Maven candidate; do not assume this development version is available on Maven Central.
+This checkout is the **1.1.0 release candidate, not yet uploaded or published to Maven Central**. The preceding implementation passed Android 16 physical-device checks and the API 24/36 cloud matrix; see [CI for the corresponding commit](https://github.com/logan0817/MultiUrlManager/actions/workflows/ci.yml) for this candidate. Evaluate the APIs below through the local Maven repository.
 
 ## Screenshots
 
@@ -53,13 +53,13 @@ Add the dependency to the host app module's `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("io.github.logan0817:multiurlmanager:1.1.0-SNAPSHOT")
+    implementation("io.github.logan0817:multiurlmanager:1.1.0")
     // The entry Activity below directly uses AppCompat.
     implementation("androidx.appcompat:appcompat:1.7.1")
 }
 ```
 
-After a formal release, use the actual published version from Maven Central. A standalone [consumer fixture](fixtures/consumer) resolves the actual AAR/POM; see [development instructions](docs/development.md) for build and validation commands.
+The `1.1.0` dependency above currently requires the local Maven repository. After publication and verification of public downloads, remove the local repository to resolve it from Maven Central. A standalone [consumer fixture](fixtures/consumer) resolves the actual AAR/POM; see [development instructions](docs/development.md) for build and validation commands.
 
 ## Quick start
 

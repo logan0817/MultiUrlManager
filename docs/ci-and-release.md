@@ -82,7 +82,7 @@ bash ./gradlew prepareCentralBundle \
   --no-configuration-cache
 ```
 
-该任务只生成 `build/central/multiurlmanager-<version>.zip`，逐文件核对 GPG 签名及完整指纹，并为文件和签名生成 MD5/SHA-1/SHA-256/SHA-512。可用 `SIGNING_FINGERPRINT` 环境变量代替 `signing.gnupg.keyName`；GPG 程序可用 `GPG_EXECUTABLE` 指定。它不重新构建、不读取 Central token、不联网上传，也不会将本地 manifest 当作成功云端 CI 的证明；不能绕过正式发布的 main CI 来源检查。当前开发版本是 SNAPSHOT，会在签名前拒绝该任务。已存在的 ZIP 不自动覆盖，须先核对旧包。
+该任务只生成 `build/central/multiurlmanager-<version>.zip`，逐文件核对 GPG 签名及完整指纹，并为文件和签名生成 MD5/SHA-1/SHA-256/SHA-512。可用 `SIGNING_FINGERPRINT` 环境变量代替 `signing.gnupg.keyName`；GPG 程序可用 `GPG_EXECUTABLE` 指定。它不重新构建、不读取 Central token、不联网上传，也不会将本地 manifest 当作成功云端 CI 的证明；不能绕过正式发布的 main CI 来源检查。当前候选版本为 `1.1.0`，尚未上传或正式发布；若以后改为 SNAPSHOT，任务会在签名前拒绝执行。已存在的 ZIP 不自动覆盖，须先核对旧包。
 
 本机入口使用 GPG agent，不读取传统 `signing.keyId`、`signing.password`、`signing.secretKeyRingFile`，也不把 `signing.gnupg.passphrase` 当作口令来源。云端口令仅经 stdin 传入隔离签名进程，不写入命令行或日志。[Gradle 签名文档](https://docs.gradle.org/8.14.3/userguide/signing_plugin.html) 说明了标准 GPG 配置与 agent 的关系。
 

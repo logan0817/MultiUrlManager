@@ -44,6 +44,10 @@ JVM 测试关注 URL、单选、环境和失败结果，并直接用真实配置
 
 ## 发布前本地审核记录
 
+2026-10-19 正式版本候选准备：`APP_VERSION_NAME` 从 SNAPSHOT 改为 `1.1.0`，Demo versionCode 为 `7`，旧 `1.0.6` 为 `6`。本轮未修改持久化、默认配置或页面行为；本地 JVM 23 项、Debug/Release 与测试 APK 构建、publication/批次名、真实 AAR/R8 消费及中英文 README 示例编译、1.0.6 公开 ABI 和文档检查通过。直接解包核对两变体 JSON 与源码逐字节一致：Debug 默认 dev、包含三环境；Release 默认 production、只包含生产。AAR、POM、module、sources、javadoc 均存在，坐标一致。正式候选须在对应 main 提交的完整 CI 通过后，才能用于后续 tag 和上传；版本号改为正式格式不表示已经发布。
+
+此前功能提交 [8be5e45 的完整 CI 第 2 次运行](https://github.com/logan0817/MultiUrlManager/actions/runs/39208002616/attempts/2) 的 quality、API 24/36 和 required 全部成功。第 1 次 API 24 失败发生在首次交互前后，预装 Messages 在此之前崩溃；窗口无焦点和截图压暗高度支持系统崩溃弹窗遮挡，未取得当时窗口焦点转储，故不当作直接观察确认。保留失败记录后，代码和断言不变地完整重跑一次通过。
+
 2026-10-19 提交前审查后的最终本地结果：JVM **23 项**、Python **29 项**、API 24 页面 **14 项**、存储迁移 **16 项**、R8 消费 **1 项**通过。真实 1.0.6 AAR 的 Debug/Release 覆盖升级各 **9 个阶段**通过，包含迁移后编辑及新进程重读；该流程通过与 CI 相同的候选 manifest 和设备驱动执行，日志为 `build/verification/release-review/precommit-device-api24.log`。Debug/Release 打包 JSON 与源码逐字节相同，相关 Lint、ABI、publication、原生 actionlint、文档及最终差异检查通过。该阶段设备仅有 API 24 模拟器；后续云端与 Android 16 真机结果见下文。下表保留 10 月 16 日既有验证范围，不能替代最新候选的结果。
 
 2026-10-19 Android 16 原真机补验使用以下可追溯输入：首轮 Demo、存储与 R8 消费包从 `eb0a5e4` 同源构建并复用本机原测试证书，避免云端 Debug 证书不同而卸载用户 Demo；Debug/Release 升级夹具直接使用 [CI run 39200952925](https://github.com/logan0817/MultiUrlManager/actions/runs/39200952925) 的原始候选，归档 SHA-256 与内部 48 项文件摘要核验通过。真实旧库的 Debug/Release 各 9 个阶段通过，包含旧固定 JSON 默认、用户自定义记录和旧代码 provider 三类场景的旧库写入、覆盖安装新版、再启动重读。Release 为真实 release 变体、测试证书签名，不能替代线上宿主和生产分发渠道验收。存储 16 项通过；其持久化实现未在后续页面修正中变化。
