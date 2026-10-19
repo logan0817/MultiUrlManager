@@ -44,6 +44,8 @@ JVM 测试关注 URL、单选、环境和失败结果，并直接用真实配置
 
 ## 发布前本地审核记录
 
+2026-10-19，发布收尾文档提交 `097df12` 的 [CI run 39232161996 / attempt 1](https://github.com/logan0817/MultiUrlManager/actions/runs/39232161996/attempts/1) 在 API 36 页面用例 `deletingRequiredSelectionSurvivesRotationAndBlocksSave` 的删除确认点击处失败。日志显示删除菜单点击已执行，随后 Espresso 选中 `has-window-focus=false`、类型为 `BASE_APPLICATION` 的 Activity 根窗口，约 10 秒后抛出 `RootViewWithoutFocusException`；重建和保存断言尚未执行。同轮 quality、API 24，以及 API 36 的存储 16 项、R8 1 项、Debug/Release 升级各 9 阶段均通过。修正仅将该用例的菜单与确认按钮限定在 Dialog 根窗口，保留真实点击、重建、必选校验及未落盘断言；不修改库实现或放宽测试。修正后的结果以对应提交 CI 为准，不将失败轮次计为通过。
+
 2026-10-19 正式版本候选准备：`APP_VERSION_NAME` 从 SNAPSHOT 改为 `1.1.0`，Demo versionCode 为 `7`，旧 `1.0.6` 为 `6`。本轮未修改持久化、默认配置或页面行为；本地 JVM 23 项、Debug/Release 与测试 APK 构建、publication/批次名、真实 AAR/R8 消费及中英文 README 示例编译、1.0.6 公开 ABI 和文档检查通过。直接解包核对两变体 JSON 与源码逐字节一致：Debug 默认 dev、包含三环境；Release 默认 production、只包含生产。AAR、POM、module、sources、javadoc 均存在，坐标一致。正式候选须在对应 main 提交的完整 CI 通过后，才能用于后续 tag 和上传；版本号改为正式格式不表示已经发布。
 
 此前功能提交 [8be5e45 的完整 CI 第 2 次运行](https://github.com/logan0817/MultiUrlManager/actions/runs/39208002616/attempts/2) 的 quality、API 24/36 和 required 全部成功。第 1 次 API 24 失败发生在首次交互前后，预装 Messages 在此之前崩溃；窗口无焦点和截图压暗高度支持系统崩溃弹窗遮挡，未取得当时窗口焦点转储，故不当作直接观察确认。保留失败记录后，代码和断言不变地完整重跑一次通过。

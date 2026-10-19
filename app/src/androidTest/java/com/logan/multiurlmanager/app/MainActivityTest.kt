@@ -201,8 +201,9 @@ class MainActivityTest {
         val baseline = manager.snapshot()
         ActivityScenario.launch(BaseUrlManagerActivity::class.java).use { scenario ->
             onView(withText("https://order.dev.example.com/")).perform(longClick())
-            onView(withText(LibraryR.string.base_url_delete)).perform(click())
-            onView(withText(android.R.string.ok)).perform(click())
+            onView(withText(LibraryR.string.base_url_delete)).inRoot(isDialog()).perform(click())
+            // 操作菜单关闭与确认弹窗出现之间，默认根匹配可能锁定失去焦点的 Activity。
+            onView(withId(android.R.id.button1)).inRoot(isDialog()).perform(click())
             scenario.recreate()
             waitForWindowIdle()
             onView(withId(LibraryR.id.btnSave)).perform(click())
