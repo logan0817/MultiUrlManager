@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#0086aa</color>
-    <color name="colorPrimaryDark">#0076aa</color>
-    <color name="colorAccent">#0086aa</color>
-
-    <color name="tip_text_color">#505050</color>
+    <color name="colorPrimary">#2563EB</color>
+    <color name="colorPrimaryDark">#1D4ED8</color>
+    <color name="colorAccent">#2563EB</color>
+    <color name="app_page">#F3F6FC</color>
+    <color name="app_surface">#FFFFFF</color>
+    <color name="app_text">#17243D</color>
+    <color name="app_secondary">#596981</color>
+    <color name="app_border">#E1E7F0</color>
+    <color name="app_accent_soft">#EAF0FF</color>
+    <color name="app_on_accent">#FFFFFF</color>
 </resources>

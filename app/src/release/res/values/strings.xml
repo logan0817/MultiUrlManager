@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_demo_title">Production configuration demo</string>
+    <string name="home_demo_steps">A fresh Release install reads production defaults from the packaged JSON: order.example.com for orders and login.example.com for sign-in.\n\nSelect order-backup.example.com and save to switch orders alone. Sign-in stays unchanged.\n\nOnly production defaults are bundled. Existing saved environments and selections remain in effect on upgrade; a Release build does not overwrite them. These example.com addresses do not send requests.</string>
+</resources>

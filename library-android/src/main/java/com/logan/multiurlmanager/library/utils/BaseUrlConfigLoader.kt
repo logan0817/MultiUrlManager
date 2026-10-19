@@ -1,62 +1,73 @@
 package com.logan.multiurlmanager.library.utils
 
 import android.content.Context
-import com.google.gson.Gson
-import com.google.gson.JsonObject
-import com.google.gson.reflect.TypeToken
-import com.logan.multiurlmanager.library.BuildConfig
+import com.google.gson.JsonParser
+import com.logan.multiurlmanager.library.UrlEnvironment
 import com.logan.multiurlmanager.library.bean.BaseUrl
-import java.io.InputStreamReader
+import com.logan.multiurlmanager.library.internal.StateCodec
+import com.logan.multiurlmanager.library.internal.UrlRules
 
-
-/**
- * Responsible for loading the default BaseUrl list from Assets or other configuration sources.
- * 负责从 Assets 或其他配置源加载默认 BaseUrl 列表。
- *
- * @author logan
- * @date 2025/12/02
- */
+/** 读取最终合入宿主 APK 的固定文件，不根据库的构建类型猜测环境。 */
 object BaseUrlConfigLoader {
-
-    private const val ASSET_FILE_NAME = "base_urls_config.json"
-
     const val RELEASE_CONFIG_KEY = "release_defaults"
     const val DEBUG_CONFIG_KEY = "debug_defaults"
 
-    private val gson = Gson()
+    internal data class Configuration(
+        val environments: List<UrlEnvironment>,
+        val defaultEnvironment: String?
+    )
 
-    private val jsonObjectType = object : TypeToken<JsonObject>() {}.type
-    private val listType = object : TypeToken<List<BaseUrl>>() {}.type
-
-    /**
-     * Load the corresponding configuration list based on the passed JSON key name.
-     * @param context Context.
-     * @param configKeyName The key name of the configuration to load in the JSON file (e.g., "debug_defaults").
-     * @return A list of corresponding BaseUrls; return an empty list if the key does not exist or parsing fails.
-     *
-     * 根据传入的 JSON 键名加载对应的配置列表。
-     * @param context Context。
-     * @param configKeyName 要加载的配置在 JSON 文件中的键名（如 "debug_defaults"）。
-     * @return 对应的 BaseUrl 列表，如果键不存在或解析失败则返回空列表。
-     */
-    fun loadFromAssets(context: Context, configKeyName: String?): List<BaseUrl> {
-        try {
-            val defaultKeyName = if (BuildConfig.DEBUG) DEBUG_CONFIG_KEY else RELEASE_CONFIG_KEY
-            val keyName = configKeyName ?: defaultKeyName
-            context.assets.open(ASSET_FILE_NAME).use { inputStream ->
-                InputStreamReader(inputStream).use { reader ->
-                    val rootObject = gson.fromJson<JsonObject>(reader, jsonObjectType)
-
-                    if (rootObject.has(keyName)) {
-                        val jsonArray = rootObject.getAsJsonArray(keyName)
-                        return gson.fromJson<List<BaseUrl>>(jsonArray, listType)
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
+    internal fun loadConfiguration(context: Context): Configuration =
+        context.assets.open("base_urls_config.json").bufferedReader(Charsets.UTF_8).use {
+            parseConfiguration(it.readText())
         }
 
-        return emptyList()
+    internal fun parseConfiguration(text: String): Configuration {
+        val root = JsonParser.parseString(text).asJsonObject
+        val modern = root.has("schemaVersion")
+        val environments = if (modern) {
+            StateCodec.requireSupportedVersion(root)
+            root.getAsJsonArray("environments").map { raw ->
+                val env = raw.asJsonObject
+                UrlRules.validate(
+                    UrlEnvironment(
+                        env.get("id").asString,
+                        env.get("name").asString,
+                        env.getAsJsonArray("urls").map { StateCodec.parseUrl(it.asJsonObject) },
+                        env.getAsJsonArray("requiredKeys")?.map { it.asString }?.toSet() ?: emptySet()
+                    )
+                )
+            }
+        } else {
+            // 旧格式顶层键就是环境 id，不能把新版字段混进旧数组对象中。
+            root.entrySet().map { (key, value) ->
+                UrlRules.validate(
+                    UrlEnvironment(key, key, value.asJsonArray.map { StateCodec.parseUrl(it.asJsonObject) })
+                )
+            }
+        }
+        require(environments.isNotEmpty() && environments.map { it.id }.distinct().size == environments.size) {
+            "Invalid environments"
+        }
+        val defaultId = if (modern && root.has("defaultEnvironment")) {
+            val value = root.get("defaultEnvironment")
+            require(value.isJsonPrimitive && value.asJsonPrimitive.isString) { "defaultEnvironment must be a string" }
+            value.asString.also { id ->
+                require(environments.any { it.id == id }) { "Unknown default environment" }
+            }
+        } else {
+            null
+        }
+        return Configuration(environments, defaultId)
+    }
+
+    fun loadEnvironments(context: Context): List<UrlEnvironment> = loadConfiguration(context).environments
+
+    /** configKeyName 为旧显式入口；缺省时依次取 JSON 声明和 release_defaults。 */
+    fun loadFromAssets(context: Context, configKeyName: String?): List<BaseUrl> {
+        val config = loadConfiguration(context)
+        val id = configKeyName ?: config.defaultEnvironment ?: RELEASE_CONFIG_KEY
+        return config.environments.firstOrNull { it.id == id }?.urls
+            ?: throw IllegalArgumentException("Unknown configuration environment")
     }
 }

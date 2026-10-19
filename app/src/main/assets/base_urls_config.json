@@ -1,42 +1,90 @@
 {
-  "release_defaults": [
+  "schemaVersion": 1,
+  "defaultEnvironment": "dev",
+  "environments": [
     {
-      "configKey": "searchApiDomain",
-      "url": "https://www.google.com/",
-      "select": true,
-      "remark": "google Environment"
+      "id": "dev",
+      "name": "Development",
+      "requiredKeys": [
+        "order",
+        "login"
+      ],
+      "urls": [
+        {
+          "configKey": "order",
+          "url": "https://order.dev.example.com/",
+          "select": true,
+          "remark": "Development order service"
+        },
+        {
+          "configKey": "order",
+          "url": "https://order-backup.dev.example.com/",
+          "select": false,
+          "remark": "Development order backup"
+        },
+        {
+          "configKey": "login",
+          "url": "https://login.dev.example.com/",
+          "select": true,
+          "remark": "Development sign-in service"
+        }
+      ]
     },
     {
-      "configKey": "githubDomain",
-      "url": "https://github.com/",
-      "select": true,
-      "remark": "github Environment"
-    }
-  ],
-  "debug_defaults": [
-    {
-      "configKey": "searchApiDomain",
-      "url": "https://www.google.com/",
-      "select": true,
-      "remark": "google Environment"
+      "id": "test",
+      "name": "Testing",
+      "requiredKeys": [
+        "order",
+        "login"
+      ],
+      "urls": [
+        {
+          "configKey": "order",
+          "url": "https://order.test.example.com/",
+          "select": true,
+          "remark": "Testing order service"
+        },
+        {
+          "configKey": "order",
+          "url": "https://order-backup.test.example.com/",
+          "select": false,
+          "remark": "Testing order backup"
+        },
+        {
+          "configKey": "login",
+          "url": "https://login.test.example.com/",
+          "select": true,
+          "remark": "Testing sign-in service"
+        }
+      ]
     },
     {
-      "configKey": "searchApiDomain",
-      "url": "https://www.bing.com/",
-      "select": false,
-      "remark": "bing Environment"
-    },
-    {
-      "configKey": "gitDomain",
-      "url": "https://www.github.com/",
-      "select": true,
-      "remark": "github Environment"
-    },
-    {
-      "configKey": "gitDomain",
-      "url": "https://www.gitee.com/",
-      "select": false,
-      "remark": "gitee Environment"
+      "id": "production",
+      "name": "Production",
+      "requiredKeys": [
+        "order",
+        "login"
+      ],
+      "urls": [
+        {
+          "configKey": "order",
+          "url": "https://order.example.com/",
+          "select": true,
+          "remark": "Production order service"
+        },
+        {
+          "configKey": "order",
+          "url": "https://order-backup.example.com/",
+          "select": false,
+          "remark": "Production order backup"
+        },
+        {
+          "configKey": "login",
+          "url": "https://login.example.com/",
+          "select": true,
+          "remark": "Production sign-in service"
+        }
+      ]
     }
   ]
 }

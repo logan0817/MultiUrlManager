@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/base_url_business_key"
+            android:labelFor="@id/configKeySpinner"
+            android:textColor="?attr/base_url_item_url_remark_text_color"
+            android:textSize="12sp" />
+        <Spinner
+            android:id="@+id/configKeySpinner"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="6dp"
+            android:contentDescription="@string/base_url_business_key" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="@string/base_url_address"
+            android:labelFor="@id/etUrl"
+            android:textColor="?attr/base_url_item_url_remark_text_color"
+            android:textSize="12sp" />
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/etUrl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="52dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/base_url_input"
+            android:padding="12dp"
+            android:hint="@string/base_url_hint_example_url"
+            android:inputType="textUri"
+            android:singleLine="true"
+            android:textSize="15sp"
+            android:textColor="?attr/base_url_edit_url_text_color"
+            android:imeOptions="actionNext" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="@string/base_url_remark"
+            android:labelFor="@id/etRemark"
+            android:textColor="?attr/base_url_item_url_remark_text_color"
+            android:textSize="12sp" />
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/etRemark"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="52dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/base_url_input"
+            android:padding="12dp"
+            android:inputType="textCapSentences"
+            android:singleLine="true"
+            android:imeOptions="actionDone"
+            android:textColor="?attr/base_url_edit_url_text_color"
+            android:textSize="15sp" />
+    </LinearLayout>
+</ScrollView>

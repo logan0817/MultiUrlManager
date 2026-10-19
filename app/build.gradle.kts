@@ -6,9 +6,9 @@ plugins {
     kotlin("android")
 }
 
-val APP_VERSION_NAME : String by project
-val APP_VERSION_CODE : String by project
-val APP_ID : String by project
+val APP_VERSION_NAME: String by project
+val APP_VERSION_CODE: String by project
+val APP_ID: String by project
 
 android {
     compileSdk = libs.versions.compile.sdk.version.get().toInt()
@@ -44,22 +44,9 @@ android {
         warningsAsErrors = true
         abortOnError = true
         disable.add("GradleDependency")
-        // 忽略 AGP 版本检查，因为我们受限于 CI 环境
+        // 工具链升级单独验证，不将新版本提示当成当前源码缺陷。
         disable.add("AndroidGradlePluginVersion")
     }
-
-    // Use this block to configure different flavors
-//    flavorDimensions("version")
-//    productFlavors {
-//        create("full") {
-//            dimension = "version"
-//            applicationIdSuffix = ".full"
-//        }
-//        create("demo") {
-//            dimension = "version"
-//            applicationIdSuffix = ".demo"
-//        }
-//    }
 }
 
 tasks.withType<KotlinCompile>().configureEach {
@@ -80,4 +67,5 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit.ktx)
     androidTestImplementation(libs.androidx.test.rules)
     androidTestImplementation(libs.espresso.core)
+    androidTestImplementation(libs.androidx.recyclerview)
 }

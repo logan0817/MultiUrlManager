@@ -1,7 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<string name="base_url_title">BaseUrlManager</string>
-	<string name="base_url_hint_example_url">example: http://192.168.100.100:8888/</string>
-	<string name="base_url_add">Add</string>
-	<string name="base_url_save">Save</string>
-	<string name="base_url_reset">Reset</string>
+    <string name="base_url_title">BaseUrlManager</string>
+    <string name="base_url_hint_example_url">example: http://192.168.100.100:8888/</string>
+    <string name="base_url_add">Add</string>
+    <string name="base_url_save">Save</string>
+    <string name="base_url_reset">Reset</string>
+    <string name="base_url_environment">Environment</string>
+    <string name="base_url_business_key">Business key</string>
+    <string name="base_url_remark">Remark (optional)</string>
+    <string name="base_url_selected">Selected address</string>
+    <string name="base_url_select">Select address</string>
+    <string name="base_url_restore_error">Unable to restore draft or custom URL rule. Close this page and reopen it.</string>
+    <string name="base_url_not_initialized">Initialize BaseUrlManager before opening this page.</string>
+    <string name="base_url_saving">Saving…</string>
+    <string name="base_url_empty">No addresses. Restore defaults or configure business keys in the application.</string>
+    <string name="base_url_actions_hint">Tap to select; hold to edit, delete or copy. Changes take effect after saving.</string>
+    <string name="base_url_invalid_url">Enter a valid HTTP(S) address without credentials, query or fragment, matching the custom URL rule when supplied.</string>
+    <string name="base_url_edit">Edit address and remark</string>
+    <string name="base_url_delete">Delete</string>
+    <string name="base_url_copy">Copy address</string>
+    <string name="base_url_delete_selected">Delete the selected address? This key will have no selected address until you choose another. Saving requires every required key to have a selection.</string>
+    <string name="base_url_delete_confirm">Delete this address from the draft?</string>
+    <string name="base_url_reset_confirm">Restore the current environment defaults in the draft? Save to apply.</string>
+    <string name="base_url_conflict">Configuration changed outside this page. Keep editing or reload the latest configuration and discard this draft.</string>
+    <string name="base_url_reload">Reload latest</string>
+    <string name="base_url_storage_error">Storage could not be confirmed. Your draft is preserved. Reload to read storage again and discard the draft; if reloading fails, the draft is kept.</string>
+    <string name="base_url_validation_error">Every required business key needs one selected address. Check the configuration before saving.</string>
+    <string name="base_url_discard_confirm">Discard unsaved changes?</string>
+    <string name="base_url_discard">Discard</string>
+    <string name="base_url_override">Selected override</string>
+    <string name="base_url_default">Default candidate</string>
+    <string name="base_url_custom">Custom address</string>
+    <string name="base_url_add_address">Add address</string>
+    <string name="base_url_address">Base URL</string>
+    <string name="base_url_duplicate">This address already exists for the business key. Edit the existing candidate instead.</string>
 </resources>

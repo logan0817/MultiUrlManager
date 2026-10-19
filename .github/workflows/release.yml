@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: upload 只上传并验收；publish 正式发布已有 deployment
+        type: choice
+        options: [upload, publish]
+        default: upload
+        required: true
+      tag:
+        description: 已存在并通过 main CI 的正式版本 tag，例如 v1.1.0
+        type: string
+        required: true
+      deployment_id:
+        description: publish 必填；upload 恢复查询时填写，留空表示首次上传
+        type: string
+        required: false
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  source:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
+      run_id: ${{ steps.source.outputs.run_id }}
+      attempt: ${{ steps.source.outputs.attempt }}
+      version: ${{ steps.source.outputs.version }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - id: source
+        name: 校验 tag 和成功 CI 来源
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/ci/release-source.py
+
+  publish:
+    needs: source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    environment: release
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: candidate-${{ needs.source.outputs.run_id }}-${{ needs.source.outputs.attempt }}
+          path: build/ci/candidate
+          github-token: ${{ github.token }}
+          run-id: ${{ needs.source.outputs.run_id }}
+      - name: 上传验收或正式发布固定候选
+        env:
+          RELEASE_ACTION: ${{ inputs.action }}
+          CANDIDATE_SHA: ${{ needs.source.outputs.sha }}
+          CANDIDATE_RUN_ID: ${{ needs.source.outputs.run_id }}
+          CANDIDATE_ATTEMPT: ${{ needs.source.outputs.attempt }}
+          RELEASE_VERSION: ${{ needs.source.outputs.version }}
+          DEPLOYMENT_ID: ${{ inputs.deployment_id }}
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          SIGNING_KEY_BASE64: ${{ secrets.SIGNING_KEY_BASE64 }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          SIGNING_FINGERPRINT: ${{ vars.SIGNING_FINGERPRINT }}
+        run: python3 scripts/ci/publish-central.py
+      - name: 保留发布状态，便于中断后恢复
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-status-${{ github.run_id }}
+          path: build/ci/release
+          retention-days: 14

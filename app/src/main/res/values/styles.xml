@@ -1,35 +1,39 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-
-    <style name="AppTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style
+        name="AppTheme"
+        parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <!-- true 表示浅色背景（显示深色图标），false 表示深色背景（显示浅色图标） -->
-        <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
+        <item name="android:windowBackground">@null</item>
+        <item name="android:colorBackground">@color/app_page</item>
+        <item name="android:textColorPrimary">@color/app_text</item>
+        <item name="android:textColorSecondary">@color/app_secondary</item>
+        <item name="android:statusBarColor">@color/app_surface</item>
+        <item name="android:navigationBarColor">@color/app_surface</item>
     </style>
-
-    <style name="AppTheme.Toolbar" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
-        <item name="android:textColorPrimary">@android:color/white</item>
+    <style
+        name="AppTheme.Toolbar"
+        parent="ThemeOverlay.AppCompat.DayNight.ActionBar">
+        <item name="android:textColorPrimary">@color/app_text</item>
     </style>
-
-    <style name="AppBaseUrlManagerTheme" parent="BaseUrlManagerTheme">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
+    <style
+        name="AppBaseUrlManagerTheme"
+        parent="BaseUrlManagerTheme">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <item name="base_url_bg_color">#f4f4f4</item>
-        <item name="base_url_page_title_text_color">#ffff8800</item>
-        <item name="base_url_toolbar_bg_color">@color/tip_text_color</item>
-        <item name="base_url_edit_url_text_color">@color/base_url_edit_url_text_color</item>
-        <item name="base_url_btn_add_text_color">@color/base_url_btn_add_text_color</item>
-        <item name="base_url_btn_add_bg_color">@color/base_url_btn_add_bg_color</item>
-        <item name="base_url_item_bg_color">@color/base_url_item_bg_color</item>
-        <item name="base_url_item_url_text_color">@color/base_url_item_url_text_color</item>
-        <item name="base_url_item_url_remark_text_color">@color/base_url_item_url_remark_text_color</item>
-        <item name="base_url_item_header_key_bg_color">@color/base_url_item_header_key_bg_color</item>
+        <item name="base_url_bg_color">@color/app_page</item>
+        <item name="base_url_page_title_text_color">@color/app_text</item>
+        <item name="base_url_toolbar_bg_color">@color/app_surface</item>
+        <item name="base_url_edit_url_text_color">@color/app_text</item>
+        <item name="base_url_btn_add_text_color">@color/app_on_accent</item>
+        <item name="base_url_btn_add_bg_color">@color/colorPrimary</item>
+        <item name="base_url_item_bg_color">@color/app_surface</item>
+        <item name="base_url_item_url_text_color">@color/app_text</item>
+        <item name="base_url_item_url_remark_text_color">@color/app_secondary</item>
+        <item name="base_url_item_header_key_bg_color">@color/app_page</item>
         <item name="base_url_item_header_key_text_color">@color/colorPrimary</item>
     </style>
 </resources>

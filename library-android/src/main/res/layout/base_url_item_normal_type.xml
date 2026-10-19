@@ -1,56 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/base_url_item_bg_color"
-    android:paddingVertical="5dp"
-    android:paddingLeft="15dp"
-    android:paddingRight="15dp">
-
+    android:layout_marginStart="16dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginBottom="8dp"
+    android:orientation="horizontal"
+    android:background="@drawable/base_url_candidate"
+    android:padding="@dimen/base_url_candidate_padding"
+    android:minHeight="@dimen/base_url_candidate_height"
+    android:gravity="center_vertical">
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_centerVertical="true"
-        android:layout_toLeftOf="@+id/ivSelect"
+        android:layout_weight="1"
         android:orientation="vertical">
-
-        <androidx.appcompat.widget.AppCompatTextView
+        <TextView
             android:id="@+id/tvUrl"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:ellipsize="marquee"
-            android:maxLines="1"
-            android:singleLine="true"
             android:textColor="?attr/base_url_item_url_text_color"
-            android:textIsSelectable="true"
-            android:textSize="16sp"
-            tools:text="http://192.168.100.100:8888/" />
-
-        <androidx.appcompat.widget.AppCompatTextView
+            android:textSize="15sp"
+            android:textStyle="bold" />
+        <TextView
             android:id="@+id/tvUrlRemark"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:ellipsize="marquee"
-            android:maxLines="1"
-            android:singleLine="true"
+            android:layout_marginTop="6dp"
             android:textColor="?attr/base_url_item_url_remark_text_color"
-            android:textIsSelectable="true"
-            android:textSize="13sp"
-            tools:text="Remark" />
+            android:textSize="13sp" />
+        <TextView
+            android:id="@+id/tvSource"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="?attr/base_url_item_url_remark_text_color"
+            android:textSize="12sp" />
     </LinearLayout>
-
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/ivSelect"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"
-        android:layout_marginLeft="6dp"
-        android:orientation="vertical"
-        android:padding="10dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:padding="12dp"
+        android:layout_marginStart="8dp"
         android:src="@drawable/ic_circle_checkbox_base_url_selector" />
-
-</RelativeLayout>
+</LinearLayout>

@@ -1,0 +1,15 @@
+name: 功能建议
+description: 描述实际场景和当前限制
+title: '[Feature] '
+body:
+  - type: textarea
+    id: scenario
+    attributes:
+      label: 场景与目标
+      description: 哪个流程受限，预期如何工作
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: 当前替代方式与兼容要求

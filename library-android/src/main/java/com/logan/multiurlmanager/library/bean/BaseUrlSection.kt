@@ -1,13 +1,6 @@
 package com.logan.multiurlmanager.library.bean
 
-/**
- * Section implementation that encapsulates baseURL
- * 封装baseURL的Section实现
- *
- * @author logan
- * @date 2025/12/02
- */
-
+/** 配置列表的一行：非空 headerText 表示业务分组标题，否则展示 baseUrl 候选。 */
 class BaseUrlSection(
     val baseUrl: BaseUrl? = null,
     val headerText: String? = null

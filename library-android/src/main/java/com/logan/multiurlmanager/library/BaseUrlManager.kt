@@ -1,150 +1,282 @@
 package com.logan.multiurlmanager.library
 
-import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import com.logan.multiurlmanager.library.bean.BaseUrl
+import com.logan.multiurlmanager.library.internal.FileStateStore
+import com.logan.multiurlmanager.library.internal.StateStore
+import com.logan.multiurlmanager.library.internal.UrlRules
 import com.logan.multiurlmanager.library.utils.BaseUrlConfigLoader
-import com.logan.multiurlmanager.library.utils.BaseUrlUtil
+import java.util.concurrent.CopyOnWriteArraySet
+import java.util.concurrent.Executors
 
 /**
- * The specific implementation of the manager
- * 管理器的具体实现。
+ * 单进程配置入口。查询返回副本，写入先持久化再发布内存状态。
  *
- * @author logan
- * @date 2025/12/02
+ * 同步写入方法访问磁盘，应在后台调用；页面使用 [saveAsync]，其回调和变更通知在主线程派发。
  */
-class BaseUrlManager private constructor(
-    private val context: Context,
-    private val defaultProvider: (() -> List<BaseUrl>)?,
-    private val configKeyToLoad: String?
+class BaseUrlManager internal constructor(
+    defaults: List<UrlEnvironment>,
+    initial: UrlSnapshot,
+    private val store: StateStore,
+    private val dispatch: ((() -> Unit) -> Unit) = { task -> Handler(Looper.getMainLooper()).post { task() } }
 ) : IBaseUrlManager {
-
-    override var dynamicUrls: MutableList<BaseUrl> = mutableListOf()
-    override val count: Int
-        get() = dynamicUrls.size
-
-    init {
-        refreshData()
+    private val defaults = defaults.map {
+        it.copy(urls = it.urls.map { url -> url.copy() }, requiredKeys = it.requiredKeys.toSet())
     }
 
-    override fun getBaseUrl(configKey: String, defaultUrl: String?): BaseUrl? {
-        val config = dynamicUrls.find { it.configKey == configKey && it.select }
-        return config ?: defaultUrl?.let { BaseUrl(configKey = configKey, url = it, select = true) }
-    }
+    @Volatile
+    private var storageUncertain = false
 
+    @Volatile
+    private var state = copy(initial)
 
-    override fun refreshData() {
-        dynamicUrls =
-            BaseUrlUtil.loadDynamicBaseUrlConfigs(context).map { it.value }.sorted().toMutableList()
+    private val listeners = CopyOnWriteArraySet<UrlChangeListener>()
+    private var defaultId: String? = null
+    private val executor = Executors.newSingleThreadExecutor()
 
-        if (dynamicUrls.isEmpty()) {
-            addDefaultConfigs()
+    @Deprecated("Use snapshot() and explicit save")
+    override var dynamicUrls: MutableList<BaseUrl>
+        get() = snapshot().urls.toMutableList()
+        set(value) {
+            updateBaseURL(value)
         }
 
+    override val count: Int get() = state.urls.size
+
+    /** 返回隔离副本；revision 必须随草稿保留，保存时用于检测并发编辑。 */
+    fun snapshot(): UrlSnapshot = copy(state)
+
+    /** 获取内置默认值副本；未知环境抛出 NoSuchElementException。 */
+    fun defaultEnvironment(id: String): UrlEnvironment = defaults.first { it.id == id }.let {
+        it.copy(urls = it.urls.map { url -> url.copy() }, requiredKeys = it.requiredKeys.toSet())
     }
 
-    override fun addBaseURL(baseUrl: BaseUrl) {
-        if (baseUrl.configKey.isNullOrBlank() || baseUrl.url.isNullOrBlank()) return
-        dynamicUrls.removeIf { it.configKey == baseUrl.configKey && it.url == baseUrl.url }
-        dynamicUrls.add(baseUrl)
-        BaseUrlUtil.put(context, baseUrl)
+    fun getUrl(configKey: String): String? = getBaseUrl(configKey)?.url
+
+    override fun getBaseUrl(configKey: String, defaultUrl: String?): BaseUrl? =
+        state.urls.find { it.configKey == configKey && it.select }?.copy()
+            ?: defaultUrl?.let { UrlRules.normalize(BaseUrl(configKey, it, true)) }
+
+    /** 仅环境或生效地址变化才通知；宿主应在相应生命周期结束时移除监听器。 */
+    fun addListener(listener: UrlChangeListener) {
+        listeners.add(listener)
     }
 
-    override fun addBaseURL(baseUrls: Collection<BaseUrl>) {
-        baseUrls.forEach { addBaseURL(it) }
+    fun removeListener(listener: UrlChangeListener) {
+        listeners.remove(listener)
     }
 
-    override fun updateBaseURL(baseUrls: Collection<BaseUrl>) {
-        clear()
-        baseUrls.forEach { addBaseURL(it) }
-    }
-
-    override fun remove(baseUrl: BaseUrl) {
-        if (baseUrl.configKey.isNullOrBlank() || baseUrl.url.isNullOrBlank()) return
-        dynamicUrls.removeIf { it.configKey == baseUrl.configKey && it.url == baseUrl.url }
-        BaseUrlUtil.remove(context, baseUrl)
-    }
-
-    override fun clear() {
-        dynamicUrls.clear()
-        BaseUrlUtil.clear(context)
-    }
-
-
-    /**
-     * High priority: Code settings add default BaseUrl configuration, data is obtained from the external defaultProvider
-     * Low priority: Load from a unified configuration file (BaseUrlConfigLoader handles environment differentiation)
-     *
-     * 优先级高：代码设置 添加默认的 BaseUrl 配置，从外部传入的 defaultProvider 获取数据
-     * 优先级低：从统一配置文件中加载（BaseUrlConfigLoader 已处理环境区分）
-     */
-    private fun addDefaultConfigs() {
-        // 优先从代码设置中获取默认配置
-        val configsByCode = defaultProvider?.invoke()
-        val defaultList: List<BaseUrl> = if (!configsByCode.isNullOrEmpty()) {
-            // [High Priority] Configuration passed in via code - 【优先级高】使用代码传入的配置
-            configsByCode
-        } else {
-            // [Low Priority] If no code is passed in, load the configuration file -【优先级低】如果代码未传入，则加载配置文件
-            BaseUrlConfigLoader.loadFromAssets(context, configKeyToLoad)
+    /** 校验和提交整份快照；验证失败、存储失败或 revision 过期均不覆盖当前内存状态。 */
+    @Synchronized
+    fun save(candidate: UrlSnapshot): SaveResult {
+        if (storageUncertain) {
+            return SaveResult.Failure(SaveResult.Reason.STORAGE, "Reload storage before retrying")
         }
+        if (candidate.revision != state.revision) {
+            return SaveResult.Failure(SaveResult.Reason.CONFLICT, "Configuration changed; reload before saving")
+        }
+        val validated = try {
+            require(candidate.environments.all { env ->
+                val definition = defaults.find { it.id == env.id }
+                definition == null || env.requiredKeys == definition.requiredKeys
+            }) { "Required key declarations cannot be changed" }
+            require(candidate.environments.map { it.id }.distinct().size == candidate.environments.size) {
+                "Duplicate environment"
+            }
+            candidate.copy(environments = candidate.environments.map {
+                UrlRules.validate(it, checkRequired = it.id == candidate.environmentId)
+            }).also {
+                require(it.environments.any { env -> env.id == it.environmentId }) { "Unknown environment" }
+            }
+        } catch (e: Exception) {
+            return SaveResult.Failure(SaveResult.Reason.VALIDATION, e.message ?: "Invalid configuration")
+        }
+        return commit(validated)
+    }
 
-        if (defaultList.isNotEmpty()) {
-            defaultList.forEach {
-                addBaseURL(it.copy(time = System.currentTimeMillis()))
+    private fun commit(validated: UrlSnapshot): SaveResult {
+        if (storageUncertain) {
+            return SaveResult.Failure(SaveResult.Reason.STORAGE, "Reload storage before retrying")
+        }
+        val previous = state
+        if (validated == previous) return SaveResult.Success(snapshot(), false)
+        val next = copy(validated.copy(revision = previous.revision + 1))
+        try {
+            store.write(next)
+        } catch (_: Exception) {
+            // 写入可能已完成而校验失败，必须重新读取确认，不能盲目重试覆盖磁盘。
+            storageUncertain = true
+            return SaveResult.Failure(
+                SaveResult.Reason.STORAGE,
+                "Unable to persist configuration; reload before retrying"
+            )
+        }
+        state = next
+        notifyChanged(previous, next)
+        return SaveResult.Success(snapshot(), true)
+    }
+
+    private fun notifyChanged(previous: UrlSnapshot, next: UrlSnapshot) {
+        if (previous.environmentId == next.environmentId && previous.effectiveUrls() == next.effectiveUrls()) return
+        val observers = listeners.toList()
+        dispatch {
+            observers.forEach { observer ->
+                try {
+                    observer.onChanged(copy(previous), copy(next))
+                } catch (e: Exception) {
+                    Log.e("MultiUrlManager", "Configuration listener failed", e)
+                }
             }
         }
     }
 
-    @SuppressLint("StaticFieldLeak")
-    companion object {
+    /** 入队前复制草稿，防止调用方后续修改；后台串行写入，结果回到主线程。 */
+    fun saveAsync(candidate: UrlSnapshot, callback: (SaveResult) -> Unit) {
+        val input = copy(candidate)
+        executor.execute {
+            val result = save(input)
+            dispatch { callback(result) }
+        }
+    }
 
+    internal fun reloadAsync(callback: (Result<UrlSnapshot>) -> Unit) {
+        executor.execute {
+            val result = runCatching {
+                refreshData()
+                snapshot()
+            }
+            dispatch { callback(result) }
+        }
+    }
+
+    @Synchronized
+    fun switchEnvironment(id: String): SaveResult = save(snapshot().copy(environmentId = id))
+
+    @Synchronized
+    fun restoreDefaults(): SaveResult {
+        val environment = defaults.find { it.id == state.environmentId }
+            ?: return SaveResult.Failure(SaveResult.Reason.VALIDATION, "No defaults for current environment")
+        return replace(environment.urls)
+    }
+
+    @Synchronized
+    fun select(configKey: String, url: String): SaveResult = try {
+        val normalized = UrlRules.normalize(BaseUrl(configKey, url, true))
+        val existing = state.urls.find { it.configKey == normalized.configKey && it.url == normalized.url }
+        replace(UrlRules.upsert(state.urls, existing?.copy(select = true) ?: normalized))
+    } catch (_: Exception) {
+        SaveResult.Failure(SaveResult.Reason.VALIDATION, "Invalid key or HTTP(S) base URL")
+    }
+
+    private fun replace(urls: List<BaseUrl>): SaveResult {
+        val current = snapshot()
+        return save(current.copy(environments = current.environments.map {
+            if (it.id == current.environmentId) it.copy(urls = urls) else it
+        }))
+    }
+
+    @Synchronized
+    override fun addBaseURL(baseUrl: BaseUrl) {
+        checkResult(replace(UrlRules.upsert(state.urls, baseUrl)))
+    }
+
+    @Synchronized
+    override fun addBaseURL(baseUrls: Collection<BaseUrl>) {
+        val inputs = baseUrls.map { it.copy() }
+        UrlRules.validate(UrlEnvironment("input", "input", inputs))
+        checkResult(replace(inputs.fold(state.urls) { values, value -> UrlRules.upsert(values, value) }))
+    }
+
+    @Synchronized
+    override fun updateBaseURL(baseUrls: Collection<BaseUrl>) {
+        checkResult(replace(baseUrls.map { it.copy() }))
+    }
+
+    @Synchronized
+    override fun remove(baseUrl: BaseUrl) {
+        checkResult(replace(state.urls.filterNot { it.configKey == baseUrl.configKey && it.url == baseUrl.url }))
+    }
+
+    @Synchronized
+    override fun clear() {
+        // 兼容旧清空入口；保留环境与必选声明，之后普通保存仍须补齐当前环境必选项。
+        checkResult(commit(snapshot().copy(environments = state.environments.map { it.copy(urls = emptyList()) })))
+    }
+
+    @Synchronized
+    override fun refreshData() {
+        val loaded = store.read() ?: throw IllegalStateException("No persisted state; cannot reload")
+        val previous = state
+        state = copy(loaded)
+        storageUncertain = false
+        notifyChanged(previous, state)
+    }
+
+    companion object {
+        @Volatile
         var instance: BaseUrlManager? = null
             private set
 
         @JvmStatic
-        fun builder(context: Context): Builder {
-            return Builder(context.applicationContext)
+        fun builder(context: Context): Builder = Builder(context.applicationContext)
+
+        private fun copy(value: UrlSnapshot): UrlSnapshot = value.copy(environments = value.environments.map {
+            it.copy(urls = it.urls.map { url -> url.copy() }, requiredKeys = it.requiredKeys.toSet())
+        })
+
+        private fun sameDefinitions(first: List<UrlEnvironment>, second: List<UrlEnvironment>): Boolean =
+            first.map { it.copy(urls = it.urls.map { url -> url.copy(time = 0) }) } ==
+                second.map { it.copy(urls = it.urls.map { url -> url.copy(time = 0) }) }
+
+        private fun checkResult(result: SaveResult) {
+            if (result is SaveResult.Failure) throw IllegalStateException("${result.reason}: ${result.message}")
         }
 
+        /** 默认来源依次为显式环境、Provider、assets；默认环境优先级为 Builder、JSON、旧 release_defaults。 */
         class Builder(private val context: Context) {
-
             private var provider: (() -> List<BaseUrl>)? = null
-            private var fileConfigKey: String? = null
+            private var environments: List<UrlEnvironment>? = null
+            private var environmentId: String? = null
 
-            /**
-             * Set high-priority code in the default BaseUrl configuration.
-             * 设置高优先级的代码  BaseUrl默认配置。
-             */
-            fun setDefaultProvider(provider: (() -> List<BaseUrl>)?): Builder {
-                this.provider = provider
-                return this
-            }
+            fun setDefaultProvider(provider: (() -> List<BaseUrl>)?): Builder = apply { this.provider = provider }
 
-            /**
-             * Set a low-priority configuration file key. If not configured, it will be automatically selected based on the environment (if (BuildConfig.DEBUG) DEBUG_CONFIG_KEY else RELEASE_CONFIG_KEY).
-             * 设置低优先级的配置文件键名。如果不配置会根据环境自动选择(if (BuildConfig.DEBUG) DEBUG_CONFIG_KEY else RELEASE_CONFIG_KEY)
-             */
-            fun setFileConfigKey(key: String): Builder {
-                this.fileConfigKey = key
-                return this
-            }
+            fun setFileConfigKey(key: String): Builder = setDefaultEnvironment(key)
 
-            /**
-             * Build and initialize the BaseUrlManager singleton.
-             * 构建并初始化 BaseUrlManager 单例。
-             */
-            fun build(): BaseUrlManager {
-                if (instance == null) {
-                    instance = BaseUrlManager(
-                        context = context,
-                        defaultProvider = provider,
-                        configKeyToLoad = fileConfigKey
-                    )
+            fun setDefaultEnvironment(id: String): Builder = apply { environmentId = id }
+
+            fun setEnvironments(values: List<UrlEnvironment>): Builder = apply { environments = values }
+
+            fun build(): BaseUrlManager = synchronized(BaseUrlManager::class.java) {
+                val fileConfig = if (environments == null && provider == null) {
+                    BaseUrlConfigLoader.loadConfiguration(context)
                 } else {
-                    println("BaseUrlManager has already been initialized.")
+                    null
                 }
-                return instance!!
+                val defaultId = environmentId ?: fileConfig?.defaultEnvironment ?: BaseUrlConfigLoader.RELEASE_CONFIG_KEY
+                val definitions = (environments
+                    ?: provider?.let { listOf(UrlEnvironment(defaultId, defaultId, it())) }
+                    ?: requireNotNull(fileConfig).environments).map { UrlRules.validate(it) }
+                require(definitions.isNotEmpty() && definitions.map { it.id }.distinct().size == definitions.size) {
+                    "Invalid environments"
+                }
+                require(definitions.any { it.id == defaultId }) { "Unknown default environment" }
+                instance?.let { existing ->
+                    require(sameDefinitions(existing.defaults, definitions) && existing.defaultId == defaultId) {
+                        "BaseUrlManager already initialized with different configuration"
+                    }
+                    return@synchronized existing
+                }
+                val store = FileStateStore(context, definitions)
+                // 已存配置和迁移优先；构建变体只决定首次安装默认值，不强制覆盖用户选择。
+                val persisted = store.read() ?: store.migrate(definitions)
+                val initial = persisted ?: UrlSnapshot(0, defaultId, definitions).also(store::write)
+                BaseUrlManager(definitions, initial, store).also {
+                    it.defaultId = defaultId
+                    instance = it
+                }
             }
         }
     }

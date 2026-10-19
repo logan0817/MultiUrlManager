@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.logan.multiurlmanager">
-
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <application
         android:name=".App"
         android:allowBackup="true"
@@ -13,27 +12,16 @@
         android:theme="@style/AppTheme"
         tools:ignore="AllowBackup">
         <activity
+            android:name="com.logan.multiurlmanager.library.BaseUrlManagerActivity"
+            android:theme="@style/AppBaseUrlManagerTheme"
+            tools:replace="android:theme" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <!--  默认样式-->
-        <activity
-            android:name="com.logan.multiurlmanager.library.BaseUrlManagerActivity"
-            android:exported="false"
-            android:theme="@style/BaseUrlManagerTheme"
-            android:windowSoftInputMode="adjustPan" />
-
-        <!--  自定义样式-->
-        <!--<activity
-            android:name="com.logan.multiurlmanager.library.BaseUrlManagerActivity"
-            android:exported="false"
-            android:theme="@style/AppBaseUrlManagerTheme"
-            android:windowSoftInputMode="adjustPan" />-->
     </application>
-
 </manifest>

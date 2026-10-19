@@ -1,0 +1,142 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}-${{ github.event_name == 'pull_request' && 'pr' || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
+        with:
+          cache-provider: basic
+          cache-read-only: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
+          validate-wrappers: true
+      - name: 检查脚本和文档
+        run: |
+          python3 -m unittest discover -s scripts/ci -p 'test_*.py' -v
+          python3 scripts/ci/check-docs.py
+      - name: 静态检查工作流
+        run: python3 scripts/ci/check-workflows.py
+      - name: 准备固定 SDK 组件
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools'
+      - name: 构建、测试和本地 Maven 候选
+        run: >-
+          bash ./gradlew --stacktrace
+          :app:testDebugUnitTest :library-android:testDebugUnitTest
+          :app:lintDebug :library-android:lintDebug
+          :app:assembleDebug :app:assembleRelease :app:assembleDebugAndroidTest
+          :library-android:assembleDebugAndroidTest
+          :library-android:publishReleasePublicationToCiRepository
+          verifyCentralDeploymentName
+      - name: 核验已发布 1.0.6 公开 ABI
+        run: python3 scripts/ci/check-api.py
+      - name: 真实 AAR 和 R8 消费验证
+        run: >-
+          bash ./gradlew -p fixtures/consumer --stacktrace
+          :app:assembleDebug :app:assembleMinified :app:assembleMinifiedAndroidTest
+      - name: 构建真实旧库与新版覆盖升级夹具
+        run: |
+          bash ./gradlew -p fixtures/upgrade -PupgradeStage=legacy :app:assembleDebug :app:assembleRelease :app:assembleDebugAndroidTest
+          bash ./gradlew -p fixtures/upgrade -PupgradeStage=legacy -PupgradeVariant=release :app:assembleReleaseAndroidTest
+          bash ./gradlew -p fixtures/upgrade :app:assembleDebug :app:assembleRelease :app:assembleDebugAndroidTest
+          bash ./gradlew -p fixtures/upgrade -PupgradeVariant=release :app:assembleReleaseAndroidTest
+      - name: 生成同轮产物清单
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          export RELEASE_VERSION="$(sed -n 's/^APP_VERSION_NAME=//p' gradle.properties)"
+          python3 scripts/ci/artifacts.py create --candidate build/ci/candidate --sha "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" --aapt "$ANDROID_HOME/build-tools/36.0.0/aapt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/ci/candidate
+          if-no-files-found: error
+          retention-days: 14
+      - name: 保留构建诊断
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: quality-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            app/build/reports
+            library-android/build/reports
+            fixtures/consumer/app/build/reports
+          retention-days: 14
+
+  device:
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [24, 36]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/ci/candidate
+      - name: 验证产物身份
+        run: python3 scripts/ci/artifacts.py verify --candidate build/ci/candidate --sha "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT"
+      - name: 启用 KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2
+        with:
+          api-level: ${{ matrix.api }}
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: python3 scripts/ci/run-instrumentation.py build/ci/candidate
+      - name: 保留设备诊断
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: device-api-${{ matrix.api }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/ci/device
+          retention-days: 14
+
+  required:
+    if: ${{ always() }}
+    needs: [quality, device]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: 核对全部必需检查
+        env:
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          DEVICE_RESULT: ${{ needs.device.result }}
+        run: |
+          printf 'quality=%s device=%s\n' "$QUALITY_RESULT" "$DEVICE_RESULT"
+          test "$QUALITY_RESULT" = success
+          test "$DEVICE_RESULT" = success

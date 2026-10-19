@@ -1,0 +1,29 @@
+name: Bug 报告
+description: 提供可复现输入和实际结果
+title: '[Bug] '
+body:
+  - type: input
+    id: versions
+    attributes:
+      label: 版本与环境
+      description: 框架版本、Android API、设备和宿主工具链
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 最小复现步骤
+      description: 提供脱敏配置与调用顺序，不要包含凭据或私有地址
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: 预期与实际结果
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: 相关诊断
+      description: 首个有效异常、保存结果或测试输出

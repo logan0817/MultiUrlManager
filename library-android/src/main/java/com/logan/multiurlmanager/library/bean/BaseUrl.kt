@@ -4,11 +4,8 @@ import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
 /**
- * Information and data categories
- * 信息数据类
- *
- * @author logan
- * @date 2025/12/02
+ * 单个业务候选地址。configKey 在宿主查询与配置文件中必须一致；url 经管理器校验和规范化。
+ * select、remark 保留旧版可变字段，管理器返回的副本仍需显式保存；time 用于历史排序。
  */
 @Parcelize
 data class BaseUrl(
@@ -18,8 +15,5 @@ data class BaseUrl(
     var remark: String? = null,
     val time: Long = System.currentTimeMillis()
 ) : Parcelable, Comparable<BaseUrl> {
-
-    override fun compareTo(other: BaseUrl): Int {
-        return this.time.compareTo(other.time)
-    }
+    override fun compareTo(other: BaseUrl): Int = time.compareTo(other.time)
 }

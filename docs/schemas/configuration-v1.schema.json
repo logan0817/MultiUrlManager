@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/logan0817/MultiUrlManager/blob/main/docs/schemas/configuration-v1.schema.json",
+  "title": "MultiUrlManager 配置 v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "environments"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "defaultEnvironment": {
+      "type": "string",
+      "minLength": 1,
+      "description": "首次初始化的环境 id，必须存在于 environments"
+    },
+    "environments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "urls"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "requiredKeys": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "urls": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "configKey",
+                "url"
+              ],
+              "properties": {
+                "configKey": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri",
+                  "pattern": "^https?://"
+                },
+                "select": {
+                  "type": "boolean"
+                },
+                "remark": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "time": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

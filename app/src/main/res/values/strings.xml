@@ -1,6 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">MultiUrlManager</string>
-    <string name="setup_baseurl">Set BaseUrl</string>
-    <string name="multiurlmanager_desc">MultiUrlManager was primarily designed for scenarios where multiple environments need to be packaged into an APK during development. Through the BaseUrl dynamic setting entry provided by BaseUrlManager, different development or testing environments can be easily switched with a single package build. When building a production environment package, the BaseUrl dynamic setting entry can be disabled.</string>
-    <string name="current_settings">Current settings:</string>
+    <string name="setup_baseurl">Manage environments &amp; URLs</string>
+    <string name="current_settings">Active service URLs</string>
+    <string name="current_environment">%1$s</string>
+    <string name="configuration_initialization_failed">Configuration could not be initialized. Existing data was preserved. Check the configuration or storage before trying again.</string>
+    <string name="home_heading">Your API workspace</string>
+    <string name="home_description">One place to manage the addresses your app uses.</string>
+    <string name="home_environment_label">CURRENT ENVIRONMENT</string>
+    <plurals name="home_environment_summary">
+        <item quantity="one">%1$s · %2$d active service</item>
+        <item quantity="other">%1$s · %2$d active services</item>
+    </plurals>
+    <string name="home_sample_note">Demo addresses use example.com. This sample does not send network requests.</string>
+    <string name="home_no_selection">No address selected</string>
+    <string name="home_no_services">No business keys configured. Declare a service in JSON or code first.</string>
+    <string name="home_order_service">Orders · order</string>
+    <string name="home_login_service">Sign-in · login</string>
+    <string name="home_demo_title">Development, testing and production</string>
+    <string name="home_demo_steps">Scenario 1 · Switch the whole environment\nThe Debug demo includes Development, Testing and Production. Choose Testing and save: both order and login move to test addresses.\n\nScenario 2 · Switch one service\nKeep the environment, select the backup address under order and save. Only order changes; login stays the same.\n\nScenario 3 · Production defaults\nSelect Production and save to view order.example.com and login.example.com. A fresh Release install starts in Production and bundles only production defaults. Existing saved choices remain in effect after an upgrade.\n\nChanges stay in the draft until saved. Cancel leaves the dashboard unchanged.</string>
 </resources>

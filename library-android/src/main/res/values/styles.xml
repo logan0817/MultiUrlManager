@@ -1,8 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-
-    <style name="BaseUrlManagerTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
+    <style
+        name="BaseUrlManagerTheme"
+        parent="Theme.AppCompat.DayNight.DarkActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <item name="android:windowBackground">@null</item>
         <item name="colorPrimary">@color/base_url_color_primary</item>
         <item name="colorPrimaryDark">@color/base_url_color_primaryDark</item>
         <item name="colorAccent">@color/base_url_color_accent</item>
@@ -19,7 +22,9 @@
         <item name="base_url_item_header_key_bg_color">@color/base_url_item_header_key_bg_color</item>
         <item name="base_url_item_header_key_text_color">@color/base_url_item_header_key_text_color</item>
     </style>
-    <style name="BaseUrlManagerTheme.Toolbar" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
+    <style
+        name="BaseUrlManagerTheme.Toolbar"
+        parent="ThemeOverlay.AppCompat.DayNight.ActionBar">
         <item name="android:textColorPrimary">?attr/base_url_page_title_text_color</item>
     </style>
 </resources>

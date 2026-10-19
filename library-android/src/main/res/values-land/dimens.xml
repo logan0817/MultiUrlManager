@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="base_url_page_top_spacing">8dp</dimen>
+    <dimen name="base_url_environment_padding">6dp</dimen>
+    <dimen name="base_url_action_padding">8dp</dimen>
+    <dimen name="base_url_candidate_padding">12dp</dimen>
+    <dimen name="base_url_candidate_height">88dp</dimen>
+    <dimen name="base_url_header_spacing">8dp</dimen>
+</resources>
