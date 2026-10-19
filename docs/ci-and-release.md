@@ -121,6 +121,8 @@ bash ./gradlew prepareCentralBundle \
 
 2026-10-19 确认继续采用本机发布，不配置 GitHub 发布凭据。可选 `release.yml` 的环境保护、secrets 和签名上传链路尚未实测，不属于本次本机发布的未完成项。发布恢复修复提交 `800fdca` 的 [CI run 39221044260 / attempt 2](https://github.com/logan0817/MultiUrlManager/actions/runs/39221044260/attempts/2) 已通过 quality、API 24/36 和 required；首轮 API 36 的单击后出现长按菜单失败保留诊断，日志同期存在明显绘制延迟，代码与断言不变地完整重跑一次通过，暂态输入延迟为有证据支持的判断。
 
+2026-10-19，[GitHub v1.1.0 Release](https://github.com/logan0817/MultiUrlManager/releases/tag/v1.1.0) 已正式公开并标记 Latest，说明包含功能、旧数据迁移、打包配置与验证边界。公开正文与审阅文案一致，tag 仍指向 `063c92c`，未上传 APK。后续 README 依赖说明修正提交 `7198ac3` 的 [CI run 39230266104 / attempt 1](https://github.com/logan0817/MultiUrlManager/actions/runs/39230266104) 已通过 quality、API 24/36 和 required；该文档修改不改变已发布 Maven 文件。
+
 ## 中断与恢复
 
 本机 Portal 操作按上文保存并复用原 deployment ID；以下 `action` 参数与签名 secrets 指可选云端脚本。
