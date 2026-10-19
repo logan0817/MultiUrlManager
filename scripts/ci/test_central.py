@@ -34,12 +34,13 @@ class CentralStagesTest(unittest.TestCase):
         self.calls = []
         self.state = 'VALIDATED'
         self.signature_error = None
+        self.purls = ['pkg:maven/io.github.logan0817/multiurlmanager@1.1.0']
 
     def remote(self, path, *args, **kwargs):
         self.calls.append(path)
         if path.startswith('status?'):
             return json.dumps({'deploymentId': self.deployment, 'deploymentState': self.state,
-                               'purls': ['pkg:maven/io.github.logan0817/multiurlmanager@1.1.0']}).encode()
+                               'purls': self.purls}).encode()
         if '/download/' in path:
             return (self.target / path.rsplit('/', 1)[-1]).read_bytes()
         if path == 'deployment/' + self.deployment:
@@ -68,6 +69,38 @@ class CentralStagesTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'deployment ID'):
             self.run_stage('publish')
         self.assertEqual(self.calls, [])
+
+    def test_upload_accepts_central_aar_coordinates_without_publishing(self):
+        base = self.purls[0]
+        for purls in ([base + '?type=aar', base], [base, base + '?type=aar'], [base + '?type=aar']):
+            with self.subTest(purls=purls):
+                self.purls = purls
+                self.run_stage('upload')
+                self.assertNotIn('deployment/' + self.deployment, self.calls)
+                self.assertEqual(self.state, 'VALIDATED')
+
+    def test_published_accepts_aar_coordinates_during_recovery(self):
+        self.purls.insert(0, self.purls[0] + '?type=aar')
+        self.state = 'PUBLISHED'
+        self.run_stage('publish')
+        self.assertNotIn('deployment/' + self.deployment, self.calls)
+        self.assertTrue(Path('build/ci/release/public-verification.txt').is_file())
+
+    def test_recovery_rejects_missing_duplicate_or_foreign_coordinates(self):
+        base = self.purls[0]
+        invalid = (None, [], base, [None], [base, base],
+                   [base, base.replace('multiurlmanager', 'flowbus')],
+                   [base, base.replace('@1.1.0', '@1.0.6')],
+                   [base, base + '?type=jar'], [base, base + '?type=aar&classifier=sources'])
+        for state in ('VALIDATED', 'PUBLISHED'):
+            for purls in invalid:
+                with self.subTest(state=state, purls=purls):
+                    self.state = state
+                    self.purls = purls
+                    self.calls.clear()
+                    with self.assertRaisesRegex(ValueError, 'ID 或坐标'):
+                        self.run_stage('publish')
+                    self.assertEqual(len(self.calls), 1)
 
     def test_publish_verifies_then_publishes_once_without_upload(self):
         self.run_stage('publish')

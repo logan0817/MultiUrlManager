@@ -10,7 +10,7 @@ An Android library for managing base URLs across services and environments. Main
 - **Legacy integration**: 1.0.x fixed-array JSON and major entry points remain available, and migration preserves saved addresses. Behavior changes are explained below.
 - **Native Android screen**: light/dark modes, English/Chinese resources, theme customization and Activity Result support.
 
-This checkout is the **1.1.0 release candidate, not yet uploaded or published to Maven Central**. The preceding implementation passed Android 16 physical-device checks and the API 24/36 cloud matrix; see [CI for the corresponding commit](https://github.com/logan0817/MultiUrlManager/actions/workflows/ci.yml) for this candidate. Evaluate the APIs below through the local Maven repository.
+The **1.1.0 release candidate has been uploaded to Central and reached `VALIDATED`; it has not been publicly published**. Candidate commit `063c92c` passed [the complete CI run and API 24/36 cloud matrix](https://github.com/logan0817/MultiUrlManager/actions/runs/39211596505); the preceding implementation passed Android 16 physical-device checks. See the [upload verification record](docs/ci-and-release.md#110-上传验收记录) for the tested files, signing identity and deployment. Evaluate the APIs below through the local Maven repository.
 
 ## Screenshots
 

@@ -1,6 +1,6 @@
 # CI 与发布
 
-工作流源文件：[ci.yml](../.github/workflows/ci.yml)、[release.yml](../.github/workflows/release.yml)。普通 CI 已在云端执行，具体提交是否通过以 [GitHub Actions 的对应运行](https://github.com/logan0817/MultiUrlManager/actions/workflows/ci.yml) 为准。发布工作流尚未执行真实上传或正式发布；本地静态检查不能替代凭据与发布环境的实际验收。
+工作流源文件：[ci.yml](../.github/workflows/ci.yml)、[release.yml](../.github/workflows/release.yml)。普通 CI 已在云端执行，具体提交是否通过以 [GitHub Actions 的对应运行](https://github.com/logan0817/MultiUrlManager/actions/workflows/ci.yml) 为准。1.1.0 已在本机上传到 Central 并通过 `VALIDATED` 验收，见[本次记录](#110-上传验收记录)。GitHub 发布工作流尚未执行真实上传或正式发布，云端 release environment 与 secrets 仍待配置和验收。
 
 ## 普通验证
 
@@ -46,7 +46,7 @@ quality 在 publication 完成后、独立消费前运行 `python3 scripts/ci/ch
 
 发布 workflow 仅允许从 main 发起。无凭据的 source job 验证 tag、版本、祖先关系与 CI 来源；经环境审批后 publish job 下载所选 CI 的同一候选，重新核验 manifest，使用临时 GPG 目录签名，并通过 [Central Portal API](https://central.sonatype.org/publish/publish-portal-api/) 上传固定文件，不重新编译。
 
-`upload` 采用 USER_MANAGED，批次名为 `io.github.logan0817-MultiUrlManager-<version>`，实际坐标仍为 `io.github.logan0817:multiurlmanager:<version>`。取得 deployment ID 后轮询状态，在 VALIDATED 核对 ID、坐标和部署文件与受测候选一致，然后结束。审核完成后，再以 `action=publish`、同一 tag 和该 deployment ID 调度工作流；重新核验候选与部署内容后才调用正式发布 API。PUBLISHED 后逐个下载公开 AAR/POM/JAR/module 对比 SHA-256。[Central 官方 API](https://central.sonatype.org/publish/publish-portal-api/) 明确区分上传、VALIDATED 和正式发布。
+`upload` 采用 USER_MANAGED，批次名为 `io.github.logan0817-MultiUrlManager-<version>`，实际坐标仍为 `io.github.logan0817:multiurlmanager:<version>`。取得 deployment ID 后轮询状态，在 VALIDATED 核对 ID、坐标和部署文件与受测候选一致，然后结束。Central 可同时返回同一坐标的基础 purl 与 `?type=aar` purl，校验接受二者及其组合，仍拒绝空值、重复、其他类型、业务库或版本。审核完成后，再以 `action=publish`、同一 tag 和该 deployment ID 调度工作流；重新核验候选与部署内容后才调用正式发布 API。PUBLISHED 后逐个下载公开 AAR/POM/JAR/module 对比 SHA-256。[Central 官方 API](https://central.sonatype.org/publish/publish-portal-api/) 明确区分上传、VALIDATED 和正式发布。
 
 普通 CI 不含生产凭据，候选签名前后内容不改动。临时签名材料随临时目录删除；`release-status` artifact 只保留公开签名包、完整指纹、deployment ID、公开状态与验证结果，不包含私钥或口令。
 
@@ -82,9 +82,23 @@ bash ./gradlew prepareCentralBundle \
   --no-configuration-cache
 ```
 
-该任务只生成 `build/central/multiurlmanager-<version>.zip`，逐文件核对 GPG 签名及完整指纹，并为文件和签名生成 MD5/SHA-1/SHA-256/SHA-512。可用 `SIGNING_FINGERPRINT` 环境变量代替 `signing.gnupg.keyName`；GPG 程序可用 `GPG_EXECUTABLE` 指定。它不重新构建、不读取 Central token、不联网上传，也不会将本地 manifest 当作成功云端 CI 的证明；不能绕过正式发布的 main CI 来源检查。当前候选版本为 `1.1.0`，尚未上传或正式发布；若以后改为 SNAPSHOT，任务会在签名前拒绝执行。已存在的 ZIP 不自动覆盖，须先核对旧包。
+该任务只生成 `build/central/multiurlmanager-<version>.zip`，逐文件核对 GPG 签名及完整指纹，并为文件和签名生成 MD5/SHA-1/SHA-256/SHA-512。可用 `SIGNING_FINGERPRINT` 环境变量代替 `signing.gnupg.keyName`；GPG 程序可用 `GPG_EXECUTABLE` 指定。它不重新构建、不读取 Central token、不联网上传，也不会将本地 manifest 当作成功云端 CI 的证明；不能绕过正式发布的 main CI 来源检查。当前候选版本为 `1.1.0`，已在本次独立上传操作中达到 VALIDATED，尚未正式发布；若以后改为 SNAPSHOT，任务会在签名前拒绝执行。已存在的 ZIP 不自动覆盖，须先核对旧包。
 
 本机入口使用 GPG agent，不读取传统 `signing.keyId`、`signing.password`、`signing.secretKeyRingFile`，也不把 `signing.gnupg.passphrase` 当作口令来源。云端口令仅经 stdin 传入隔离签名进程，不写入命令行或日志。[Gradle 签名文档](https://docs.gradle.org/8.14.3/userguide/signing_plugin.html) 说明了标准 GPG 配置与 agent 的关系。
+
+## 1.1.0 上传验收记录
+
+2026-10-19，在用户授权范围内复用 FlowBus 最近发布使用的本机 Central token 与 GPG agent，上传本项目的固定 CI 候选；私钥未导出到 GitHub，凭据未写入仓库或发布包。
+
+- tag `v1.1.0` 固定提交 `063c92cdeba2c513c40730f00dd7bf86963e8c01`，对应 [CI run 39211596505 / attempt 1](https://github.com/logan0817/MultiUrlManager/actions/runs/39211596505)，quality、API 24、API 36、required 全部成功。
+- 下载 artifact `candidate-39211596505-1`，ZIP SHA-256 为 `ba1d4e6c615b3e6476bdc3a9df0ba234c03592f3649ad56648a6c43863932b28`，manifest 身份和 43 个文件摘要全部通过。
+- 主签名密钥指纹 `8BB25F160F45FD8919DC985A152B32281C3E9240`，已与本机保存的 FlowBus 1.2.0 公开 AAR 签名核对。
+- 批次 `io.github.logan0817-MultiUrlManager-1.1.0`，deployment ID `6b499138-69fc-4180-a3bc-4832c9652ac3`，状态 VALIDATED，errors 与 warnings 均为空。
+- 从该 deployment 下载的 5 份 Maven 文件、5 份签名及 40 份校验和共 50 个文件，与固定 CI 候选生成的签名包逐字节一致；签名身份再次验证通过。
+
+上传仅执行一次，后续验证使用原 deployment ID 恢复查询；下载核验遇到一次 TLS EOF，查询重试后完成。实测发现并修复了 Central 返回基础与 AAR 两条 purl 时的过严断言，32 项本地脚本回归通过；后续脚本修复的云端结果以其对应提交的 CI 为准。原 tag 与受测 Maven 文件保持不变。
+
+当前未执行正式 publish；公开 Maven Central 解析与宿主消费仍须在获授权发布后验证。云端 `release.yml` 的环境保护、secrets 和签名上传链路仍未实测；本机上传结果不代表这些云端配置已完成。
 
 ## 中断与恢复
 

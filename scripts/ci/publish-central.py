@@ -47,6 +47,16 @@ def payload_files(maven, version):
     return files
 
 
+def verify_deployment_identity(status, deployment, version):
+    expected = f'pkg:maven/io.github.logan0817/multiurlmanager@{version}'
+    purls = status.get('purls')
+    # Central 可同时报告基础坐标与 AAR 类型坐标；两者都必须属于同一受测版本。
+    if (status.get('deploymentId') != deployment or not isinstance(purls, list) or not purls
+            or any(not isinstance(purl, str) or purl not in (expected, expected + '?type=aar') for purl in purls)
+            or len(set(purls)) != len(purls)):
+        raise ValueError('部署 ID 或坐标不匹配，禁止继续发布')
+
+
 def signing_fingerprint():
     value = os.environ.get('SIGNING_FINGERPRINT', '').strip().upper()
     if not re.fullmatch(r'(?:[0-9A-F]{40}|[0-9A-F]{64})', value):
@@ -173,9 +183,7 @@ def main():
         if state == 'FAILED':
             raise RuntimeError('Central 校验失败，参见保留的 status.json；禁止重传同版本')
         if state in ('VALIDATED', 'PUBLISHED'):
-            expected_purl = f'pkg:maven/io.github.logan0817/multiurlmanager@{version}'
-            if status.get('deploymentId') != deployment or status.get('purls') != [expected_purl]:
-                raise ValueError('部署 ID 或坐标不匹配，禁止继续发布')
+            verify_deployment_identity(status, deployment, version)
         if state == 'VALIDATED':
             for file in files:
                 relative = file.relative_to(candidate / 'maven').as_posix()

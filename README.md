@@ -10,7 +10,7 @@ Android 多业务 Base URL 管理库。在应用内维护开发、测试、生�
 - **兼容旧项目**：保留 1.0.x 的固定数组 JSON 与主要入口，旧地址迁移时保留；行为差异见下文。
 - **原生 Android 页面**：支持深浅色、中英文、主题定制和 Activity Result。
 
-当前工作区为 **1.1.0 待发布候选**，尚未上传或正式发布到 Maven Central。此前功能提交已通过 Android 16 真机与 API 24/36 云端验证；本候选的结果以 [对应提交的 CI](https://github.com/logan0817/MultiUrlManager/actions/workflows/ci.yml) 为准。以下新 API 请先通过本地 Maven 候选接入。
+当前为 **1.1.0 待正式发布候选**，已上传 Central 并通过 `VALIDATED` 验收，尚未公开发布。候选提交 `063c92c` 已通过 [完整 CI 与 API 24/36 云端验证](https://github.com/logan0817/MultiUrlManager/actions/runs/39211596505)，此前功能实现已通过 Android 16 真机验证。[发布记录](docs/ci-and-release.md#110-上传验收记录)说明受测文件、签名与部署身份；以下新 API 请先通过本地 Maven 候选接入。
 
 ## 页面预览
 
