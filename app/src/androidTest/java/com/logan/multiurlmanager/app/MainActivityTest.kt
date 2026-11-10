@@ -11,8 +11,6 @@ import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
 import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
-import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
-import androidx.test.espresso.matcher.ViewMatchers.Visibility
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
@@ -77,7 +75,18 @@ class MainActivityTest {
             onView(withText("https://order-backup.dev.example.com/")).perform(click())
             addAddress("https://new.dev.example.com")
             scenario.recreate()
-            onView(withText("https://new.dev.example.com/")).check(matches(withEffectiveVisibility(Visibility.VISIBLE)))
+            scenario.onActivity { activity ->
+                val list = activity.findViewById<androidx.recyclerview.widget.RecyclerView>(LibraryR.id.recyclerView)
+                val adapter = list.adapter as com.logan.multiurlmanager.library.adapter.BaseUrlAdapter
+                val position = adapter.listData.indexOfFirst { it.baseUrl?.url == "https://new.dev.example.com/" }
+                assertTrue("新增候选必须在重建后保留", position >= 0)
+                assertTrue(adapter.listData.any {
+                    it.baseUrl?.url == "https://order-backup.dev.example.com/" && it.baseUrl?.select == true
+                })
+                // 小屏只创建视口内的行，先滚动到新增候选再核对真实显示。
+                list.scrollToPosition(position)
+            }
+            onView(withText("https://new.dev.example.com/")).check(matches(isDisplayed()))
             assertEquals(baseline, manager.snapshot())
             pressBack()
             onView(withText(LibraryR.string.base_url_discard)).perform(click())

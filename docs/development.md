@@ -126,6 +126,12 @@ JVM 测试关注 URL、单选、环境和失败结果，并直接用真实配置
 
 新候选位于 `build/verification/v1.2-review-fixes-20261110/candidate/`，保留 8 套件、82 文件，只更新两个消费 APK；其余库、Demo、网络和升级夹具输入未变，既有结果保留原测试日期与范围。安装、构建和真机原始证据见同目录上级的 `summary.json` 及日志。新增的 R8 路由断言本轮仅在 API 33 执行，API 36 仍是 10 月 31 日旧消费用例的通过结果；API 24 和云端 CI 未执行。未启动模拟器，未提交、推送或发布。
 
+## 1.2.0-SNAPSHOT 云端首轮诊断（2026-11-10）
+
+首轮 quality 成功，两个设备矩阵的存储 20 项、网络 2 项、R8 消费 1 项、1.0.6 Debug/Release 各 9 阶段、1.1.0 Debug/Release 各 3 阶段均通过；页面 API 24 两项失败、API 36 一项失败，因此 required 失败。原运行已按用户要求删除，诊断归档仅保留在本地 `build/verification/v1.2-ci-20261110/`，不能将此轮记作完整成功。
+
+API 24 的固定模式复制用例在 instrumentation 线程首次获取 ClipboardManager 时触发未创建 Looper 的 Handler 异常，修正为主线程获取服务。两端的新增候选恢复用例在小屏视口查找尚未创建的 RecyclerView 行而失败；现在先断言重建后的列表包含新增候选和原选择，再滚动到候选并断言真实显示，保存/取消和未落盘检查仍保留。生产实现未变。最终兼容结果以后续 `feat/v1.2.0-development` 提交的完整 CI 为准。
+
 ## 发布前本地审核记录
 
 2026-10-19，发布收尾文档提交 `097df12` 的 [CI run 39232161996 / attempt 1](https://github.com/logan0817/MultiUrlManager/actions/runs/39232161996/attempts/1) 在 API 36 页面用例 `deletingRequiredSelectionSurvivesRotationAndBlocksSave` 的删除确认点击处失败。日志显示删除菜单点击已执行，随后 Espresso 选中 `has-window-focus=false`、类型为 `BASE_APPLICATION` 的 Activity 根窗口，约 10 秒后抛出 `RootViewWithoutFocusException`；重建和保存断言尚未执行。同轮 quality、API 24，以及 API 36 的存储 16 项、R8 1 项、Debug/Release 升级各 9 阶段均通过。修正仅将该用例的菜单与确认按钮限定在 Dialog 根窗口，保留真实点击、重建、必选校验及未落盘断言；不修改库实现或放宽测试。修正后的结果以对应提交 CI 为准，不将失败轮次计为通过。

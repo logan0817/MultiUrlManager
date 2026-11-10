@@ -180,7 +180,11 @@ class EditorPresentationTest {
         val previous = manager
         val field = BaseUrlManager::class.java.getDeclaredField("instance").apply { isAccessible = true }
         val context = instrumentation.targetContext
-        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        lateinit var clipboard: ClipboardManager
+        // Android 7 首次创建 ClipboardManager 会绑定 Handler，必须使用主线程。
+        instrumentation.runOnMainSync {
+            clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        }
         var previousClip: ClipData? = null
         field.set(null, null)
         try {
