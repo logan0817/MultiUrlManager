@@ -3,7 +3,9 @@ package com.logan.multiurlmanager.app
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.os.Build
+import android.os.SystemClock
 import android.widget.Spinner
 import android.widget.FrameLayout
 import android.widget.TextView
@@ -217,6 +219,27 @@ class EditorPresentationTest {
                 else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) clipboard.clearPrimaryClip()
                 else clipboard.setPrimaryClip(ClipData.newPlainText("", ""))
             }
+            waitForClipboardOverlayToClose()
+        }
+    }
+
+    private fun waitForClipboardOverlayToClose() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        val automation = instrumentation.uiAutomation
+        val originalInfo = automation.serviceInfo
+        val originalFlags = originalInfo.flags
+        automation.serviceInfo = originalInfo.apply {
+            flags = flags or AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
+        }
+        try {
+            waitForWindow()
+            val deadline = SystemClock.uptimeMillis() + 10_000
+            while (automation.windows.any { it.title?.toString() == "ClipboardOverlay" }) {
+                check(SystemClock.uptimeMillis() < deadline) { "系统剪贴板浮层未退出，会拦截后续用例触摸" }
+                SystemClock.sleep(100)
+            }
+        } finally {
+            automation.serviceInfo = originalInfo.apply { flags = originalFlags }
         }
     }
 

@@ -132,6 +132,8 @@ JVM 测试关注 URL、单选、环境和失败结果，并直接用真实配置
 
 API 24 的固定模式复制用例在 instrumentation 线程首次获取 ClipboardManager 时触发未创建 Looper 的 Handler 异常，修正为主线程获取服务。两端的新增候选恢复用例在小屏视口查找尚未创建的 RecyclerView 行而失败；现在先断言重建后的列表包含新增候选和原选择，再滚动到候选并断言真实显示，保存/取消和未落盘检查仍保留。生产实现未变。最终兼容结果以后续 `feat/v1.2.0-development` 提交的完整 CI 为准。
 
+修正后运行 #17 的 API 24 全部通过，API 36 新增候选已恢复，但原备用选择断言失败。该轮 logcat 在备用地址点击期间明确记录系统 `ClipboardOverlay` 触摸窗口被移除；前一复制用例遗留的系统浮层拦截触摸。复制用例现在在恢复剪贴板后，利用 UiAutomation 的交互窗口标题有界等待该浮层退出，结束时恢复自动化服务原 flags；不关闭系统浮层功能、不跳过复制断言，也不调整默认测试顺序。若 10 秒内浮层不退出则明确失败。该修正的测试 APK 构建和 Debug Lint 通过，云端结果以新提交为准。
+
 ## 发布前本地审核记录
 
 2026-10-19，发布收尾文档提交 `097df12` 的 [CI run 39232161996 / attempt 1](https://github.com/logan0817/MultiUrlManager/actions/runs/39232161996/attempts/1) 在 API 36 页面用例 `deletingRequiredSelectionSurvivesRotationAndBlocksSave` 的删除确认点击处失败。日志显示删除菜单点击已执行，随后 Espresso 选中 `has-window-focus=false`、类型为 `BASE_APPLICATION` 的 Activity 根窗口，约 10 秒后抛出 `RootViewWithoutFocusException`；重建和保存断言尚未执行。同轮 quality、API 24，以及 API 36 的存储 16 项、R8 1 项、Debug/Release 升级各 9 阶段均通过。修正仅将该用例的菜单与确认按钮限定在 Dialog 根窗口，保留真实点击、重建、必选校验及未落盘断言；不修改库实现或放宽测试。修正后的结果以对应提交 CI 为准，不将失败轮次计为通过。
