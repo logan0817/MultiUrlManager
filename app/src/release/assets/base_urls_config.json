@@ -1,6 +1,10 @@
 {
   "schemaVersion": 1,
   "defaultEnvironment": "production",
+  "businessNames": {
+    "order": "Order service",
+    "login": "Sign-in service"
+  },
   "environments": [
     {
       "id": "production",

@@ -4,6 +4,8 @@
 
 Android 多业务 Base URL 管理库。在应用内维护开发、测试、生产等环境，为订单、登录等业务分别选择地址，通过一次保存提交完整配置。核心库不依赖 Retrofit 或 OkHttp。
 
+当前源码正在开发 **1.2.0-SNAPSHOT**（`io.github.logan0817:multiurlmanager:1.2.0-SNAPSHOT`），尚未发布。新增固定环境模式、业务展示名、配置变更摘要与可选 OkHttp 路由；开发版用法和验收状态见 [1.2.0 方案](docs/plans/v1.2.0-implementation-plan.md)及[网络路由](docs/network-routing.md)。下方安装仍使用已发布的 1.1.0。
+
 - **环境与业务分开管理**：切换环境同时切换整套服务，也可以只替换一个业务的候选地址。
 - **草稿式编辑**：新增、编辑、删除、环境切换和重置先进入草稿，保存成功后生效，取消不会改动当前配置。
 - **可观察的保存结果**：快照版本检测并发冲突；存储失败不报告成功；监听器一次收到完整前后状态。
@@ -266,7 +268,7 @@ class ActiveUrls(private val manager: BaseUrlManager) : Closeable {
 
 首次默认环境的优先级是 **显式 `setDefaultEnvironment` / `setFileConfigKey` > JSON 的 `defaultEnvironment` > 兼容回退 `release_defaults`**。选择的环境必须存在；不要给缺少 schemaVersion 的旧数组格式直接添加新字段。
 
-仓库 Demo 的 main 文件包含 dev/test/production、默认 dev；release 文件只包含 production、默认 production。Release 配置用于首次初始化，**覆盖安装保留已有状态**，不会强制生产，也不会删除已有环境。生产包如需锁定生产，应由宿主另外定义运行与迁移策略。
+仓库 Demo 的 main 文件包含 dev/test/production、默认 dev；release 文件只包含 production、默认 production。1.2.0 开发版 Demo 还通过宿主 `FIXED_PRODUCTION` 显式启用固定 production 模式；该模式不读取或覆盖设备调试数据。普通模式的覆盖安装继续保留已有状态。固定模式属于宿主主动选择，库不会根据自身构建类型猜测环境，详见[配置说明](docs/configuration.md#固定环境模式12-开发版)。
 
 从 1.0.x 升级时，有效旧地址（包括旧版自动写入的默认地址）会迁入当前 `legacy` 历史环境（同名冲突时使用 `legacy-1` 等可用 id）；新版默认值不会自动覆盖旧选择或重命名旧业务键。旧 `debug_defaults` / `release_defaults` 固定数组 JSON、`setFileConfigKey`、旧 Activity 启动与结果解析入口继续保留。`dynamicUrls` getter 现为副本，直接修改集合不生效；清空、持久化失败与默认值合并等行为边界见 [升级迁移](docs/migration-1.1.md)。
 

@@ -18,6 +18,10 @@ class BaseUrlAdapter(var listData: MutableList<BaseUrlSection>) :
     var sourceLabel: ((BaseUrl) -> String)? = null
     var onSelect: ((BaseUrl) -> Unit)? = null
     var onActions: ((View, BaseUrl) -> Unit)? = null
+    internal var groupTitle: ((String) -> String)? = null
+    internal var groupSummary: ((String) -> String)? = null
+    internal var isGroupCollapsed: ((String) -> Boolean)? = null
+    internal var onToggleGroup: ((String) -> Unit)? = null
 
     companion object {
         private const val TYPE_HEADER = 0
@@ -28,6 +32,8 @@ class BaseUrlAdapter(var listData: MutableList<BaseUrlSection>) :
 
     class HeaderViewHolder(view: View) : BaseUrlViewHolder(view) {
         val tvKey: TextView = view.findViewById(R.id.tvKey)
+        // 宿主可能沿用只包含 tvKey 的旧版分组布局。
+        internal val tvSummary: TextView? = view.findViewById(R.id.tvGroupSummary)
     }
 
     class NormalViewHolder(view: View) : BaseUrlViewHolder(view) {
@@ -63,7 +69,28 @@ class BaseUrlAdapter(var listData: MutableList<BaseUrlSection>) :
 
         when (holder.itemViewType) {
             TYPE_HEADER -> {
-                (holder as HeaderViewHolder).tvKey.text = item.headerText
+                val key = item.headerText.orEmpty()
+                val header = holder as HeaderViewHolder
+                header.tvKey.text = groupTitle?.invoke(key) ?: key
+                val summary = groupSummary?.invoke(key).orEmpty()
+                header.tvSummary?.apply {
+                    text = summary
+                    visibility = if (text.isEmpty()) View.GONE else View.VISIBLE
+                }
+                header.itemView.isClickable = onToggleGroup != null
+                header.itemView.isFocusable = onToggleGroup != null
+                header.itemView.isActivated = isGroupCollapsed?.invoke(key) == true
+                if (onToggleGroup != null) {
+                    val action = if (isGroupCollapsed?.invoke(key) == true) R.string.base_url_expand_group
+                        else R.string.base_url_collapse_group
+                    header.itemView.contentDescription = listOf(
+                        header.itemView.context.getString(action, header.tvKey.text), summary
+                    ).filter { it.isNotBlank() }.joinToString(". ")
+                    header.itemView.setOnClickListener { onToggleGroup?.invoke(key) }
+                } else {
+                    header.itemView.contentDescription = null
+                    header.itemView.setOnClickListener(null)
+                }
             }
             TYPE_NORMAL -> {
                 val normalHolder = holder as NormalViewHolder
@@ -110,6 +137,11 @@ class BaseUrlAdapter(var listData: MutableList<BaseUrlSection>) :
         // 整套环境没有候选身份连续性，原位重绑以避免删除动画结束后才显示新地址。
         listData = list
         notifyDataSetChanged()
+    }
+
+    /** 标题摘要依赖整组选择及折叠状态，不能仅依赖候选行的 DiffUtil 差异。 */
+    internal fun refreshGroupHeaders() {
+        listData.forEachIndexed { index, item -> if (item.isHeader) notifyItemChanged(index) }
     }
 
     fun setNewInstance(list: MutableList<BaseUrlSection>?) {

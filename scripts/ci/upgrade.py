@@ -4,10 +4,12 @@ from instrumentation import validate_output
 
 def run_upgrade(candidate, suite, reports, command):
     package = suite['package']
-    if package not in ('com.logan.multiurlmanager.upgrade.debug', 'com.logan.multiurlmanager.upgrade.release'):
+    if package not in ('com.logan.multiurlmanager.upgrade.debug', 'com.logan.multiurlmanager.upgrade.release',
+                       'com.logan.multiurlmanager.upgrade11.debug', 'com.logan.multiurlmanager.upgrade11.release'):
         raise ValueError('升级测试只允许清理专用夹具包')
     count = 0
-    for scenario in ('asset', 'custom', 'code'):
+    scenarios = ('snapshot',) if package.startswith('com.logan.multiurlmanager.upgrade11.') else ('asset', 'custom', 'code')
+    for scenario in scenarios:
         # 上一个场景为新版，先卸载仅属于夹具的应用，下一场景才能重新安装 versionCode=1。
         installed = command(['shell', 'pm', 'list', 'packages', package]).splitlines()
         if 'package:' + package in installed:

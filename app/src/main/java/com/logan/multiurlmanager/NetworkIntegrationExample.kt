@@ -2,6 +2,16 @@ package com.logan.multiurlmanager
 
 import com.logan.multiurlmanager.library.BaseUrlManager
 import com.logan.multiurlmanager.library.UrlChangeListener
+import com.logan.multiurlmanager.okhttp.RouteContext
+import com.logan.multiurlmanager.okhttp.RouteKey
+import com.logan.multiurlmanager.okhttp.UrlRoutingInterceptor
+import okhttp3.OkHttpClient
+import okhttp3.ResponseBody
+import retrofit2.Call
+import retrofit2.Retrofit
+import retrofit2.http.GET
+import retrofit2.http.Path
+import retrofit2.http.Tag
 import java.io.Closeable
 import java.net.URI
 
@@ -40,5 +50,45 @@ class NetworkIntegrationExample(private val manager: BaseUrlManager) : Closeable
 
     override fun close() {
         manager.removeListener(listener)
+    }
+}
+
+/**
+ * 可选 OkHttp 模块的真实 Retrofit 接入；构造时不发送请求。
+ * 宿主按 RouteContext.environmentId 查询凭据；CookieJar、401 刷新和业务缓存仍由宿主管理。
+ */
+class RoutingNetworkExample(
+    manager: BaseUrlManager,
+    tokenFor: (RouteContext) -> String?
+) : Closeable {
+    private val source = "https://bootstrap.example/api/"
+    private val client = OkHttpClient.Builder()
+        .addInterceptor(UrlRoutingInterceptor(manager, mapOf("order" to source, "login" to source)))
+        .addInterceptor { chain ->
+            val context = checkNotNull(chain.request().tag(RouteContext::class.java))
+            val request = chain.request().newBuilder()
+            tokenFor(context)?.let { request.header("Authorization", "Bearer $it") }
+            chain.proceed(request.build())
+        }
+        .build()
+    private val service = Retrofit.Builder().baseUrl(source).client(client).build().create(Service::class.java)
+
+    // 同一 Service 可重复使用；实际选址发生在执行请求时。
+    fun order(id: String): Call<ResponseBody> = service.order(id, RouteKey("order"))
+
+    fun login(): Call<ResponseBody> = service.login(RouteKey("login"))
+
+    override fun close() {
+        client.dispatcher.cancelAll()
+        client.dispatcher.executorService.shutdown()
+        client.connectionPool.evictAll()
+    }
+
+    interface Service {
+        @GET("orders/{id}")
+        fun order(@Path("id") id: String, @Tag route: RouteKey): Call<ResponseBody>
+
+        @GET("session")
+        fun login(@Tag route: RouteKey): Call<ResponseBody>
     }
 }

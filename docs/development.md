@@ -5,6 +5,8 @@
 ## 工程与工具链
 
 - `library-android`：公开管理器、配置页面、存储与测试。
+- `library-okhttp`：1.2 开发版可选网络路由、真实 Retrofit / MockWebServer 测试；原核心制品不新增网络依赖。
+- `fixtures/compatibility`：真实发行 1.1.0 编译后替换当前 AAR 运行，以及当前源码重编译；`fixtures/upgrade/app11` 验证真实 1.1.0 的保留数据升级。
 - `app`：实际接入示例。
 - `fixtures/consumer`：独立工程，从本轮文件 Maven 仓库解析真实 AAR/POM；包含 Kotlin 接口调用和开启 R8 的 minified 变体。`prepareReadmeExamples` 从中英文 README 各提取 5 份完整 Kotlin 示例，隔离包名后一起编译，源码正文保持不变；示例 app 另有实际编译的 Java 接入代码。
 - `scripts/ci`：文档检查、工作流检查、产物身份、仪器输出解析和受控发布。
@@ -20,17 +22,19 @@
 ```sh
 python3 -m unittest discover -s scripts/ci -p 'test_*.py' -v
 python3 scripts/ci/check-docs.py
-bash ./gradlew :app:testDebugUnitTest :library-android:testDebugUnitTest :app:lintDebug :library-android:lintDebug :app:assembleDebug :app:assembleRelease :app:assembleDebugAndroidTest :library-android:assembleDebugAndroidTest :library-android:publishReleasePublicationToCiRepository
+bash ./gradlew :app:testDebugUnitTest :library-android:testDebugUnitTest :library-okhttp:testDebugUnitTest :app:lintDebug :library-android:lintDebug :library-okhttp:lintDebug :app:assembleDebug :app:assembleRelease :app:assembleDebugAndroidTest :library-android:assembleDebugAndroidTest :library-okhttp:assembleDebugAndroidTest :library-android:publishReleasePublicationToCiRepository :library-okhttp:publishReleasePublicationToCiRepository verifyCentralDeploymentName
 python3 scripts/ci/check-api.py
+bash ./gradlew -p fixtures/compatibility run
+bash ./gradlew -p fixtures/compatibility -PcompatBaseline=current run
 bash ./gradlew -p fixtures/consumer :app:assembleDebug :app:assembleMinified :app:assembleMinifiedAndroidTest
 ```
 
-工作流检查使用固定摘要的 actionlint；CI 在 Linux 执行 `python3 scripts/ci/check-workflows.py`。其他系统可自行安装对应平台 actionlint 1.7.7 后运行 `actionlint .github/workflows/*.yml`，不可直接运行 Linux 二进制。
+工作流检查执行 `python3 scripts/ci/check-workflows.py`。脚本按 Linux/macOS 和 amd64/arm64 选择 actionlint 1.7.7，核对固定摘要后在临时目录运行，并检查外部 Action 的完整 SHA 引用；不需要全局安装工具。
 
 连接隔离测试设备后可运行：
 
 ```sh
-bash ./gradlew :app:connectedDebugAndroidTest :library-android:connectedDebugAndroidTest
+bash ./gradlew :app:connectedDebugAndroidTest :library-android:connectedDebugAndroidTest :library-okhttp:connectedDebugAndroidTest
 bash ./gradlew -p fixtures/consumer :app:connectedMinifiedAndroidTest
 ```
 
@@ -40,7 +44,87 @@ bash ./gradlew -p fixtures/consumer :app:connectedMinifiedAndroidTest
 
 JVM 测试关注 URL、单选、环境和失败结果，并直接用真实配置解析器读取中英文 README 的 JSON 示例，检查两份配置一致。文档脚本校验 Markdown/HTML 本地链接和图片、围栏、JSON/XML 示例语法；仪器测试覆盖 AtomicFile、迁移与页面；独立消费工程检验真实发布依赖和 R8。普通 Debug 编译不等于设备、混淆或发布已通过。
 
-新增逻辑应提供行为测试，明确预期和错误路径，不依赖公网真实站点、设备已有数据或集合遍历顺序。版本升级同步 [迁移文档](migration-1.1.md) 与 [变更记录](../CHANGELOG.md)。CI 的实际执行路径与报告见 [CI 与发布](ci-and-release.md)。
+新增逻辑应提供行为测试，明确预期和错误路径，不依赖公网真实站点、设备已有数据或集合遍历顺序。版本升级同步迁移文档与 [变更记录](../CHANGELOG.md)。CI 的实际执行路径与报告见 [CI 与发布](ci-and-release.md)。1.2 开发版在 API 24/36 上收集 8 套必需设备套件（app、library、okhttp、R8 consumer、1.0.6/1.1.0 Debug/Release 升级），候选共 22 个 APK 和两个同版本 Maven 坐标；候选 schema 2 保留旧 schema 1 / 1.1 发布恢复读取能力。
+
+## 1.2.0-SNAPSHOT 本地开发验收（2026-10-30）
+
+本轮基于 `main` / `885898f` 的未提交工作区，本地候选的 event 为 `local`；不能用它替代已提交版本的云端 CI 或正式发布候选。
+
+| 检查 | 当前结果 |
+| --- | --- |
+| JVM | 核心与配置 25 项、可选网络 16 项通过；网络使用真实 Retrofit / OkHttp / MockWebServer |
+| 应用与库 | Debug/Release、三模块仪器 APK、应用 Debug/Release Lint、核心与网络 Debug Lint、双 publication 通过 |
+| 二进制 ABI | 当前 Release AAR 对比真实 1.0.6（17 类/105 成员）及 1.1.0（27 类/239 成员）通过 |
+| 消费 | 同一 Kotlin/Java 用法以 1.1.0 编译后运行于当前 AAR，以及以当前源码重编译均通过；独立 Debug/R8 与仪器 APK 构建通过；两代旧库/新版的 Debug/Release 及测试 APK 全部构建通过，设备消费待执行 |
+| 制品与配置 | 核心 POM 不引入 OkHttp；适配制品依赖同版本核心与 OkHttp 4.12.0；Debug/Release JSON 与源码逐字节一致，分别为 dev 三环境及 production 单环境 |
+| 本地候选 | schema 2 的 8 套件、22 APK、两个 Maven 制品，共 82 文件封存及摘要校验通过；SNAPSHOT 均解析为 `1.2.0-20261030.091951-2` |
+| 脚本 | 45 项非签名测试通过；完整 51 项中的 6 项临时 GPG 签名组因本机 agent 连接失败未完成，CI 保留完整检查 |
+| 设备与升级 | 真机由其他任务占用，按使用安排暂缓完整仪器及覆盖升级；API 24 本轮未运行，不复用 1.1.0 的旧结果宣称通过 |
+
+本地 Maven 发布的 SNAPSHOT 文件带 timestamp/buildNumber。候选脚本按真实 `maven-metadata.xml` 核对坐标、更新时间、classifier、扩展名与同轮版本，封存所选轮次及其 metadata/checksum，并在 manifest 的 `snapshotVersions` 固定两个制品的解析版本。缺少最新文件、metadata 陈旧、夹带旧轮次或错误坐标均失败，不从旧完整轮次补齐。正式发布仍拒绝 SNAPSHOT。
+
+构建复用 Android Studio 工具链和共享缓存，后续构建限制为 `--max-workers=2`。本轮启动的 API 24 模拟器已按用户要求关闭，后续设备验证使用连接的 Android 16 真机；Demo 原 APK、files/shared_prefs 与原状态摘要已备份到忽略目录，最后一次辅助脚本退出时已丢弃草稿，原状态文件与测试前备份的 SHA-256 一致；辅助脚本的真实进程恢复没有通过，尚未执行的设备步骤不得标为通过。
+
+## 1.2.0-SNAPSHOT 真机补验（2026-10-31）
+
+连接 OnePlus Android 13（API 33）真机执行补验。设备中已有 Demo 的签名与本机候选不同，因此通过忽略目录中的临时 Gradle init 脚本，只将验证 Demo 的 applicationId 改为 `com.logan.multiurlmanager.verification`；namespace、业务源码与库制品保持同源，原 Demo 不卸载、不覆盖。随后已重新构建标准包名 Demo，标准与隔离候选分别封存，均为 schema 2、8 套件/22 APK/82 文件。
+
+| 检查 | 本轮结果 |
+| --- | --- |
+| 管理页 | 18 项通过，覆盖展示名、折叠、变更摘要、固定模式只读与复制、错误定位、Bundle 新 ViewModel 恢复、深浅色与横屏 |
+| 核心存储与固定模式 | 20 项通过，包含原有 16 项存储回归与 4 项固定模式文件隔离、损坏文件绕过及普通模式恢复 |
+| 网络端到端 | 2 项通过，真实 manager.saveAsync 驱动回环 HTTP，覆盖成功提交、冲突、注入存储失败、保护重读及固定模式 |
+| R8 消费 | 独立真实 Maven 制品的 minified 消费 1 项通过 |
+| 1.1.0 覆盖升级 | Debug、Release 各 3 阶段通过：真实 1.1.0 写入、多环境/自定义/删除候选/备注保留、新版编辑后新进程再读 |
+| 真实进程退出恢复 | HOME 后 am kill 确认旧 PID 消失；Launcher 恢复为新 PID，表单 URL/备注和未保存选择恢复；取消草稿后磁盘 SHA-256 不变 |
+| 脚本 | 最终完整 51 项通过，包括 6 项真实临时 GPG 签名测试；本机运行将测试临时目录限定为 `/tmp`，不接触用户密钥环 |
+| 原 Demo 数据 | 原 APK 与 files/shared_prefs 已备份，存量 legacy 偏好及其他原有文件逐项摘要一致；原应用没有新版状态文件，本轮没有为其创建或迁移状态 |
+
+设备首次网络测试被现有 Charles 抓包代理接管，返回代理错误页；仅测试客户端新增 `Proxy.NO_PROXY`，让设备回环流量直达 MockWebServer，重建、Lint 与两项端到端复测通过，宿主代理策略不变。1.1.0 升级夹具首次比较失败只涉及旧版自身重读时的业务分组顺序；旧版写入后先调用真实 1.1.0 的 refreshData，再记录耐久读取基准，保留完整 JSON、revision、候选、备注和选择比较，修正后两变体均通过。
+
+1.0.6 Debug/Release 首轮各完成 asset/custom 两场景的 6 阶段，但第三场景安装被厂商安装器拒绝，返回 `-99`，同一时刻日志记录 `PC install attack detected`。放慢安装间隔后的有限复测仍被拒绝，故两套完整升级测试未通过，未修改安全设置或使用其他安装身份绕过。首次失败和复测日志均保留；不能将已过的部分阶段作为整套通过证据。
+
+本轮 API 24/36 未执行，API 33 不能替代这两个 CI 端点。深浅色和横屏已有设备截图及断言；额外的 1.3 倍系统字号检查因 shell 无 WRITE_SETTINGS 权限未执行，不调整权限。CI 尚未触发，正式签名/上传/发布未执行。
+
+原始证据在忽略目录 `build/verification/v1.2-20261031-api33/`，包含两轮候选、逐套输出、logcat、进程恢复报告和截图。页面/核心/R8 的最终 APK 与首轮成功输入逐字节一致，按身份复用对应通过结果；只对变化的网络及 1.1.0 测试 APK、被拦截的升级项重跑，最终汇总仍明确记录两个 1.0.6 套件失败。标准包名最新候选为 `build/verification/v1.2-20261031-candidate/`，本地未提交源码身份另行记录；不把 base commit 的 SHA 当作本次未提交内容的云端验收身份。
+
+### 同日后续补验
+
+设备状态随后发生变化：只读检查得到 `verifier_verify_adb_installs=0`、`persist.sys.permission.enable=false`；本会话未修改这些安全开关。在此新条件下，复用已封存候选重跑 1.0.6 两变体升级，Debug 的 asset/custom/code 三场景完整 **9 阶段通过**。Release 的 asset/custom 两场景 **6 阶段通过**，code 场景安装仍被厂商识别为 `PC install attack` 并返回 `-99`，所以 Release 整套仍未通过。本轮仅对界面中名称为 `Upgrade verification`、版本为 legacy 的本项目安装器确认页，按实际 resource-id 和 bounds 点击“继续安装”；不处理密码、身份验证或修改安装安全规则。新证据保存在 `build/verification/v1.2-20261031-upgrade06-completion/`，原失败记录保留。
+
+额外显示检查现已完成：普通字号浅色/深色竖屏、1.3 倍字号竖屏/横屏共 4 张截图，保存按钮与滚动列表区域可见，已人工核对。测试前持久记录原字号、旋转、自动旋转及深浅色设置，结束后逐项恢复成功；编辑过程未保存，配置文件 SHA-256 不变。证据为 `build/verification/v1.2-20261031-visual-completion/summary.json` 及同目录截图。此前 WRITE_SETTINGS 失败属于首次尝试，不能覆盖本次成功结果；首次失败日志仍保留。
+
+### 本轮最终补验与覆盖核对
+
+随后只补跑 1.0.6 Release 的 code 场景：旧版写入、新版覆盖后读取/编辑、新进程重读共 3 阶段全部通过。与逐文件摘要一致的前两个场景合并后，Release 完整 **9 阶段通过**；新报告位于 `build/verification/v1.2-release06-final-scenario/summary.json`，此前失败记录仍保留。安装确认同时核对本项目名称、legacy/current 版本、按钮 resource-id 和 bounds，不改设备安全设置。
+
+契约覆盖核对补充了新增候选、删除候选及选中变化的完整预览断言，并验证重建后预览仍完整、未保存时配置不变；折叠用例扩展到切换环境后返回。最终页面套件重新在 API 33 真机完整执行，**19 项全部通过**。仅测试源码变化，库、Demo 功能及其他夹具输入未变；无变化的套件按候选 APK 摘要复用既有成功证据。标准/隔离测试 APK 重新构建、Debug Lint、文档检查、本机 actionlint 和差异空白检查通过。
+
+最终 API 33 上 **8 套必需设备套件全部取得通过证据**：页面 19 项、存储/固定模式 20 项、网络 2 项、R8 1 项、1.0.6 Debug/Release 各 9 阶段、1.1.0 Debug/Release 各 3 阶段。汇总为 `build/verification/v1.2-20261031-validation-summary.json`；包含本地源码摘要、各套件输入及原始报告位置。这是身份核对后的分批补验，不表示一次完整云端 CI 全绿。契约与用例映射见 [1.2 开发验收方案](plans/v1.2.0-implementation-plan.md#契约与测试对应)。
+
+上述 API 33 补验结束时，API 24/36 和云端 CI 尚未执行；后续 API 36 结果见下节。M4 保持未完成，不能将一个系统端点的结果替代其他端点。所有结果保留本地，未创建提交、推送或触发远端 CI；未启动模拟器，原 Demo 数据与显示设置已核对保留。
+
+## 1.2.0-SNAPSHOT Android 16 真机补验（2026-10-31）
+
+用户连接 Android 16 / API 36 真机后，直接复用此前封存的隔离 Demo 候选。全部源码输入摘要一致，无需重新构建。最终 **8 套必需功能套件取得通过证据**：页面 19 项、存储/固定模式 20 项、网络 2 项、R8 1 项，1.0.6 Debug/Release 各 9 阶段、1.1.0 Debug/Release 各 3 阶段，均无跳过。
+
+首次安装独立验证包被 USB 安装确认拦截，用户确认后继续；两个历史 1.0.6 测试 APK 签名与本次候选不同，仅清理对应专用测试包后重跑。独立验证 Demo 的页面启动随后被厂商后台启动策略拒绝，日志为 `Abort background activity starts`；用户手动允许该验证包的后台显示权限后，读取得到 `MIUIOP(10021): allow`。本会话未通过命令修改权限或全局安全开关。
+
+页面默认类顺序完整执行时两轮均为 18 项通过、1 项失焦失败，失败用例为 `selectedDraftSurvivesAddingAndRecreation_cancelDoesNotPersist`；日志显示 `com.xiaomi.aicr` 拉起浏览器，应用没有处于 RESUMED 状态。该用例单独执行通过，耗时 3.418 秒。保持 APK 与所有断言不变，随后指定 `MainActivityTest,EditorPresentationTest` 类顺序完整执行，**19 项通过、零跳过**。现象指向测试间的系统界面干扰，但小爱识屏的具体触发链路未确认；不能将调整类顺序后的成功描述为默认顺序问题已修复，也不能将此前失败轮次计为通过。所有原始输出、系统抢占现场与失败记录保留。
+
+最终汇总在 `build/verification/v1.2-20261031-api36/final-summary.json`，按测试/升级阶段严格解析终态，记录同一候选的 APK 摘要、实际报告路径和执行限制。浅色、深色、横屏管理页及深色表单截图已核对，保存入口和可滚动内容区域正常。原 Demo 未覆盖，其 files/shared_prefs 的全部文件大小与 SHA-256 均与测试前备份一致；字号、旋转与深浅色系统设置一致。测试进程已停止，临时安装界面 XML 已清理。
+
+剩余为 API 24 与云端 CI。真实进程回收与 1.3 倍字号专项仍以 API 33 的既有证据为准；本轮 API 36 使用上述类顺序执行完整页面用例，不代替未运行的默认云端流程。未提交、推送或触发远端操作。
+
+## 1.2.0-SNAPSHOT 审查修正验证（2026-11-10）
+
+修正 R8 消费夹具的验证缺口：先保存并重读 `https://consumer.example.com/`，再通过真实 `OkHttpClient.newCall().execute()` 执行来源为 `https://bootstrap.example/api/v1/` 的请求。断言改写后的 URL、编码路径/query、保留的 RouteKey，以及 RouteContext 的环境、revision、业务键和目标地址。仅末端测试拦截器返回响应，路由实现参与 R8 和实际执行，不访问公网；响应体和 Client 资源均释放。专用消费应用与测试 APK 补充验证用版本信息，使安装工具可核验包身份与版本，不影响库或 Demo。
+
+配置文档同时区分普通模式的旧数组兼容和 Release Demo 的固定 production 策略；明确改用 `release_defaults` 等键时须同步调整固定 id，或由宿主选择普通模式。
+
+通过共享 Android Studio 环境运行消费工程 `:app:assembleDebug :app:assembleMinified :app:assembleMinifiedAndroidTest :app:lintMinified`，全部成功，中英文 README 示例随构建编译。经安装工具核对两个包的版本，并逐字节核对安装 APK 与封存候选后，一加 Android 13 / API 33 真机消费测试 **1 项通过、零跳过（1.597 秒）**，覆盖上述实际路由、存储重读和管理页启动。15 份文档校验、EditorConfig 空白/编码检查、XML 语法及暂存/工作区差异检查通过。没有独立 Kotlin formatter 配置，采用现有风格与 Lint 检查。原 Demo 数据与本轮备份摘要一致，专用消费测试进程已停止。
+
+新候选位于 `build/verification/v1.2-review-fixes-20261110/candidate/`，保留 8 套件、82 文件，只更新两个消费 APK；其余库、Demo、网络和升级夹具输入未变，既有结果保留原测试日期与范围。安装、构建和真机原始证据见同目录上级的 `summary.json` 及日志。新增的 R8 路由断言本轮仅在 API 33 执行，API 36 仍是 10 月 31 日旧消费用例的通过结果；API 24 和云端 CI 未执行。未启动模拟器，未提交、推送或发布。
 
 ## 发布前本地审核记录
 

@@ -14,7 +14,8 @@ object BaseUrlConfigLoader {
 
     internal data class Configuration(
         val environments: List<UrlEnvironment>,
-        val defaultEnvironment: String?
+        val defaultEnvironment: String?,
+        val businessNames: Map<String, String> = emptyMap()
     )
 
     internal fun loadConfiguration(context: Context): Configuration =
@@ -58,7 +59,18 @@ object BaseUrlConfigLoader {
         } else {
             null
         }
-        return Configuration(environments, defaultId)
+        val businessNames = if (modern && root.has("businessNames")) {
+            require(root.get("businessNames").isJsonObject) { "businessNames must be an object" }
+            root.getAsJsonObject("businessNames").entrySet().associate { (key, value) ->
+                require(key.isNotBlank() && value.isJsonPrimitive && value.asJsonPrimitive.isString &&
+                    value.asString.isNotBlank()) { "Business names must be nonblank strings" }
+                key to value.asString
+            }.also { names ->
+                val keys = environments.flatMap { env -> env.urls.map { it.configKey } + env.requiredKeys }.toSet()
+                require(names.keys.all { it in keys }) { "Business name references an unknown key" }
+            }
+        } else emptyMap()
+        return Configuration(environments, defaultId, businessNames)
     }
 
     fun loadEnvironments(context: Context): List<UrlEnvironment> = loadConfiguration(context).environments

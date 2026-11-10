@@ -13,12 +13,14 @@ tasks.register("verifyCentralDeploymentName") {
     group = "verification"
     description = "离线核对实际 publication 坐标和 Central 项目批次名；不签名、不上传。"
     doLast {
-        val publications = project(":library-android").extensions.getByType<PublishingExtension>()
-            .publications.withType<MavenPublication>().toList()
-        check(publications.size == 1 && publications.single().let {
-            it.groupId == "io.github.logan0817" && it.artifactId == "multiurlmanager" &&
-                it.version == releaseVersion.get()
-        }) { "实际 publication 坐标必须为 io.github.logan0817:multiurlmanager:${releaseVersion.get()}" }
+        val expected = mapOf(":library-android" to "multiurlmanager", ":library-okhttp" to "multiurlmanager-okhttp")
+        expected.forEach { (module, artifact) ->
+            val publications = project(module).extensions.getByType<PublishingExtension>()
+                .publications.withType<MavenPublication>().toList()
+            check(publications.size == 1 && publications.single().let {
+                it.groupId == "io.github.logan0817" && it.artifactId == artifact && it.version == releaseVersion.get()
+            }) { "实际 publication 坐标必须为 io.github.logan0817:$artifact:${releaseVersion.get()}" }
+        }
         logger.lifecycle("Central batch: io.github.logan0817-MultiUrlManager-${releaseVersion.get()}")
     }
 }

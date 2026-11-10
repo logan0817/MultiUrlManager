@@ -2,6 +2,8 @@
 
 入口类型位于 `com.logan.multiurlmanager.library`，候选地址 `BaseUrl` 位于 `.bean`。初始化持有 applicationContext；同一进程初始化一次。配置不同的重复初始化会失败，避免悄悄切换默认配置。库不提供多进程写入同步。
 
+1.2 开发版增加 `Builder.setFixedEnvironment(id)`、`Builder.setBusinessNames(map)`、`isReadOnly` 和 `businessName(key)`。既有模型构造、`copy`、Parcelable 和 `SaveResult` 分支不变。固定模式的查询、保存和刷新例外见[配置说明](configuration.md#固定环境模式12-开发版)。可选网络制品见[路由说明](network-routing.md)。
+
 ## 查询
 
 | 入口 | 返回与约定 |
@@ -59,6 +61,6 @@ Builder 可从 `BaseUrlManager.builder(context)` 调用，Java 中通过 `BaseUr
 
 ## 已发布二进制兼容基线
 
-已从 Maven Central 下载真实 1.0.6 AAR，并以 SHA-256 `cffa13b0bf3fb43c209621e135701d7925024ff83ca5354910ca8aafc790be9e` 固定身份。仓库 [ABI 基线](api-baseline-1.0.6.json) 覆盖 17 个公开类、105 个字段/方法；[check-api.py](../scripts/ci/check-api.py) 对比类/接口类型、父类型、成员名称、JVM descriptor 与 static 属性，当前 Release AAR 检查通过。
+1.0.6 的发行 AAR SHA-256 为 `cffa13b0bf3fb43c209621e135701d7925024ff83ca5354910ca8aafc790be9e`，[旧 ABI 基线](api-baseline-1.0.6.json) 覆盖 17 个公开类、105 个字段/方法。1.2 开发版增加真实 1.1.0 AAR，SHA-256 为 `d4237ddba47f663b2c73f80f3a18e380fdea0b62d87ab5eda10813ca39a6e897`，[新基线](api-baseline-1.1.0.json)覆盖 27 类、239 成员，包含默认构造和复制入口。[check-api.py](../scripts/ci/check-api.py) 同时检查两份真实发行基线的类/接口类型、父类型、成员名称、JVM descriptor 与 static 属性。1.2 当前 AAR 的实际结果以开发验收记录为准。
 
 该门槛允许新增入口，禁止删除旧基线入口，CI 在生成本地 Maven 候选后执行。它不证明所有行为完全相同；可变集合、环境选择、保存与清空的有意行为变化仍以 [迁移说明](migration-1.1.md) 为准。基线不包含 BuildConfig、匿名类、编译器访问桥，也不代替实际旧宿主运行与 API 36 设备验收。

@@ -5,6 +5,14 @@ import android.os.Bundle
 import com.logan.multiurlmanager.library.BaseUrlManager
 import com.logan.multiurlmanager.library.UrlEnvironment
 import com.logan.multiurlmanager.library.bean.BaseUrl
+import com.logan.multiurlmanager.okhttp.RouteContext
+import com.logan.multiurlmanager.okhttp.RouteKey
+import com.logan.multiurlmanager.okhttp.UrlRoutingInterceptor
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 
 class ConsumerActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -13,6 +21,36 @@ class ConsumerActivity : Activity() {
             .setEnvironments(listOf(UrlEnvironment("release", "Release", listOf(BaseUrl("api", "https://example.com/", true)))))
             .build()
     }
+    fun routeIntegration(): Boolean {
+        val manager = checkNotNull(BaseUrlManager.instance)
+        val snapshot = manager.snapshot()
+        val interceptor = UrlRoutingInterceptor(manager, mapOf("api" to "https://bootstrap.example/api/v1/"))
+        val request = Request.Builder().url("https://bootstrap.example/api/v1/orders/a%2Fb?detail=a%2Fb")
+            .tag(RouteKey::class.java, RouteKey("api")).build()
+        val client = OkHttpClient.Builder()
+            .addInterceptor(interceptor)
+            // 保留真实路由执行，只在末端返回响应，避免消费验收访问公网。
+            .addInterceptor { chain ->
+                Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
+                    .code(200).message("OK").body("routed".toResponseBody()).build()
+            }
+            .build()
+        return try {
+            client.newCall(request).execute().use { response ->
+                val routed = response.request
+                val context = routed.tag(RouteContext::class.java)
+                routed.url.toString() == "https://consumer.example.com/orders/a%2Fb?detail=a%2Fb" &&
+                    context?.environmentId == snapshot.environmentId &&
+                    context.revision == snapshot.revision && context.configKey == "api" &&
+                    context.targetBaseUrl.toString() == "https://consumer.example.com/" &&
+                    routed.tag(RouteKey::class.java)?.configKey == "api" && response.body?.string() == "routed"
+            }
+        } finally {
+            client.dispatcher.executorService.shutdown()
+            client.connectionPool.evictAll()
+        }
+    }
+
     fun roundTrip(): String? {
         val manager = checkNotNull(BaseUrlManager.instance)
         manager.addBaseURL(BaseUrl("api", "https://consumer.example.com/", true))

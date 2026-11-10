@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, codex/v1.2.0-development]
   merge_group:
   workflow_dispatch:
 
@@ -59,24 +59,29 @@ jobs:
       - name: 构建、测试和本地 Maven 候选
         run: >-
           bash ./gradlew --stacktrace
-          :app:testDebugUnitTest :library-android:testDebugUnitTest
-          :app:lintDebug :library-android:lintDebug
+          :app:testDebugUnitTest :library-android:testDebugUnitTest :library-okhttp:testDebugUnitTest
+          :app:lintDebug :library-android:lintDebug :library-okhttp:lintDebug
           :app:assembleDebug :app:assembleRelease :app:assembleDebugAndroidTest
-          :library-android:assembleDebugAndroidTest
+          :library-android:assembleDebugAndroidTest :library-okhttp:assembleDebugAndroidTest
           :library-android:publishReleasePublicationToCiRepository
+          :library-okhttp:publishReleasePublicationToCiRepository
           verifyCentralDeploymentName
-      - name: 核验已发布 1.0.6 公开 ABI
+      - name: 核验已发布 1.0.6 和 1.1.0 公开 ABI
         run: python3 scripts/ci/check-api.py
+      - name: 1.1.0 二进制与源码消费验证
+        run: |
+          bash ./gradlew -p fixtures/compatibility run
+          bash ./gradlew -p fixtures/compatibility -PcompatBaseline=current run
       - name: 真实 AAR 和 R8 消费验证
         run: >-
           bash ./gradlew -p fixtures/consumer --stacktrace
           :app:assembleDebug :app:assembleMinified :app:assembleMinifiedAndroidTest
       - name: 构建真实旧库与新版覆盖升级夹具
         run: |
-          bash ./gradlew -p fixtures/upgrade -PupgradeStage=legacy :app:assembleDebug :app:assembleRelease :app:assembleDebugAndroidTest
-          bash ./gradlew -p fixtures/upgrade -PupgradeStage=legacy -PupgradeVariant=release :app:assembleReleaseAndroidTest
-          bash ./gradlew -p fixtures/upgrade :app:assembleDebug :app:assembleRelease :app:assembleDebugAndroidTest
-          bash ./gradlew -p fixtures/upgrade -PupgradeVariant=release :app:assembleReleaseAndroidTest
+          bash ./gradlew -p fixtures/upgrade -PupgradeStage=legacy :app:assembleDebug :app:assembleRelease :app:assembleDebugAndroidTest :app11:assembleDebug :app11:assembleRelease :app11:assembleDebugAndroidTest
+          bash ./gradlew -p fixtures/upgrade -PupgradeStage=legacy -PupgradeVariant=release :app:assembleReleaseAndroidTest :app11:assembleReleaseAndroidTest
+          bash ./gradlew -p fixtures/upgrade :app:assembleDebug :app:assembleRelease :app:assembleDebugAndroidTest :app11:assembleDebug :app11:assembleRelease :app11:assembleDebugAndroidTest
+          bash ./gradlew -p fixtures/upgrade -PupgradeVariant=release :app:assembleReleaseAndroidTest :app11:assembleReleaseAndroidTest
       - name: 生成同轮产物清单
         env:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -98,6 +103,7 @@ jobs:
           path: |
             app/build/reports
             library-android/build/reports
+            library-okhttp/build/reports
             fixtures/consumer/app/build/reports
           retention-days: 14
 

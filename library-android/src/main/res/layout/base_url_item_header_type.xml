@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:minHeight="48dp"
+    android:background="?attr/base_url_item_header_key_bg_color"
+    android:foreground="?android:attr/selectableItemBackground">
     <TextView
         android:id="@+id/tvKey"
         android:layout_width="match_parent"
@@ -10,9 +14,21 @@
         android:paddingStart="20dp"
         android:paddingEnd="20dp"
         android:paddingTop="@dimen/base_url_header_spacing"
-        android:paddingBottom="10dp"
-        android:background="?attr/base_url_item_header_key_bg_color"
+        android:paddingBottom="4dp"
         android:textColor="?attr/base_url_item_header_key_text_color"
         android:textStyle="bold"
+        android:maxLines="2"
+        android:ellipsize="end"
         android:textSize="13sp" />
-</FrameLayout>
+    <TextView
+        android:id="@+id/tvGroupSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="10dp"
+        android:textColor="?attr/base_url_item_url_remark_text_color"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:textSize="12sp" />
+</LinearLayout>

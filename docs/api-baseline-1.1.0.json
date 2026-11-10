@@ -1,0 +1,1629 @@
+{
+  "artifact": "https://repo.maven.apache.org/maven2/io/github/logan0817/multiurlmanager/1.1.0/multiurlmanager-1.1.0.aar",
+  "sha256": "d4237ddba47f663b2c73f80f3a18e380fdea0b62d87ab5eda10813ca39a6e897",
+  "classes": {
+    "com.logan.multiurlmanager.library.BaseUrlManager": {
+      "kind": "class",
+      "supertypes": [
+        "com.logan.multiurlmanager.library.IBaseUrlManager"
+      ],
+      "members": [
+        {
+          "kind": "field",
+          "name": "Companion",
+          "descriptor": "Lcom/logan/multiurlmanager/library/BaseUrlManager$Companion;",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Ljava/util/List;Lcom/logan/multiurlmanager/library/UrlSnapshot;Lcom/logan/multiurlmanager/library/internal/StateStore;Lkotlin/jvm/functions/Function1;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Ljava/util/List;Lcom/logan/multiurlmanager/library/UrlSnapshot;Lcom/logan/multiurlmanager/library/internal/StateStore;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "addBaseURL",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/bean/BaseUrl;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "addBaseURL",
+          "descriptor": "(Ljava/util/Collection;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "addListener",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/UrlChangeListener;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "builder",
+          "descriptor": "(Landroid/content/Context;)Lcom/logan/multiurlmanager/library/BaseUrlManager$Companion$Builder;",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "clear",
+          "descriptor": "()V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "defaultEnvironment",
+          "descriptor": "(Ljava/lang/String;)Lcom/logan/multiurlmanager/library/UrlEnvironment;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getBaseUrl",
+          "descriptor": "(Ljava/lang/String;Ljava/lang/String;)Lcom/logan/multiurlmanager/library/bean/BaseUrl;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getCount",
+          "descriptor": "()I",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getDynamicUrls",
+          "descriptor": "()Ljava/util/List;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getDynamicUrls$annotations",
+          "descriptor": "()V",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "getUrl",
+          "descriptor": "(Ljava/lang/String;)Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "refreshData",
+          "descriptor": "()V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "reloadAsync$library_android_release",
+          "descriptor": "(Lkotlin/jvm/functions/Function1;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "remove",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/bean/BaseUrl;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "removeListener",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/UrlChangeListener;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "restoreDefaults",
+          "descriptor": "()Lcom/logan/multiurlmanager/library/SaveResult;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "save",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/UrlSnapshot;)Lcom/logan/multiurlmanager/library/SaveResult;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "saveAsync",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/UrlSnapshot;Lkotlin/jvm/functions/Function1;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "select",
+          "descriptor": "(Ljava/lang/String;Ljava/lang/String;)Lcom/logan/multiurlmanager/library/SaveResult;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setDynamicUrls",
+          "descriptor": "(Ljava/util/List;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "snapshot",
+          "descriptor": "()Lcom/logan/multiurlmanager/library/UrlSnapshot;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "switchEnvironment",
+          "descriptor": "(Ljava/lang/String;)Lcom/logan/multiurlmanager/library/SaveResult;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "updateBaseURL",
+          "descriptor": "(Ljava/util/Collection;)V",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.BaseUrlManager$Companion": {
+      "kind": "class",
+      "supertypes": [],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Lkotlin/jvm/internal/DefaultConstructorMarker;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "builder",
+          "descriptor": "(Landroid/content/Context;)Lcom/logan/multiurlmanager/library/BaseUrlManager$Companion$Builder;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getInstance",
+          "descriptor": "()Lcom/logan/multiurlmanager/library/BaseUrlManager;",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.BaseUrlManager$Companion$Builder": {
+      "kind": "class",
+      "supertypes": [],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Landroid/content/Context;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "build",
+          "descriptor": "()Lcom/logan/multiurlmanager/library/BaseUrlManager;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setDefaultEnvironment",
+          "descriptor": "(Ljava/lang/String;)Lcom/logan/multiurlmanager/library/BaseUrlManager$Companion$Builder;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setDefaultProvider",
+          "descriptor": "(Lkotlin/jvm/functions/Function0;)Lcom/logan/multiurlmanager/library/BaseUrlManager$Companion$Builder;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setEnvironments",
+          "descriptor": "(Ljava/util/List;)Lcom/logan/multiurlmanager/library/BaseUrlManager$Companion$Builder;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setFileConfigKey",
+          "descriptor": "(Ljava/lang/String;)Lcom/logan/multiurlmanager/library/BaseUrlManager$Companion$Builder;",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.IBaseUrlManager": {
+      "kind": "interface",
+      "supertypes": [],
+      "members": [
+        {
+          "kind": "method",
+          "name": "addBaseURL",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/bean/BaseUrl;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "addBaseURL",
+          "descriptor": "(Ljava/util/Collection;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "clear",
+          "descriptor": "()V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getBaseUrl",
+          "descriptor": "(Ljava/lang/String;Ljava/lang/String;)Lcom/logan/multiurlmanager/library/bean/BaseUrl;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getCount",
+          "descriptor": "()I",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getDynamicUrls",
+          "descriptor": "()Ljava/util/List;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "refreshData",
+          "descriptor": "()V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "remove",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/bean/BaseUrl;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "updateBaseURL",
+          "descriptor": "(Ljava/util/Collection;)V",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.IBaseUrlManager$DefaultImpls": {
+      "kind": "class",
+      "supertypes": [],
+      "members": [
+        {
+          "kind": "method",
+          "name": "getBaseUrl$default",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/IBaseUrlManager;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/logan/multiurlmanager/library/bean/BaseUrl;",
+          "static": true
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.BaseUrlManagerActivity": {
+      "kind": "class",
+      "supertypes": [
+        "androidx.appcompat.app.AppCompatActivity"
+      ],
+      "members": [
+        {
+          "kind": "field",
+          "name": "Companion",
+          "descriptor": "Lcom/logan/multiurlmanager/library/BaseUrlManagerActivity$Companion;",
+          "static": true
+        },
+        {
+          "kind": "field",
+          "name": "HTTP_URL_REGEX",
+          "descriptor": "Ljava/lang/String;",
+          "static": true
+        },
+        {
+          "kind": "field",
+          "name": "KEY_CHANGED",
+          "descriptor": "Ljava/lang/String;",
+          "static": true
+        },
+        {
+          "kind": "field",
+          "name": "KEY_ENVIRONMENT_ID",
+          "descriptor": "Ljava/lang/String;",
+          "static": true
+        },
+        {
+          "kind": "field",
+          "name": "KEY_REGEX",
+          "descriptor": "Ljava/lang/String;",
+          "static": true
+        },
+        {
+          "kind": "field",
+          "name": "KEY_REVISION",
+          "descriptor": "Ljava/lang/String;",
+          "static": true
+        },
+        {
+          "kind": "field",
+          "name": "KEY_TITLE",
+          "descriptor": "Ljava/lang/String;",
+          "static": true
+        },
+        {
+          "kind": "field",
+          "name": "KEY_URLS_INFO",
+          "descriptor": "Ljava/lang/String;",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "()V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "onCreateOptionsMenu",
+          "descriptor": "(Landroid/view/Menu;)Z",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "onOptionsItemSelected",
+          "descriptor": "(Landroid/view/MenuItem;)Z",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "onPrepareOptionsMenu",
+          "descriptor": "(Landroid/view/Menu;)Z",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "parseActivityResult",
+          "descriptor": "(Landroid/content/Intent;)Ljava/util/List;",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "startBaseUrlManager",
+          "descriptor": "(Landroid/app/Activity;I)V",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "startBaseUrlManager",
+          "descriptor": "(Landroid/app/Activity;ILandroid/os/Bundle;)V",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "startBaseUrlManager",
+          "descriptor": "(Landroidx/fragment/app/Fragment;I)V",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "startBaseUrlManager",
+          "descriptor": "(Landroidx/fragment/app/Fragment;ILandroid/os/Bundle;)V",
+          "static": true
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.BaseUrlManagerActivity$Companion": {
+      "kind": "class",
+      "supertypes": [],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Lkotlin/jvm/internal/DefaultConstructorMarker;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "parseActivityResult",
+          "descriptor": "(Landroid/content/Intent;)Ljava/util/List;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "startBaseUrlManager",
+          "descriptor": "(Landroid/app/Activity;I)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "startBaseUrlManager",
+          "descriptor": "(Landroid/app/Activity;ILandroid/os/Bundle;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "startBaseUrlManager",
+          "descriptor": "(Landroidx/fragment/app/Fragment;I)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "startBaseUrlManager",
+          "descriptor": "(Landroidx/fragment/app/Fragment;ILandroid/os/Bundle;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "startBaseUrlManager$default",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/BaseUrlManagerActivity$Companion;Landroid/app/Activity;ILandroid/os/Bundle;ILjava/lang/Object;)V",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "startBaseUrlManager$default",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/BaseUrlManagerActivity$Companion;Landroidx/fragment/app/Fragment;ILandroid/os/Bundle;ILjava/lang/Object;)V",
+          "static": true
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.adapter.BaseUrlAdapter": {
+      "kind": "class",
+      "supertypes": [
+        "androidx.recyclerview.widget.RecyclerView$Adapter"
+      ],
+      "members": [
+        {
+          "kind": "field",
+          "name": "Companion",
+          "descriptor": "Lcom/logan/multiurlmanager/library/adapter/BaseUrlAdapter$Companion;",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Ljava/util/List;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getItemCount",
+          "descriptor": "()I",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getItemViewType",
+          "descriptor": "(I)I",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getListData",
+          "descriptor": "()Ljava/util/List;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getOnActions",
+          "descriptor": "()Lkotlin/jvm/functions/Function2;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getOnSelect",
+          "descriptor": "()Lkotlin/jvm/functions/Function1;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getSourceLabel",
+          "descriptor": "()Lkotlin/jvm/functions/Function1;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "onBindViewHolder",
+          "descriptor": "(Landroidx/recyclerview/widget/RecyclerView$ViewHolder;I)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "onBindViewHolder",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/adapter/BaseUrlAdapter$BaseUrlViewHolder;I)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "onCreateViewHolder",
+          "descriptor": "(Landroid/view/ViewGroup;I)Landroidx/recyclerview/widget/RecyclerView$ViewHolder;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "onCreateViewHolder",
+          "descriptor": "(Landroid/view/ViewGroup;I)Lcom/logan/multiurlmanager/library/adapter/BaseUrlAdapter$BaseUrlViewHolder;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "replaceEnvironment$library_android_release",
+          "descriptor": "(Ljava/util/List;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setListData",
+          "descriptor": "(Ljava/util/List;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setNewInstance",
+          "descriptor": "(Ljava/util/List;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setOnActions",
+          "descriptor": "(Lkotlin/jvm/functions/Function2;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setOnSelect",
+          "descriptor": "(Lkotlin/jvm/functions/Function1;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setSelected",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/bean/BaseUrl;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setSourceLabel",
+          "descriptor": "(Lkotlin/jvm/functions/Function1;)V",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.adapter.BaseUrlAdapter$Companion": {
+      "kind": "class",
+      "supertypes": [],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Lkotlin/jvm/internal/DefaultConstructorMarker;)V",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.adapter.BaseUrlAdapter$BaseUrlViewHolder": {
+      "kind": "class",
+      "supertypes": [
+        "androidx.recyclerview.widget.RecyclerView$ViewHolder"
+      ],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Landroid/view/View;)V",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.adapter.BaseUrlAdapter$HeaderViewHolder": {
+      "kind": "class",
+      "supertypes": [
+        "com.logan.multiurlmanager.library.adapter.BaseUrlAdapter$BaseUrlViewHolder"
+      ],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Landroid/view/View;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getTvKey",
+          "descriptor": "()Landroid/widget/TextView;",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.adapter.BaseUrlAdapter$NormalViewHolder": {
+      "kind": "class",
+      "supertypes": [
+        "com.logan.multiurlmanager.library.adapter.BaseUrlAdapter$BaseUrlViewHolder"
+      ],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Landroid/view/View;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getIvSelect",
+          "descriptor": "()Landroid/view/View;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getTvSource",
+          "descriptor": "()Landroid/widget/TextView;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getTvUrl",
+          "descriptor": "()Landroid/widget/TextView;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getTvUrlRemark",
+          "descriptor": "()Landroid/widget/TextView;",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.bean.BaseUrl": {
+      "kind": "class",
+      "supertypes": [
+        "android.os.Parcelable",
+        "java.lang.Comparable"
+      ],
+      "members": [
+        {
+          "kind": "field",
+          "name": "CREATOR",
+          "descriptor": "Landroid/os/Parcelable$Creator;",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;J)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;JILkotlin/jvm/internal/DefaultConstructorMarker;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "compareTo",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/bean/BaseUrl;)I",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "compareTo",
+          "descriptor": "(Ljava/lang/Object;)I",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component1",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component2",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component3",
+          "descriptor": "()Z",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component4",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component5",
+          "descriptor": "()J",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "copy",
+          "descriptor": "(Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;J)Lcom/logan/multiurlmanager/library/bean/BaseUrl;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "copy$default",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/bean/BaseUrl;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;JILjava/lang/Object;)Lcom/logan/multiurlmanager/library/bean/BaseUrl;",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "describeContents",
+          "descriptor": "()I",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "equals",
+          "descriptor": "(Ljava/lang/Object;)Z",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getConfigKey",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getRemark",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getSelect",
+          "descriptor": "()Z",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getTime",
+          "descriptor": "()J",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getUrl",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "hashCode",
+          "descriptor": "()I",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setRemark",
+          "descriptor": "(Ljava/lang/String;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setSelect",
+          "descriptor": "(Z)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "toString",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "writeToParcel",
+          "descriptor": "(Landroid/os/Parcel;I)V",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.bean.BaseUrl$Creator": {
+      "kind": "class",
+      "supertypes": [
+        "android.os.Parcelable$Creator"
+      ],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "()V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "createFromParcel",
+          "descriptor": "(Landroid/os/Parcel;)Lcom/logan/multiurlmanager/library/bean/BaseUrl;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "createFromParcel",
+          "descriptor": "(Landroid/os/Parcel;)Ljava/lang/Object;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "newArray",
+          "descriptor": "(I)[Lcom/logan/multiurlmanager/library/bean/BaseUrl;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "newArray",
+          "descriptor": "(I)[Ljava/lang/Object;",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.bean.BaseUrlSection": {
+      "kind": "class",
+      "supertypes": [],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "()V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/bean/BaseUrl;Ljava/lang/String;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/bean/BaseUrl;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getBaseUrl",
+          "descriptor": "()Lcom/logan/multiurlmanager/library/bean/BaseUrl;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getHeaderText",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "isHeader",
+          "descriptor": "()Z",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.utils.BaseUrlConfigLoader": {
+      "kind": "class",
+      "supertypes": [],
+      "members": [
+        {
+          "kind": "field",
+          "name": "DEBUG_CONFIG_KEY",
+          "descriptor": "Ljava/lang/String;",
+          "static": true
+        },
+        {
+          "kind": "field",
+          "name": "INSTANCE",
+          "descriptor": "Lcom/logan/multiurlmanager/library/utils/BaseUrlConfigLoader;",
+          "static": true
+        },
+        {
+          "kind": "field",
+          "name": "RELEASE_CONFIG_KEY",
+          "descriptor": "Ljava/lang/String;",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "loadConfiguration$library_android_release",
+          "descriptor": "(Landroid/content/Context;)Lcom/logan/multiurlmanager/library/utils/BaseUrlConfigLoader$Configuration;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "loadEnvironments",
+          "descriptor": "(Landroid/content/Context;)Ljava/util/List;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "loadFromAssets",
+          "descriptor": "(Landroid/content/Context;Ljava/lang/String;)Ljava/util/List;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "parseConfiguration$library_android_release",
+          "descriptor": "(Ljava/lang/String;)Lcom/logan/multiurlmanager/library/utils/BaseUrlConfigLoader$Configuration;",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.utils.BaseUrlUtil": {
+      "kind": "class",
+      "supertypes": [],
+      "members": [
+        {
+          "kind": "field",
+          "name": "INSTANCE",
+          "descriptor": "Lcom/logan/multiurlmanager/library/utils/BaseUrlUtil;",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "clear",
+          "descriptor": "(Landroid/content/Context;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getBaseURL",
+          "descriptor": "(Landroid/content/Context;Ljava/lang/String;)Lcom/logan/multiurlmanager/library/bean/BaseUrl;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "loadDynamicBaseUrlConfigs",
+          "descriptor": "(Landroid/content/Context;)Ljava/util/Map;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "put",
+          "descriptor": "(Landroid/content/Context;Lcom/logan/multiurlmanager/library/bean/BaseUrl;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "remove",
+          "descriptor": "(Landroid/content/Context;Lcom/logan/multiurlmanager/library/bean/BaseUrl;)V",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.UrlEnvironment": {
+      "kind": "class",
+      "supertypes": [],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/Set;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component1",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component2",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component3",
+          "descriptor": "()Ljava/util/List;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component4",
+          "descriptor": "()Ljava/util/Set;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "copy",
+          "descriptor": "(Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/Set;)Lcom/logan/multiurlmanager/library/UrlEnvironment;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "copy$default",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/UrlEnvironment;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/Set;ILjava/lang/Object;)Lcom/logan/multiurlmanager/library/UrlEnvironment;",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "equals",
+          "descriptor": "(Ljava/lang/Object;)Z",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getId",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getName",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getRequiredKeys",
+          "descriptor": "()Ljava/util/Set;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getUrls",
+          "descriptor": "()Ljava/util/List;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "hashCode",
+          "descriptor": "()I",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "toString",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.UrlSnapshot": {
+      "kind": "class",
+      "supertypes": [],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(JLjava/lang/String;Ljava/util/List;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component1",
+          "descriptor": "()J",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component2",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component3",
+          "descriptor": "()Ljava/util/List;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "copy",
+          "descriptor": "(JLjava/lang/String;Ljava/util/List;)Lcom/logan/multiurlmanager/library/UrlSnapshot;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "copy$default",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/UrlSnapshot;JLjava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/logan/multiurlmanager/library/UrlSnapshot;",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "effectiveUrls",
+          "descriptor": "()Ljava/util/Map;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "equals",
+          "descriptor": "(Ljava/lang/Object;)Z",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getEnvironmentId",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getEnvironments",
+          "descriptor": "()Ljava/util/List;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getRevision",
+          "descriptor": "()J",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getUrls",
+          "descriptor": "()Ljava/util/List;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "hashCode",
+          "descriptor": "()I",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "toString",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.SaveResult": {
+      "kind": "class",
+      "supertypes": [],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Lkotlin/jvm/internal/DefaultConstructorMarker;)V",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.SaveResult$Success": {
+      "kind": "class",
+      "supertypes": [
+        "com.logan.multiurlmanager.library.SaveResult"
+      ],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/UrlSnapshot;Z)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component1",
+          "descriptor": "()Lcom/logan/multiurlmanager/library/UrlSnapshot;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component2",
+          "descriptor": "()Z",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "copy",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/UrlSnapshot;Z)Lcom/logan/multiurlmanager/library/SaveResult$Success;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "copy$default",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/SaveResult$Success;Lcom/logan/multiurlmanager/library/UrlSnapshot;ZILjava/lang/Object;)Lcom/logan/multiurlmanager/library/SaveResult$Success;",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "equals",
+          "descriptor": "(Ljava/lang/Object;)Z",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getChanged",
+          "descriptor": "()Z",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getSnapshot",
+          "descriptor": "()Lcom/logan/multiurlmanager/library/UrlSnapshot;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "hashCode",
+          "descriptor": "()I",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "toString",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.SaveResult$Failure": {
+      "kind": "class",
+      "supertypes": [
+        "com.logan.multiurlmanager.library.SaveResult"
+      ],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/SaveResult$Reason;Ljava/lang/String;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component1",
+          "descriptor": "()Lcom/logan/multiurlmanager/library/SaveResult$Reason;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component2",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "copy",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/SaveResult$Reason;Ljava/lang/String;)Lcom/logan/multiurlmanager/library/SaveResult$Failure;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "copy$default",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/SaveResult$Failure;Lcom/logan/multiurlmanager/library/SaveResult$Reason;Ljava/lang/String;ILjava/lang/Object;)Lcom/logan/multiurlmanager/library/SaveResult$Failure;",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "equals",
+          "descriptor": "(Ljava/lang/Object;)Z",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getMessage",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getReason",
+          "descriptor": "()Lcom/logan/multiurlmanager/library/SaveResult$Reason;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "hashCode",
+          "descriptor": "()I",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "toString",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.SaveResult$Reason": {
+      "kind": "class",
+      "supertypes": [
+        "java.lang.Enum"
+      ],
+      "members": [
+        {
+          "kind": "field",
+          "name": "CONFLICT",
+          "descriptor": "Lcom/logan/multiurlmanager/library/SaveResult$Reason;",
+          "static": true
+        },
+        {
+          "kind": "field",
+          "name": "STORAGE",
+          "descriptor": "Lcom/logan/multiurlmanager/library/SaveResult$Reason;",
+          "static": true
+        },
+        {
+          "kind": "field",
+          "name": "VALIDATION",
+          "descriptor": "Lcom/logan/multiurlmanager/library/SaveResult$Reason;",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "getEntries",
+          "descriptor": "()Lkotlin/enums/EnumEntries;",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "valueOf",
+          "descriptor": "(Ljava/lang/String;)Lcom/logan/multiurlmanager/library/SaveResult$Reason;",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "values",
+          "descriptor": "()[Lcom/logan/multiurlmanager/library/SaveResult$Reason;",
+          "static": true
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.UrlChangeListener": {
+      "kind": "interface",
+      "supertypes": [],
+      "members": [
+        {
+          "kind": "method",
+          "name": "onChanged",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/UrlSnapshot;Lcom/logan/multiurlmanager/library/UrlSnapshot;)V",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.BaseUrlManagerContract": {
+      "kind": "class",
+      "supertypes": [
+        "androidx.activity.result.contract.ActivityResultContract"
+      ],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "()V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "createIntent",
+          "descriptor": "(Landroid/content/Context;Landroid/os/Bundle;)Landroid/content/Intent;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "createIntent",
+          "descriptor": "(Landroid/content/Context;Ljava/lang/Object;)Landroid/content/Intent;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "parseResult",
+          "descriptor": "(ILandroid/content/Intent;)Lcom/logan/multiurlmanager/library/BaseUrlManagerResult;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "parseResult",
+          "descriptor": "(ILandroid/content/Intent;)Ljava/lang/Object;",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.BaseUrlManagerResult": {
+      "kind": "class",
+      "supertypes": [],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Ljava/lang/String;JZLjava/util/List;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component1",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component2",
+          "descriptor": "()J",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component3",
+          "descriptor": "()Z",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component4",
+          "descriptor": "()Ljava/util/List;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "copy",
+          "descriptor": "(Ljava/lang/String;JZLjava/util/List;)Lcom/logan/multiurlmanager/library/BaseUrlManagerResult;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "copy$default",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/BaseUrlManagerResult;Ljava/lang/String;JZLjava/util/List;ILjava/lang/Object;)Lcom/logan/multiurlmanager/library/BaseUrlManagerResult;",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "equals",
+          "descriptor": "(Ljava/lang/Object;)Z",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getChanged",
+          "descriptor": "()Z",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getEnvironmentId",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getRevision",
+          "descriptor": "()J",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getUrls",
+          "descriptor": "()Ljava/util/List;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "hashCode",
+          "descriptor": "()I",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "toString",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.library.BaseUrlManagerActivity$EditorState": {
+      "kind": "class",
+      "supertypes": [
+        "androidx.lifecycle.ViewModel"
+      ],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "()V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getDraft",
+          "descriptor": "()Lcom/logan/multiurlmanager/library/UrlSnapshot;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getForm",
+          "descriptor": "()Landroid/os/Bundle;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getLastKey",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getObserver",
+          "descriptor": "()Lkotlin/jvm/functions/Function0;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getOriginal",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getReloadResult-xLWZpok",
+          "descriptor": "()Lkotlin/Result;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getResult",
+          "descriptor": "()Lcom/logan/multiurlmanager/library/SaveResult;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getSaving",
+          "descriptor": "()Z",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setDraft",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/UrlSnapshot;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setForm",
+          "descriptor": "(Landroid/os/Bundle;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setLastKey",
+          "descriptor": "(Ljava/lang/String;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setObserver",
+          "descriptor": "(Lkotlin/jvm/functions/Function0;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setOriginal",
+          "descriptor": "(Ljava/lang/String;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setReloadResult",
+          "descriptor": "(Lkotlin/Result;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setResult",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/SaveResult;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "setSaving",
+          "descriptor": "(Z)V",
+          "static": false
+        }
+      ]
+    }
+  }
+}

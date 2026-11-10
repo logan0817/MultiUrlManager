@@ -9,7 +9,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from artifacts import verify
+from artifacts import create, publication_files, verify
 from instrumentation import validate_output
 
 
@@ -17,13 +17,34 @@ def successful(count=1):
     return ''.join(f'INSTRUMENTATION_STATUS: numtests={count}\nINSTRUMENTATION_STATUS_CODE: 1\nINSTRUMENTATION_STATUS_CODE: 0\n' for _ in range(count)) + f'OK ({count} tests)\nINSTRUMENTATION_CODE: -1\n'
 
 
-def release_payload(target):
+def release_payload(target, artifact="multiurlmanager", version="1.1.0"):
     target.mkdir(parents=True, exist_ok=True)
     for suffix in ('.aar', '.pom', '-sources.jar', '-javadoc.jar'):
-        content = (b'<project xmlns="http://maven.apache.org/POM/4.0.0">'
-                   b'<groupId>io.github.logan0817</groupId><artifactId>multiurlmanager</artifactId>'
-                   b'<version>1.1.0</version></project>') if suffix == '.pom' else b'candidate'
-        (target / ('multiurlmanager-1.1.0' + suffix)).write_bytes(content)
+        content = ('<project xmlns="http://maven.apache.org/POM/4.0.0">'
+                   f'<groupId>io.github.logan0817</groupId><artifactId>{artifact}</artifactId>'
+                   f'<version>{version}</version></project>'.encode()) if suffix == '.pom' else b'candidate'
+        (target / (f'{artifact}-{version}' + suffix)).write_bytes(content)
+
+
+def snapshot_payload(target, artifact='multiurlmanager', timestamp='20261030.091951', number=2):
+    version = '1.2.0-SNAPSHOT'
+    resolved = f'1.2.0-{timestamp}-{number}'
+    release_payload(target, artifact, version)
+    entries = []
+    updated = timestamp.replace('.', '')
+    for classifier, extension in (('', 'aar'), ('', 'pom'), ('sources', 'jar'), ('javadoc', 'jar')):
+        suffix = f'-{classifier}' if classifier else ''
+        source = target / f'{artifact}-{version}{suffix}.{extension}'
+        source.rename(target / f'{artifact}-{resolved}{suffix}.{extension}')
+        entries.append(f'<snapshotVersion><classifier>{classifier}</classifier><extension>{extension}</extension>'
+                       f'<value>{resolved}</value><updated>{updated}</updated></snapshotVersion>')
+    metadata = (f'<metadata><groupId>io.github.logan0817</groupId><artifactId>{artifact}</artifactId><version>{version}</version>'
+                f'<versioning><lastUpdated>{updated}</lastUpdated><snapshot><timestamp>{timestamp}</timestamp>'
+                f'<buildNumber>{number}</buildNumber></snapshot><snapshotVersions>{"".join(entries)}</snapshotVersions>'
+                '</versioning></metadata>')
+    path = target / 'maven-metadata.xml'
+    path.write_text(metadata)
+    return resolved
 
 
 class InstrumentationTest(unittest.TestCase):
@@ -128,6 +149,26 @@ class ArtifactTest(unittest.TestCase):
     def test_valid(self):
         self.check()
 
+    def test_new_candidate_requires_both_upgrade_suites_and_publications(self):
+        self.manifest['schemaVersion'] = 2
+        self.manifest['suites'].append({**self.manifest['suites'][1], 'name': 'okhttp'})
+        self.manifest['version'] = '1.2.0'
+        with self.assertRaises(ValueError):
+            self.check()
+        for variant in ('debug', 'release'):
+            self.manifest['suites'].append({**next(s for s in self.manifest['suites'] if s['name'] == 'upgrade-release'), 'name': f'upgrade11-{variant}'})
+        with self.assertRaisesRegex(ValueError, 'Maven'):
+            self.check()
+        for artifact in ('multiurlmanager', 'multiurlmanager-okhttp'):
+            directory = self.root / f'maven/io/github/logan0817/{artifact}/1.2.0'
+            release_payload(directory, artifact, '1.2.0')
+            for path in directory.iterdir():
+                self.manifest['files'].append({'path': path.relative_to(self.root).as_posix(), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
+        self.check()
+        self.manifest['schemaVersion'] = 1
+        with self.assertRaises(ValueError):
+            self.check()
+
     def test_identity(self):
         self.manifest['sha'] = 'wrong'
         with self.assertRaises(ValueError):
@@ -154,6 +195,157 @@ class ArtifactTest(unittest.TestCase):
         self.manifest['suites'].pop()
         with self.assertRaises(ValueError):
             self.check()
+
+
+class CandidateCreationTest(unittest.TestCase):
+    def test_new_manifest_uses_exact_current_publications_and_all_upgrade_apks(self):
+        self.assert_candidate('1.2.0')
+
+    def test_timestamped_snapshot_can_be_created_verified_and_rejects_wrong_round(self):
+        self.assert_candidate('1.2.0-SNAPSHOT')
+
+    def assert_candidate(self, version):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            candidate = root / 'candidate'
+            base = [
+                'app/build/outputs/apk/debug/app-debug.apk',
+                'app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk',
+                'library-android/build/outputs/apk/androidTest/debug/library-android-debug-androidTest.apk',
+                'library-okhttp/build/outputs/apk/androidTest/debug/library-okhttp-debug-androidTest.apk',
+                'fixtures/consumer/app/build/outputs/apk/minified/app-minified.apk',
+                'fixtures/consumer/app/build/outputs/apk/androidTest/minified/app-minified-androidTest.apk',
+            ]
+            packages = {}
+            for path in base:
+                packages[path] = 'test.app'
+            for baseline, stages in (('', ('legacy', 'current')), ('11', ('legacy11', 'current11'))):
+                for variant in ('debug', 'release'):
+                    for stage in stages:
+                        for test in (False, True):
+                            folder = f'androidTest/{variant}' if test else variant
+                            filename = f'app{baseline}-{variant}' + ('-androidTest' if test else '') + '.apk'
+                            path = f'fixtures/upgrade/build/{stage}/app/outputs/apk/{folder}/{filename}'
+                            packages[path] = f'com.logan.multiurlmanager.upgrade{baseline}.{variant}' + ('.test' if test else '')
+            for path in packages:
+                target = root / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(path.encode())
+            for artifact in ('multiurlmanager', 'multiurlmanager-okhttp'):
+                target = root / 'build/ci/maven/io/github/logan0817' / artifact / version
+                if version.endswith('-SNAPSHOT'):
+                    snapshot_payload(target, artifact, '20261030.084946', 1)
+                    snapshot_payload(target, artifact)
+                else:
+                    release_payload(target, artifact, version)
+            release_payload(root / 'build/ci/maven/io/github/logan0817/multiurlmanager/1.1.0')
+            with patch.dict(os.environ, {'RELEASE_VERSION': version}), \
+                    patch('artifacts.apk_info', side_effect=lambda aapt, path: packages[path.relative_to(root).as_posix()]):
+                create(root, candidate, 'abc', '3', '1', 'aapt')
+            manifest = verify(candidate, 'abc', '3', '1')
+            self.assertEqual(len(manifest['suites']), 8)
+            self.assertEqual(len(list((candidate / 'apk').glob('*.apk'))), 22)
+            self.assertFalse(any('1.1.0' in entry['path'] for entry in manifest['files']))
+            if version.endswith('-SNAPSHOT'):
+                self.assertEqual(manifest['snapshotVersions'], {
+                    artifact: '1.2.0-20261030.091951-2' for artifact in ('multiurlmanager', 'multiurlmanager-okhttp')})
+                self.assertFalse(any('084946-1' in entry['path'] for entry in manifest['files']))
+                manifest['snapshotVersions']['multiurlmanager'] = '1.2.0-20261030.084946-1'
+                (candidate / 'manifest.json').write_text(json.dumps(manifest))
+                with self.assertRaisesRegex(ValueError, '轮次'):
+                    verify(candidate, 'abc', '3', '1')
+                manifest['snapshotVersions']['multiurlmanager'] = '1.2.0-20261030.091951-2'
+                extra = candidate / 'maven/io/github/logan0817/multiurlmanager/1.1.0/old.aar'
+                extra.parent.mkdir(parents=True)
+                extra.write_bytes(b'old')
+                manifest['files'].append({'path': extra.relative_to(candidate).as_posix(), 'sha256': hashlib.sha256(b'old').hexdigest()})
+                (candidate / 'manifest.json').write_text(json.dumps(manifest))
+                with self.assertRaisesRegex(ValueError, '混入'):
+                    verify(candidate, 'abc', '3', '1')
+
+
+class SnapshotPublicationTest(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.version = '1.2.0-SNAPSHOT'
+        self.old = snapshot_payload(self.root, timestamp='20261030.084946', number=1)
+        self.latest = snapshot_payload(self.root)
+
+    def select(self, sealed=False):
+        return publication_files(self.root, 'multiurlmanager', self.version, sealed)
+
+    def test_latest_snapshot_selection_preserves_real_names_and_metadata(self):
+        files, resolved = self.select()
+        self.assertEqual(resolved, self.latest)
+        self.assertEqual(len(files), 5)
+        self.assertTrue(all(self.old not in path.name for path in files))
+        self.assertIn(self.root / 'maven-metadata.xml', files)
+        sealed = self.root / 'sealed'
+        sealed.mkdir()
+        for file in files:
+            (sealed / file.name).write_bytes(file.read_bytes())
+        self.assertEqual(publication_files(sealed, 'multiurlmanager', self.version, True)[1], self.latest)
+        (sealed / f'multiurlmanager-{self.old}.aar').write_bytes(b'old')
+        with self.assertRaisesRegex(ValueError, '混入'):
+            publication_files(sealed, 'multiurlmanager', self.version, True)
+
+    def test_missing_latest_does_not_fall_back_to_complete_older_snapshot(self):
+        (self.root / f'multiurlmanager-{self.latest}-sources.jar').unlink()
+        with self.assertRaisesRegex(ValueError, '缺少'):
+            self.select()
+
+    def test_stale_or_mixed_metadata_is_rejected(self):
+        metadata = self.root / 'maven-metadata.xml'
+        current = metadata.read_text()
+        metadata.write_text(current.replace('20261030.091951', '20261030.084946').replace('20261030091951', '20261030084946').replace('<buildNumber>2', '<buildNumber>1').replace('084946-2', '084946-1'))
+        with self.assertRaisesRegex(ValueError, '陈旧'):
+            self.select()
+        metadata.write_text(current.replace(f'<value>{self.latest}</value>', f'<value>{self.old}</value>', 1))
+        with self.assertRaisesRegex(ValueError, '混入'):
+            self.select()
+
+    def test_missing_duplicate_and_wrong_classifier_or_coordinates_are_rejected(self):
+        metadata = self.root / 'maven-metadata.xml'
+        current = metadata.read_text()
+        invalid = (
+            current.replace('<classifier>sources</classifier>', '<classifier>unknown</classifier>'),
+            current.replace('<classifier>sources</classifier>', '<classifier>javadoc</classifier>'),
+            current.replace('<artifactId>multiurlmanager</artifactId>', '<artifactId>foreign</artifactId>'),
+            current.replace('<extension>aar</extension>', '<extension>jar</extension>'),
+        )
+        for value in invalid:
+            metadata.write_text(value)
+            with self.assertRaises(ValueError):
+                self.select()
+
+    def test_gradle_module_metadata_must_match_snapshot_coordinate(self):
+        module = self.root / f'multiurlmanager-{self.latest}.module'
+        metadata = self.root / 'maven-metadata.xml'
+        content = metadata.read_text().replace('</snapshotVersions>',
+            f'<snapshotVersion><extension>module</extension><value>{self.latest}</value>'
+            '<updated>20261030091951</updated></snapshotVersion></snapshotVersions>')
+        metadata.write_text(content)
+        module.write_text(json.dumps({'component': {'group': 'io.github.logan0817', 'module': 'multiurlmanager', 'version': self.version}}))
+        self.assertIn(module, self.select()[0])
+        module.write_text(json.dumps({'component': {'group': 'io.github.logan0817', 'module': 'other', 'version': self.version}}))
+        with self.assertRaisesRegex(ValueError, 'module metadata'):
+            self.select()
+
+    def test_pom_and_checksum_must_match_selected_snapshot(self):
+        aar = self.root / f'multiurlmanager-{self.latest}.aar'
+        checksum = self.root / (aar.name + '.sha256')
+        checksum.write_text(hashlib.sha256(aar.read_bytes()).hexdigest())
+        self.assertIn(checksum, self.select()[0])
+        checksum.write_text('0' * 64)
+        with self.assertRaisesRegex(ValueError, 'checksum'):
+            self.select()
+        checksum.unlink()
+        pom = self.root / f'multiurlmanager-{self.latest}.pom'
+        pom.write_text(pom.read_text().replace('1.2.0-SNAPSHOT', '1.1.0'))
+        with self.assertRaisesRegex(ValueError, 'POM'):
+            self.select()
 
 
 class ReleasePayloadTest(unittest.TestCase):

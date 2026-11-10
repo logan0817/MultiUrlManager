@@ -16,6 +16,12 @@
       "minLength": 1,
       "description": "首次初始化的环境 id，必须存在于 environments"
     },
+    "businessNames": {
+      "type": "object",
+      "description": "业务键到展示名称的可选映射，不改变查询键或持久化数据",
+      "propertyNames": {"minLength": 1},
+      "additionalProperties": {"type": "string", "minLength": 1}
+    },
     "environments": {
       "type": "array",
       "minItems": 1,

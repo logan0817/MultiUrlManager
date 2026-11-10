@@ -21,9 +21,11 @@ android {
         applicationId = APP_ID
         versionCode = APP_VERSION_CODE.toInt()
         versionName = APP_VERSION_NAME
+        buildConfigField("boolean", "FIXED_PRODUCTION", "false")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures {
+        buildConfig = true
         viewBinding = true
     }
     compileOptions {
@@ -32,6 +34,8 @@ android {
     }
     buildTypes {
         getByName("release") {
+            // 这是宿主示例的显式策略；库本身不会根据构建类型推断生产环境。
+            buildConfigField("boolean", "FIXED_PRODUCTION", "true")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -57,6 +61,8 @@ tasks.withType<KotlinCompile>().configureEach {
 
 dependencies {
     implementation(projects.libraryAndroid)
+    implementation(projects.libraryOkhttp)
+    implementation(libs.retrofit)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.constraint.layout)
     implementation(libs.androidx.core.ktx)

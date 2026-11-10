@@ -1,32 +1,32 @@
 # CI 与发布
 
-工作流源文件：[ci.yml](../.github/workflows/ci.yml)、[release.yml](../.github/workflows/release.yml)。普通 CI 已在云端执行，具体提交是否通过以 [GitHub Actions 的对应运行](https://github.com/logan0817/MultiUrlManager/actions/workflows/ci.yml) 为准。1.1.0 已在本机上传并正式发布到 Central，公开文件与签名核对通过，见[本次记录](#110-上传验收记录)。本项目采用与 FlowBus 一致的本机发布方式：普通 CI 验证候选，本机 GPG 签名后上传并在 Central 正式发布。`release.yml` 保留为可选云端入口，尚未启用；无需为本机发布创建 GitHub release environment 或上传发布凭据。
+工作流源文件：[ci.yml](../.github/workflows/ci.yml)、[release.yml](../.github/workflows/release.yml)。1.1.0 的普通 CI 已在云端执行；1.2 开发版工作流改动目前仅在本地验证，具体提交是否通过以 [GitHub Actions 的对应运行](https://github.com/logan0817/MultiUrlManager/actions/workflows/ci.yml) 为准。1.1.0 已在本机上传并正式发布到 Central，公开文件与签名核对通过，见[本次记录](#110-上传验收记录)。本项目采用与 FlowBus 一致的本机发布方式：普通 CI 验证候选，本机 GPG 签名后上传并在 Central 正式发布。`release.yml` 保留为可选云端入口，尚未启用；无需为本机发布创建 GitHub release environment 或上传发布凭据。
 
 ## 普通验证
 
-CI 覆盖 PR、main push、merge_group 与手动验证，使用标准 Ubuntu 24.04、JDK 17。功能分支没有额外 push 验证，避免同一 PR 重复运行。PR 新提交取消该 PR 旧运行；非 PR 按 run ID 独立分组，避免同一 main 分支的后续提交替换此前 pending 验证。发布单独串行，不取消正在执行的发布。
+CI 覆盖 PR、main push、merge_group 与手动验证，使用标准 Ubuntu 24.04、JDK 17。本轮 1.2 验收另允许 `codex/v1.2.0-development` 分支的 push 触发完整验证，便于直接推送修复并收集 API 24/36 结果；其他功能分支没有额外 push 验证。本轮不创建 PR，避免与开发分支 push 重复运行。PR 新提交取消该 PR 旧运行；非 PR 按 run ID 独立分组，避免同一 main 分支的后续提交替换此前 pending 验证。发布单独串行，不取消正在执行的发布。
 
 quality 显式初始化 SDK 命令路径，并创建仅包含 `android-36` 平台的临时 SDK 视图，复用已安装的构建工具和已接受的许可。这样运行器预装 API 37 等新平台时，不会改变 Lint 的最高平台判断；所有 Lint 检查保持启用。升级项目 SDK 基线时须同步该步骤。设备 job 仍分别使用 API 24/36 的完整模拟器环境。
 
 | job | 内容 | 超时 |
 | --- | --- | --- |
-| quality | Python 脚本测试（含真实临时 GPG 密钥）、文档/图片/JSON/XML、actionlint、JVM（含 README JSON）、Lint、Debug/Release、仪器 APK、本地 Maven、publication/项目批次名、1.0.6 公开 ABI、真实 AAR/R8 与中英文 README Kotlin 示例编译 | 30 分钟 |
-| device / API 24、36 | 下载同轮候选，校验身份与摘要，安装应用/库/混淆消费 APK，执行仪器测试及 Debug/Release 真实旧库覆盖升级 | 各 35 分钟 |
+| quality | Python 脚本测试（含真实临时 GPG 密钥）、文档/图片/JSON/XML、actionlint、JVM（含 README JSON）、Lint、Debug/Release、仪器 APK、本地 Maven、publication/项目批次名、1.0.6/1.1.0 公开 ABI、Kotlin/Java 源码及旧二进制消费、真实双制品 AAR/R8 与中英文 README Kotlin 示例编译 | 30 分钟 |
+| device / API 24、36 | 下载同轮候选，校验身份与摘要，安装应用/库/混淆消费 APK，执行 8 套件、22 APK 的仪器测试及 1.0.6/1.1.0 Debug/Release 真实旧库覆盖升级 | 各 35 分钟 |
 | required | 总是汇总 quality、device 的结果；失败、取消、跳过均不通过 | 5 分钟 |
 
 设备矩阵 `fail-fast: false`，收集两端结果，不在设备 job 重建应用。`google_apis;x86_64` API 24/36 镜像已在云端完成下载、启动和测试执行；不能把设备启动成功视为测试通过，仍须核对该提交全部套件与 required 的终态。
 
 仓库维护者可把 `CI / required` 作为预期的分支保护入口，实际 GitHub UI 显示名以首次运行结果为准；首次启用需核对再配置。工作流不会自行修改分支规则、合并队列、环境审批或仓库权限。
 
-Actions 固定完整 SHA，checkout 不保留写凭据，PR 不使用 secrets，也不使用 pull_request_target 执行 PR 内容。Gradle 缓存仅由 setup-gradle 管理，v6 显式使用 `cache-provider: basic`；PR、合并队列和手动运行只读，main push 可写。没有额外 Build Scan 或付费缓存服务上传。缓存未命中仍执行完整任务。
+Actions 固定完整 SHA，checkout 不保留写凭据，PR 不使用 secrets，也不使用 pull_request_target 执行 PR 内容。Gradle 缓存仅由 setup-gradle 管理，v6 显式使用 `cache-provider: basic`；仅 main push 可写，开发分支、PR、合并队列和手动运行只读。没有额外 Build Scan 或付费缓存服务上传。缓存未命中仍执行完整任务。
 
 ## 公开 ABI 门槛
 
-quality 在 publication 完成后、独立消费前运行 `python3 scripts/ci/check-api.py`。脚本下载并校验固定 SHA-256 的真实 Maven Central 1.0.6 AAR，再核对仓库基线与当前 Release AAR。当前覆盖 17 个公开类、105 个字段/方法，检查缺失类、类型关系与 JVM 成员描述符；本地已通过。范围与行为兼容限制见 [API 文档](api.md#已发布二进制兼容基线)。
+quality 在 publication 完成后、独立消费前运行 `python3 scripts/ci/check-api.py`。脚本下载并校验固定 SHA-256 的真实 Maven Central 1.0.6 和 1.1.0 AAR，再核对仓库基线与当前 Release AAR。两代分别覆盖 17 类/105 成员与 27 类/239 成员，检查类型关系、JVM 成员描述符、默认构造与 copy、SaveResult 封闭分支及枚举值。独立 compatibility 工程分别以 1.1.0 和 current 编译同一 Kotlin/Java 消费端，再运行于 current AAR；具体版本的通过状态见开发验证记录。范围与行为兼容限制见 [API 文档](api.md#已发布二进制兼容基线)。
 
 ## 同轮候选与测试判定
 
-`scripts/ci/artifacts.py` 生成 `build/ci/candidate/manifest.json`，记录实际受测 SHA、PR head、event、run ID、attempt、版本、工具链、APK 包名/runner 与逐文件 SHA-256。候选包含仪器 APK 和本地 Maven 文件；缺少 AAR/POM/sources 即失败。
+`scripts/ci/artifacts.py` 生成 `build/ci/candidate/manifest.json`，记录实际受测 SHA、PR head、event、run ID、attempt、版本、工具链、APK 包名/runner 与逐文件 SHA-256。1.2.0 起候选使用 schema 2，包含 8 套件、22 APK，以及同版本的核心与可选 OkHttp 两个 Maven 制品；缺少任一制品的 AAR/POM/sources 即失败。旧 schema 1 的 1.1.0 单制品候选仍可用于历史发布恢复。
 
 设备只下载 artifact `candidate-<run-id>-<attempt>`，核验身份、文件摘要与必需套件，拒绝未声明文件或越界路径。不能从历史成功运行补取缺失产物。
 
@@ -40,7 +40,7 @@ quality 在 publication 完成后、独立消费前运行 `python3 scripts/ci/ch
 
 1. `APP_VERSION_NAME` 为对应正式版本，不能含 SNAPSHOT；消费 fixture 使用同一版本。
 2. tag 指向 main 上提交，且该 SHA 有完整成功的 main push CI，两个设备矩阵与 required 均已完成。
-3. CI 候选仍在保留期内，版本包含 AAR、POM、sources、javadoc；版本、许可证、SCM 与依赖准确。
+3. CI 候选仍在保留期内，两个制品均包含 AAR、POM、sources、javadoc；版本、许可证、SCM 与依赖准确。1.1.0 历史候选仍按当时的单制品范围核对。
 
 ## 可选云端发布（未启用）
 
@@ -51,13 +51,13 @@ quality 在 publication 完成后、独立消费前运行 `python3 scripts/ci/ch
 
 发布 workflow 仅允许从 main 发起。无凭据的 source job 验证 tag、版本、祖先关系与 CI 来源；经环境审批后 publish job 下载所选 CI 的同一候选，重新核验 manifest，使用临时 GPG 目录签名，并通过 [Central Portal API](https://central.sonatype.org/publish/publish-portal-api/) 上传固定文件，不重新编译。
 
-`upload` 采用 USER_MANAGED，批次名为 `io.github.logan0817-MultiUrlManager-<version>`，实际坐标仍为 `io.github.logan0817:multiurlmanager:<version>`。取得 deployment ID 后轮询状态，在 VALIDATED 核对 ID、坐标和部署文件与受测候选一致，然后结束。Central 可同时返回同一坐标的基础 purl 与 `?type=aar` purl，校验接受二者及其组合，仍拒绝重复、其他类型、业务库或版本；VALIDATED 的坐标为空也会失败。审核完成后，再以 `action=publish`、同一 tag 和该 deployment ID 调度工作流；重新核验候选与部署内容后才调用正式发布 API。PUBLISHED 响应可能不再提供组件 purl，此时仍要求原 deployment ID 一致，并逐个下载公开 AAR/POM/JAR/module 与受测候选对比 SHA-256；文件不可用或内容不一致均失败，不能只依据状态成功。[Central 官方 API](https://central.sonatype.org/publish/publish-portal-api/) 明确区分上传、VALIDATED 和正式发布。
+`upload` 采用 USER_MANAGED，批次名为 `io.github.logan0817-MultiUrlManager-<version>`，1.2.0 起实际坐标为 `io.github.logan0817:multiurlmanager:<version>` 与 `io.github.logan0817:multiurlmanager-okhttp:<version>`，两者必须齐全且版本一致；1.1.0 保留单坐标恢复。取得 deployment ID 后轮询状态，在 VALIDATED 核对 ID、坐标和部署文件与受测候选一致，然后结束。Central 可同时返回同一坐标的基础 purl 与 `?type=aar` purl，校验接受二者及其组合，仍拒绝重复、其他类型、业务库或版本；VALIDATED 的坐标为空也会失败。审核完成后，再以 `action=publish`、同一 tag 和该 deployment ID 调度工作流；重新核验候选与部署内容后才调用正式发布 API。PUBLISHED 响应可能不再提供组件 purl，此时仍要求原 deployment ID 一致，并逐个下载公开 AAR/POM/JAR/module 与受测候选对比 SHA-256；文件不可用或内容不一致均失败，不能只依据状态成功。[Central 官方 API](https://central.sonatype.org/publish/publish-portal-api/) 明确区分上传、VALIDATED 和正式发布。
 
 普通 CI 不含生产凭据，候选签名前后内容不改动。临时签名材料随临时目录删除；`release-status` artifact 只保留公开签名包、完整指纹、deployment ID、公开状态与验证结果，不包含私钥或口令。
 
 ## 默认本机发布流程
 
-本项目参考 KToast、FlowBus 的 `io.github.logan0817` namespace、GPG agent、标准用户级属性与项目批次命名，不复制它们的私有配置，也不引入它们为多模块发布适配的插件内部模型。当前单模块继续使用 Gradle `maven-publish` 生成候选，在本机签名并上传同一份已验收文件。
+本项目参考 KToast、FlowBus 的 `io.github.logan0817` namespace、GPG agent、标准用户级属性与项目批次命名，不复制它们的私有配置，也不引入它们为多模块发布适配的插件内部模型。当前两个 Android library 模块均使用 Gradle `maven-publish` 生成候选，在本机签名并上传同一份已验收文件；只依赖核心制品的宿主不会因此引入 OkHttp。
 
 | 配置 | KToast / FlowBus 的本机约定 | MultiUrlManager 对应入口 |
 | --- | --- | --- |

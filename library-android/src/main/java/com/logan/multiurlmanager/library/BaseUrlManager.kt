@@ -35,7 +35,15 @@ class BaseUrlManager internal constructor(
 
     private val listeners = CopyOnWriteArraySet<UrlChangeListener>()
     private var defaultId: String? = null
+    private var fixedEnvironmentId: String? = null
+    private var businessNames: Map<String, String> = emptyMap()
     private val executor = Executors.newSingleThreadExecutor()
+
+    /** 固定环境由宿主显式选择；该模式不读取或修改设备中保存的配置。 */
+    val isReadOnly: Boolean get() = fixedEnvironmentId != null
+
+    /** 展示名称不参与业务查询或持久化；未配置时返回稳定业务键。 */
+    fun businessName(configKey: String): String = businessNames[configKey] ?: configKey
 
     @Deprecated("Use snapshot() and explicit save")
     override var dynamicUrls: MutableList<BaseUrl>
@@ -50,15 +58,20 @@ class BaseUrlManager internal constructor(
     fun snapshot(): UrlSnapshot = copy(state)
 
     /** 获取内置默认值副本；未知环境抛出 NoSuchElementException。 */
-    fun defaultEnvironment(id: String): UrlEnvironment = defaults.first { it.id == id }.let {
+    fun defaultEnvironment(id: String): UrlEnvironment = defaults.first {
+        it.id == id && (!isReadOnly || it.id == fixedEnvironmentId)
+    }.let {
         it.copy(urls = it.urls.map { url -> url.copy() }, requiredKeys = it.requiredKeys.toSet())
     }
 
     fun getUrl(configKey: String): String? = getBaseUrl(configKey)?.url
 
-    override fun getBaseUrl(configKey: String, defaultUrl: String?): BaseUrl? =
-        state.urls.find { it.configKey == configKey && it.select }?.copy()
-            ?: defaultUrl?.let { UrlRules.normalize(BaseUrl(configKey, it, true)) }
+    override fun getBaseUrl(configKey: String, defaultUrl: String?): BaseUrl? {
+        val selected = state.urls.find { it.configKey == configKey && it.select }?.copy()
+        if (selected != null || defaultUrl == null) return selected
+        require(!isReadOnly) { "Fallback is unavailable in fixed environment mode" }
+        return UrlRules.normalize(BaseUrl(configKey, defaultUrl, true))
+    }
 
     /** 仅环境或生效地址变化才通知；宿主应在相应生命周期结束时移除监听器。 */
     fun addListener(listener: UrlChangeListener) {
@@ -98,6 +111,10 @@ class BaseUrlManager internal constructor(
     }
 
     private fun commit(validated: UrlSnapshot): SaveResult {
+        if (isReadOnly) {
+            return if (validated == state) SaveResult.Success(snapshot(), false)
+            else SaveResult.Failure(SaveResult.Reason.VALIDATION, "Fixed environment is read-only")
+        }
         if (storageUncertain) {
             return SaveResult.Failure(SaveResult.Reason.STORAGE, "Reload storage before retrying")
         }
@@ -208,6 +225,7 @@ class BaseUrlManager internal constructor(
 
     @Synchronized
     override fun refreshData() {
+        if (isReadOnly) return
         val loaded = store.read() ?: throw IllegalStateException("No persisted state; cannot reload")
         val previous = state
         state = copy(loaded)
@@ -240,6 +258,8 @@ class BaseUrlManager internal constructor(
             private var provider: (() -> List<BaseUrl>)? = null
             private var environments: List<UrlEnvironment>? = null
             private var environmentId: String? = null
+            private var fixedEnvironmentId: String? = null
+            private var businessNames: Map<String, String>? = null
 
             fun setDefaultProvider(provider: (() -> List<BaseUrl>)?): Builder = apply { this.provider = provider }
 
@@ -249,13 +269,28 @@ class BaseUrlManager internal constructor(
 
             fun setEnvironments(values: List<UrlEnvironment>): Builder = apply { environments = values }
 
+            /** 仅使用指定的内置环境；不会迁移、删除或覆盖普通模式的设备数据。 */
+            fun setFixedEnvironment(id: String): Builder = apply {
+                require(id.isNotBlank()) { "Fixed environment id must not be blank" }
+                fixedEnvironmentId = id
+            }
+
+            /** 覆盖 JSON 展示名；复制输入，避免初始化后被调用方改写。 */
+            fun setBusinessNames(values: Map<String, String>): Builder = apply {
+                require(values.all { (key, name) -> key.isNotBlank() && name.isNotBlank() }) {
+                    "Business names must not be blank"
+                }
+                businessNames = values.toMap()
+            }
+
             fun build(): BaseUrlManager = synchronized(BaseUrlManager::class.java) {
                 val fileConfig = if (environments == null && provider == null) {
                     BaseUrlConfigLoader.loadConfiguration(context)
                 } else {
                     null
                 }
-                val defaultId = environmentId ?: fileConfig?.defaultEnvironment ?: BaseUrlConfigLoader.RELEASE_CONFIG_KEY
+                val defaultId = fixedEnvironmentId ?: environmentId ?: fileConfig?.defaultEnvironment
+                    ?: BaseUrlConfigLoader.RELEASE_CONFIG_KEY
                 val definitions = (environments
                     ?: provider?.let { listOf(UrlEnvironment(defaultId, defaultId, it())) }
                     ?: requireNotNull(fileConfig).environments).map { UrlRules.validate(it) }
@@ -263,11 +298,30 @@ class BaseUrlManager internal constructor(
                     "Invalid environments"
                 }
                 require(definitions.any { it.id == defaultId }) { "Unknown default environment" }
+                val names = businessNames ?: fileConfig?.businessNames.orEmpty()
+                val knownKeys = definitions.flatMap { env -> env.urls.map { it.configKey } + env.requiredKeys }.toSet()
+                require(names.keys.all { it in knownKeys }) { "Business name references an unknown key" }
                 instance?.let { existing ->
-                    require(sameDefinitions(existing.defaults, definitions) && existing.defaultId == defaultId) {
+                    require(sameDefinitions(existing.defaults, definitions) && existing.defaultId == defaultId &&
+                        existing.fixedEnvironmentId == fixedEnvironmentId && existing.businessNames == names) {
                         "BaseUrlManager already initialized with different configuration"
                     }
                     return@synchronized existing
+                }
+                if (fixedEnvironmentId != null) {
+                    val definition = definitions.single { it.id == fixedEnvironmentId }
+                    // revision 0 仅标识本次只读定义，与设备文件的修订号无关。
+                    val initial = UrlSnapshot(0, definition.id, listOf(definition))
+                    val unusedStore = object : StateStore {
+                        override fun read(): UrlSnapshot? = error("Fixed environment cannot read storage")
+                        override fun write(state: UrlSnapshot) = error("Fixed environment cannot write storage")
+                    }
+                    return@synchronized BaseUrlManager(definitions, initial, unusedStore).also {
+                        it.defaultId = defaultId
+                        it.fixedEnvironmentId = fixedEnvironmentId
+                        it.businessNames = names.toMap()
+                        instance = it
+                    }
                 }
                 val store = FileStateStore(context, definitions)
                 // 已存配置和迁移优先；构建变体只决定首次安装默认值，不强制覆盖用户选择。
@@ -275,6 +329,7 @@ class BaseUrlManager internal constructor(
                 val initial = persisted ?: UrlSnapshot(0, defaultId, definitions).also(store::write)
                 BaseUrlManager(definitions, initial, store).also {
                     it.defaultId = defaultId
+                    it.businessNames = names.toMap()
                     instance = it
                 }
             }

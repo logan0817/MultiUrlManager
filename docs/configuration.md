@@ -32,6 +32,8 @@
 
 `id` 与 `name` 必须非空；id 不能重复。`requiredKeys` 默认空，作为当前环境提交时，声明的键必须存在选中地址。`select` 默认 false，`remark` 可省略。未知 schema 版本、缺失文件、非法字段或同组多选导致初始化失败，不静默加载其他服务器。
 
+1.2 开发版可添加顶层 `businessNames` 对象，例如 `"businessNames": {"order": "订单服务", "login": "登录服务"}`。键必须来自配置中已有业务，值为非空字符串；显示名称不改变 `configKey`、URL 或持久化数据。也可通过 `setBusinessNames(mapOf("order" to "订单服务"))` 显式替换 JSON 映射；输入会被复制，未配置的业务显示原键。旧数组格式不添加此字段。
+
 JSON 可通过顶层 `defaultEnvironment` 声明首次初始化的环境，例如 `dev` 或 `production`，地址也全部保存在 JSON 中。Application 只需调用 `BaseUrlManager.builder(this).build()`。环境 id 必须存在；字段错误时初始化失败。
 
 首次初始化环境选择优先级：显式 `setDefaultEnvironment` / `setFileConfigKey` > JSON 的 `defaultEnvironment` > 兼容回退 `release_defaults`。未提供 JSON 默认字段的已有配置仍可显式指定环境；代码 provider 不读取 JSON，继续使用显式环境或兼容回退。已有持久化状态优先于首次默认值，不因重启或更换构建类型自动切换。
@@ -89,7 +91,7 @@ Debug Demo 包含环境 id `dev`、`test`、`production`，以及业务键 `orde
 
 ## Debug / Release 打包使用哪份配置
 
-Demo 的地址和默认环境均由固定 JSON 提供；`App.kt` 只执行 `builder(this).build()`，没有硬编码 URL、`BuildConfig.DEBUG` 判断或代码配置开关。
+Demo 的地址和首次默认环境由固定 JSON 提供，不在代码中硬编码 URL。1.2 开发版的 `App.kt` 另外根据宿主自身的 `BuildConfig.FIXED_PRODUCTION` 决定运行策略：Debug 使用普通模式，Release 显式调用 `setFixedEnvironment("production")`，只使用包内 production 定义；旧设备配置保留但不参与固定模式选址。
 
 | 构建 | 生效的源码配置文件 | APK 内文件 | 无已存数据时的默认值 | 包内环境 |
 | --- | --- | --- | --- | --- |
@@ -98,6 +100,22 @@ Demo 的地址和默认环境均由固定 JSON 提供；`App.kt` 只执行 `buil
 
 `bash ./gradlew :app:assembleRelease` 生成 Release APK。打包时按 Android 构建源集优先级选择同名 asset，整个 JSON 文件被替换，不会把两份 environments 拼接。签名不会决定配置来源。库 AAR 不包含宿主业务地址，也无法根据库自身的 Release 变体决定宿主环境。
 
-生产案例使用 example.com 保留域名，不是真实线上服务。接入业务项目时编辑宿主 Release JSON 中的生产 URL，无需在 Kotlin 中逐条配置地址。继续使用旧 `debug_defaults` / `release_defaults` 固定数组格式也可以：未显式指定键时新版回退 `release_defaults`。若希望 Debug 自动使用另一套固定数据，可在 `src/debug/assets` 放同名文件，并将希望生效的地址放入 `release_defaults`；这个兼容键名不再代表实际构建类型。新项目推荐用带 `defaultEnvironment` 的新格式。不要把该字段直接加进无 schemaVersion 的旧数组格式。
+生产案例使用 example.com 保留域名，不是真实线上服务。接入业务项目时编辑宿主 Release JSON 中的生产 URL，无需在 Kotlin 中逐条配置地址。核心库普通模式继续兼容旧 `debug_defaults` / `release_defaults` 固定数组格式：未显式指定键时回退 `release_defaults`。普通模式下若希望 Debug 自动使用另一套固定数据，可在 `src/debug/assets` 放同名文件，并将希望生效的地址放入 `release_defaults`；这个兼容键名不再代表实际构建类型。新项目推荐用带 `defaultEnvironment` 的新格式。不要把该字段直接加进无 schemaVersion 的旧数组格式。
 
-**Release 打包只决定包内默认配置，不会清空设备数据。** 覆盖安装同 applicationId 的 Release 包时，新版快照或旧版迁移数据仍优先，原来选中的 dev/test/legacy 可以继续保留，已存环境也不会因从包内移除而被删除。只有无已存数据的首次初始化才默认 production。正式宿主若要求 Release 无条件锁定生产，需要另行定义运行与迁移策略，不能把这里的兼容保留规则理解成强制生产。
+当前 Release Demo 固定选择 `production`。若将它的 JSON 换成仅含旧数组键的配置，必须同步把 `App.kt` 的固定 id 改为实际存在的键（例如 `setFixedEnvironment("release_defaults")`）；若宿主需要继续使用设备保存的选择，则移除固定模式调用，采用普通模式。仅修改 JSON 默认环境不能覆盖固定策略，缺少指定固定 id 会导致初始化失败。
+
+**普通模式下，Release 打包只决定包内默认配置，不会清空设备数据。** 覆盖安装同 applicationId 的 Release 包时，新版快照或旧版迁移数据仍优先，原来选中的 dev/test/legacy 可以继续保留，已存环境也不会因从包内移除而被删除。只有无已存数据的首次初始化才默认 production。1.2 开发版 Demo 额外使用下面的固定模式，示范宿主显式约束；1.1.0 没有此能力。
+
+## 固定环境模式（1.2 开发版）
+
+```kotlin
+BaseUrlManager.builder(context)
+    .setFixedEnvironment("production")
+    .build()
+```
+
+`production` 必须是包内 JSON、显式环境或 provider 的有效环境。固定模式优先于首次默认环境，`snapshot()` 只包含指定的内置定义，revision 为本次只读状态的 0，不代表旧文件的 revision。该模式不读旧文件、不迁移 SharedPreferences、不写快照，也不自动删除旧配置；下次新进程采用普通模式仍可使用旧选择。损坏或未完成的旧文件同样不影响固定模式。
+
+`isReadOnly` 为 true。当前查询、快照和默认值访问均受约束；未知业务返回 null，缺键时传 fallback 会报错，不能借此引入定义外地址。`save` 对相同快照返回 `Success(changed=false)`，实际修改返回既有 `VALIDATION`；旧写入 API 对实际修改抛出异常。`refreshData()` 在此模式为空操作，不启用磁盘配置。监听不会因只读空操作产生通知。
+
+同一进程初始化一次；相同定义、展示名和模式可复用实例，改变模式或固定 id 会明确失败。固定策略由宿主在初始化时决定，不接受外部 Intent 切换。Demo Release 通过自身 `BuildConfig.FIXED_PRODUCTION` 选择此模式，Debug 仍使用普通模式。包内测试地址裁剪仍使用 source set 与产物检查；运行策略不保证其他源码或第三方组件中没有测试地址。

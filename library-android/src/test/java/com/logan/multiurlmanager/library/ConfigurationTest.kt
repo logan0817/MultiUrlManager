@@ -56,4 +56,25 @@ class ConfigurationTest {
         assertEquals(listOf("debug_defaults", "release_defaults"), legacy.environments.map { it.id })
         assertNull(BaseUrlConfigLoader.parseConfiguration("""{"schemaVersion":1,"environments":[$environment]}""").defaultEnvironment)
     }
+
+    @Test fun businessNamesAreOptionalAndDoNotChangeQueryKeys() {
+        val config = BaseUrlConfigLoader.parseConfiguration(
+            """{"schemaVersion":1,"businessNames":{"order":"订单服务"},"environments":[$environment]}"""
+        )
+        assertEquals(mapOf("order" to "订单服务"), config.businessNames)
+        assertEquals("order", config.environments.single().urls.single().configKey)
+        assertTrue(BaseUrlConfigLoader.parseConfiguration(
+            """{"schemaVersion":1,"environments":[$environment]}"""
+        ).businessNames.isEmpty())
+    }
+
+    @Test fun invalidOrUnknownBusinessNamesAreRejected() {
+        for (names in listOf("null", "[]", "1", "{\"order\":1}", "{\"order\":\" \"}", "{\"missing\":\"未知\"}")) {
+            assertThrows(Exception::class.java) {
+                BaseUrlConfigLoader.parseConfiguration(
+                    """{"schemaVersion":1,"businessNames":$names,"environments":[$environment]}"""
+                )
+            }
+        }
+    }
 }

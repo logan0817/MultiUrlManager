@@ -106,6 +106,11 @@ class MainActivityTest {
         ActivityScenario.launch(BaseUrlManagerActivity::class.java).use {
             val current = manager.snapshot()
             assertTrue(manager.save(current.copy(environmentId = "test")) is SaveResult.Success)
+            val applied = InstrumentationRegistry.getInstrumentation().targetContext.getString(
+                LibraryR.string.base_url_active_environment,
+                current.environments.first { it.id == "test" }.name
+            )
+            eventually { onView(withId(LibraryR.id.activeEnvironmentText)).check(matches(withText(applied))) }
             onView(withId(LibraryR.id.btnSave)).perform(click())
             eventually { onView(withText(LibraryR.string.base_url_conflict)).check(matches(isDisplayed())) }
             assertEquals("test", manager.snapshot().environmentId)
@@ -206,8 +211,18 @@ class MainActivityTest {
             onView(withId(android.R.id.button1)).inRoot(isDialog()).perform(click())
             scenario.recreate()
             waitForWindowIdle()
+            val businessName = manager.businessName("order")
+            val groupTitle = if (businessName == "order") businessName else "$businessName · order"
+            onView(withText(groupTitle)).perform(click())
             onView(withId(LibraryR.id.btnSave)).perform(click())
             eventually { onView(withText(LibraryR.string.base_url_validation_error)).check(matches(isDisplayed())) }
+            onView(withId(android.R.id.button1)).inRoot(isDialog()).perform(click())
+            onView(withId(LibraryR.id.validationText)).check(matches(withText(org.hamcrest.Matchers.containsString(groupTitle))))
+            scenario.onActivity { activity ->
+                val adapter = activity.findViewById<androidx.recyclerview.widget.RecyclerView>(LibraryR.id.recyclerView).adapter
+                    as com.logan.multiurlmanager.library.adapter.BaseUrlAdapter
+                assertTrue("必选项错误应重新展开对应业务", adapter.listData.any { it.baseUrl?.configKey == "order" })
+            }
             assertEquals(baseline, manager.snapshot())
         }
     }

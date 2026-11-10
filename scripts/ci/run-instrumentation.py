@@ -33,7 +33,7 @@ def main():
         cleanup_failed = False
         try:
             command(['logcat', '-c'])
-            if name.startswith('upgrade-'):
+            if name.startswith(('upgrade-', 'upgrade11-')):
                 count = run_upgrade(args.candidate, suite, args.reports, command)
                 print(f'{name}: {count} upgrade stages passed')
             else:

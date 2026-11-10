@@ -34,4 +34,25 @@
     <string name="base_url_add_address">添加地址</string>
     <string name="base_url_address">服务地址</string>
     <string name="base_url_duplicate">此业务键下已存在该地址，请编辑已有候选。</string>
+    <string name="base_url_active_environment">当前生效：%1$s</string>
+    <string name="base_url_draft_environment">正在编辑</string>
+    <string name="base_url_fixed_environment">固定环境</string>
+    <string name="base_url_read_only">已固定环境，配置仅供查看。长按地址可复制。</string>
+    <string name="base_url_no_changes">没有未保存的修改</string>
+    <string name="base_url_review_changes">查看变更（%1$d 项）▾</string>
+    <plurals name="base_url_hide_changes">
+        <item quantity="other">返回地址列表（%1$d 项变更）▴</item>
+    </plurals>
+    <string name="base_url_no_selection">未选择地址</string>
+    <string name="base_url_expand_group">展开%1$s</string>
+    <string name="base_url_collapse_group">折叠%1$s</string>
+    <string name="base_url_group_collapsed">▸ 已选：%1$s</string>
+    <string name="base_url_group_expanded">▾ 已选：%1$s</string>
+    <string name="base_url_missing_required">请为必选业务选择地址：%1$s</string>
+    <string name="base_url_change_environment">环境：%1$s → %2$s</string>
+    <string name="base_url_change_location">[%1$s]</string>
+    <string name="base_url_change_selection">%1$s %2$s · 选中地址\n%3$s → %4$s</string>
+    <string name="base_url_change_added">%1$s %2$s · 新增候选\n%3$s</string>
+    <string name="base_url_change_removed">%1$s %2$s · 删除候选\n%3$s</string>
+    <string name="base_url_change_remark">%1$s %2$s · 备注\n%3$s\n%4$s → %5$s</string>
 </resources>

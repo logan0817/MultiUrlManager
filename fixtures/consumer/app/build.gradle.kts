@@ -43,6 +43,8 @@ android {
         applicationId = "com.logan.multiurlmanager.consumer"
         minSdk = 24
         targetSdk = 36
+        versionCode = 1
+        versionName = "verification"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     sourceSets.getByName("main").java.srcDir(readmeSources)
@@ -76,6 +78,7 @@ val libraryVersion = providers.gradleProperty("libraryVersion").getOrElse(
 
 dependencies {
     implementation("io.github.logan0817:multiurlmanager:$libraryVersion")
+    implementation("io.github.logan0817:multiurlmanager-okhttp:$libraryVersion")
     // 业务宿主直接使用的 AppCompat 类型显式声明，不依赖库 implementation 的传递编译可见性。
     implementation("androidx.appcompat:appcompat:1.7.1")
     androidTestImplementation("androidx.test:runner:1.7.0")

@@ -157,6 +157,67 @@ class CentralStagesTest(unittest.TestCase):
             central.payload_files(maven, '1.1.0')
 
 
+class MultiArtifactReleaseTest(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.addCleanup(os.chdir, Path.cwd())
+        os.chdir(self.temp.name)
+        self.maven = Path('build/ci/candidate/maven')
+        self.artifacts = ('multiurlmanager', 'multiurlmanager-okhttp')
+        self.version = '1.2.0'
+        for artifact in self.artifacts:
+            release_payload(self.maven / 'io/github/logan0817' / artifact / self.version, artifact, self.version)
+        self.deployment = '00000000-0000-0000-0000-000000000000'
+        self.coordinates = [f'pkg:maven/io.github.logan0817/{artifact}@1.2.0' for artifact in self.artifacts]
+
+    def test_payload_requires_both_exact_coordinates(self):
+        self.assertEqual(len(central.payload_files(self.maven, self.version)), 8)
+        path = self.maven / 'io/github/logan0817/multiurlmanager-okhttp/1.2.0/multiurlmanager-okhttp-1.2.0.aar'
+        path.unlink()
+        with self.assertRaisesRegex(ValueError, 'multiurlmanager-okhttp'):
+            central.payload_files(self.maven, self.version)
+
+    def test_deployment_requires_both_coordinates_and_accepts_type_variants(self):
+        for purls in (self.coordinates, [p + '?type=aar' for p in self.coordinates],
+                      self.coordinates + [p + '?type=aar' for p in self.coordinates]):
+            central.verify_deployment_identity({'deploymentId': self.deployment, 'purls': purls}, self.deployment, self.version)
+        for purls in (self.coordinates[:1], self.coordinates[1:], self.coordinates * 2,
+                      self.coordinates + ['pkg:maven/other/project@1.2.0'],
+                      [p.replace('1.2.0', '1.1.0') for p in self.coordinates]):
+            with self.assertRaises(ValueError):
+                central.verify_deployment_identity({'deploymentId': self.deployment, 'purls': purls}, self.deployment, self.version)
+
+    def test_recovery_checks_every_file_in_both_artifacts(self):
+        files = central.payload_files(self.maven, self.version)
+        calls = []
+        state = ['VALIDATED']
+        def remote(path, *args, **kwargs):
+            calls.append(path)
+            if path.startswith('status?'):
+                return json.dumps({'deploymentId': self.deployment, 'deploymentState': state[0], 'purls': self.coordinates}).encode()
+            if '/download/' in path:
+                return (self.maven / path.split('/download/', 1)[1]).read_bytes()
+            if path == 'deployment/' + self.deployment:
+                state[0] = 'PUBLISHED'
+                return b''
+            raise AssertionError(path)
+        environment = {'CANDIDATE_SHA': 'abc', 'CANDIDATE_RUN_ID': '1', 'CANDIDATE_ATTEMPT': '1',
+                       'RELEASE_VERSION': self.version, 'RELEASE_ACTION': 'publish', 'DEPLOYMENT_ID': self.deployment}
+        with patch.dict(os.environ, environment, clear=True), \
+                patch.object(central, 'verify', return_value={'version': self.version, 'event': 'push'}), \
+                patch.object(central, 'request', side_effect=remote), \
+                patch.object(central, 'verify_deployment_signatures') as signatures, \
+                patch.object(central.time, 'sleep'), \
+                patch.object(central.urllib.request, 'urlopen', side_effect=lambda url, **kw:
+                    io.BytesIO((self.maven / url.split('/maven2/', 1)[1]).read_bytes())) as public:
+            central.main()
+            signatures.assert_called_once_with(files, self.maven, self.deployment)
+            self.assertEqual(public.call_count, 8)
+        self.assertEqual(len([p for p in calls if '/download/' in p]), 8)
+        self.assertEqual(calls.count('deployment/' + self.deployment), 1)
+
+
 class SigningTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -208,6 +269,25 @@ class SigningTest(unittest.TestCase):
                     for algorithm in ('md5', 'sha1', 'sha256', 'sha512'):
                         expected = hashlib.new(algorithm, archive.read(name + suffix)).hexdigest().encode()
                         self.assertEqual(archive.read(name + suffix + '.' + algorithm), expected)
+
+    def test_two_artifacts_are_signed_with_checksums_in_one_bundle(self):
+        for artifact in ('multiurlmanager', 'multiurlmanager-okhttp'):
+            release_payload(self.maven / 'io/github/logan0817' / artifact / '1.2.0', artifact, '1.2.0')
+        files = central.payload_files(self.maven, '1.2.0')
+        with patch.dict(os.environ, self.env, clear=True):
+            central.create_bundle(files, self.maven, self.output, 'gpg')
+        with zipfile.ZipFile(self.output) as archive:
+            self.assertEqual(len(archive.namelist()), 80)
+            for file in files:
+                relative = file.relative_to(self.maven).as_posix()
+                self.assertEqual(archive.read(relative), file.read_bytes())
+                signature = Path(self.work.name) / (file.name + '.asc')
+                signature.write_bytes(archive.read(relative + '.asc'))
+                central.verify_signature(self.gpg, self.environment, signature, file, self.fingerprints[1])
+                for suffix in ('', '.asc'):
+                    for algorithm in ('md5', 'sha1', 'sha256', 'sha512'):
+                        self.assertEqual(archive.read(relative + suffix + '.' + algorithm),
+                                         hashlib.new(algorithm, archive.read(relative + suffix)).hexdigest().encode())
 
     def test_ci_bundle_selects_expected_key_from_multiple_imported_keys(self):
         with patch.dict(os.environ, {**self.env, 'SIGNING_KEY_BASE64': base64.b64encode(self.export).decode(),

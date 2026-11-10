@@ -7,4 +7,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "upgrade-consumer"
-include(":app")
+include(":app", ":app11")

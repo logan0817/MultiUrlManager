@@ -8,6 +8,14 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import xml.etree.ElementTree as ET
+
+
+def release_artifacts(version):
+    match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)(?:-SNAPSHOT)?", version)
+    if not match:
+        raise ValueError("非法版本")
+    return ("multiurlmanager", "multiurlmanager-okhttp") if tuple(map(int, match.groups())) >= (1, 2, 0) else ("multiurlmanager",)
 
 
 def digest(path):
@@ -23,9 +31,85 @@ def safe_path(root, name):
     return path
 
 
+def publication_files(directory, artifact, version, sealed=False):
+    """按 publication 元数据选择完整单轮文件；封存后禁止夹带其他 snapshot。"""
+    required = {('', 'aar'), ('', 'pom'), ('sources', 'jar'), ('javadoc', 'jar')}
+    selected = []
+    resolved = version
+    if version.endswith('-SNAPSHOT'):
+        metadata = safe_path(directory, 'maven-metadata.xml')
+        if not metadata.is_file():
+            raise ValueError('SNAPSHOT 候选缺少 Maven metadata')
+        root = ET.parse(metadata).getroot()
+        if tuple(root.findtext(key) for key in ('groupId', 'artifactId', 'version')) != (
+                'io.github.logan0817', artifact, version):
+            raise ValueError('SNAPSHOT metadata 坐标不一致')
+        timestamp = root.findtext('versioning/snapshot/timestamp', '')
+        number = root.findtext('versioning/snapshot/buildNumber', '')
+        if not re.fullmatch(r'\d{8}\.\d{6}', timestamp) or not re.fullmatch(r'[1-9]\d*', number):
+            raise ValueError('非法 SNAPSHOT timestamp/buildNumber')
+        updated = timestamp.replace('.', '')
+        if root.findtext('versioning/lastUpdated') != updated:
+            raise ValueError('SNAPSHOT metadata 时间不一致')
+        base_version = version.removesuffix('-SNAPSHOT')
+        resolved = f'{base_version}-{timestamp}-{number}'
+        entries = {}
+        for entry in root.findall('versioning/snapshotVersions/snapshotVersion'):
+            key = (entry.findtext('classifier', ''), entry.findtext('extension', ''))
+            if key in entries or key not in required | {('', 'module')}:
+                raise ValueError('SNAPSHOT metadata 包含重复或未知 classifier/extension')
+            if entry.findtext('value') != resolved or entry.findtext('updated') != updated:
+                raise ValueError('SNAPSHOT metadata 混入其他发布轮次')
+            entries[key] = entry
+        if not required <= entries.keys():
+            raise ValueError('SNAPSHOT metadata 缺少必需 classifier/extension')
+        for classifier, extension in sorted(entries):
+            suffix = f'-{classifier}' if classifier else ''
+            selected.append(safe_path(directory, f'{artifact}-{resolved}{suffix}.{extension}'))
+        selected.append(metadata)
+        # metadata 陈旧时不能退回旧完整轮次，也不能从磁盘猜测补齐半次发布。
+        pattern = re.compile(re.escape(f'{artifact}-{base_version}-') +
+                             r'(\d{8}\.\d{6})-([1-9]\d*)(?:-(?:sources|javadoc))?\.(?:aar|pom|jar|module)(?:\.(?:md5|sha1|sha256|sha512))?')
+        for path in directory.iterdir():
+            match = pattern.fullmatch(path.name)
+            if match and (match.group(1), int(match.group(2))) > (timestamp, int(number)):
+                raise ValueError('SNAPSHOT metadata 陈旧，发现更新发布文件')
+    else:
+        for classifier, extension in sorted(required):
+            suffix = f'-{classifier}' if classifier else ''
+            selected.append(safe_path(directory, f'{artifact}-{version}{suffix}.{extension}'))
+        module = safe_path(directory, f'{artifact}-{version}.module')
+        if module.is_file():
+            selected.append(module)
+    if any(not path.is_file() for path in selected):
+        raise ValueError(f'候选缺少 {artifact} AAR/POM/sources/javadoc/metadata')
+    pom = ET.parse(directory / f'{artifact}-{resolved}.pom').getroot()
+    namespace = {'m': 'http://maven.apache.org/POM/4.0.0'}
+    if tuple(pom.findtext(f'm:{key}', namespaces=namespace) for key in ('groupId', 'artifactId', 'version')) != (
+            'io.github.logan0817', artifact, version):
+        raise ValueError('候选 POM 坐标不一致')
+    module = directory / f'{artifact}-{resolved}.module'
+    if module in selected:
+        component = json.loads(module.read_text()).get('component', {})
+        if tuple(component.get(key) for key in ('group', 'module', 'version')) != (
+                'io.github.logan0817', artifact, version):
+            raise ValueError('Gradle module metadata 坐标不一致')
+    # 保留并验证 Gradle 实际生成的摘要；候选自己的 manifest 再对所有封存文件做 SHA-256。
+    for path in list(selected):
+        for algorithm in ('md5', 'sha1', 'sha256', 'sha512'):
+            checksum = safe_path(directory, path.name + '.' + algorithm)
+            if checksum.exists():
+                if checksum.read_text().strip().lower() != hashlib.new(algorithm, path.read_bytes()).hexdigest():
+                    raise ValueError('Maven 文件 checksum 不匹配')
+                selected.append(checksum)
+    if sealed and {path.name for path in directory.iterdir()} != {path.name for path in selected}:
+        raise ValueError('封存 Maven 目录混入其他发布轮次或未知文件')
+    return selected, resolved
+
+
 def verify(root, sha, run_id, attempt):
     manifest = json.loads((root / 'manifest.json').read_text())
-    if manifest.get('schemaVersion') != 1:
+    if manifest.get('schemaVersion') not in (1, 2):
         raise ValueError('未知 manifest 版本')
     if (manifest['sha'], manifest['runId'], manifest['runAttempt']) != (sha, str(run_id), str(attempt)):
         raise ValueError('候选不属于本轮受测提交/运行')
@@ -40,11 +124,31 @@ def verify(root, sha, run_id, attempt):
     if actual != {f['path'] for f in files} | {'manifest.json'}:
         raise ValueError('候选包含未声明文件')
     names = {s['name'] for s in manifest['suites']}
-    if names != {'app', 'library', 'consumer-minified', 'upgrade-debug', 'upgrade-release'} or len(manifest['suites']) != 5:
+    expected = {'app', 'library', 'consumer-minified', 'upgrade-debug', 'upgrade-release'}
+    if manifest['schemaVersion'] == 2:
+        expected |= {'upgrade11-debug', 'upgrade11-release', 'okhttp'}
+    if names != expected or len(manifest['suites']) != len(expected):
         raise ValueError('必需的仪器测试套件缺失或重复')
     listed = {f['path'] for f in files}
+    if manifest.get('version') and len(release_artifacts(manifest['version'])) == 2:
+        if manifest['schemaVersion'] != 2:
+            raise ValueError('1.2 起必须使用完整新候选套件')
+        snapshots = {}
+        publication_paths = set()
+        for artifact in release_artifacts(manifest['version']):
+            directory = root / 'maven/io/github/logan0817' / artifact / manifest['version']
+            if not directory.is_dir():
+                raise ValueError('候选缺少本轮必需的 Maven 坐标或文件')
+            selected, resolved = publication_files(directory, artifact, manifest['version'], sealed=True)
+            publication_paths.update(path.relative_to(root).as_posix() for path in selected)
+            if manifest['version'].endswith('-SNAPSHOT'):
+                snapshots[artifact] = resolved
+        if {path for path in listed if path.startswith('maven/')} != publication_paths:
+            raise ValueError('候选 Maven 文件混入其他坐标或版本')
+        if snapshots and manifest.get('snapshotVersions') != snapshots:
+            raise ValueError('封存 SNAPSHOT 轮次与候选身份不一致')
     for suite in manifest['suites']:
-        if suite['name'].startswith('upgrade-') and not all(suite.get(key) for key in ('apk', 'testApk', 'legacyApk', 'legacyTestApk')):
+        if suite['name'].startswith(('upgrade-', 'upgrade11-')) and not all(suite.get(key) for key in ('apk', 'testApk', 'legacyApk', 'legacyTestApk')):
             raise ValueError('升级套件缺少旧包或新包')
         for key in ('testApk', 'apk', 'legacyApk', 'legacyTestApk'):
             if suite.get(key) and suite[key] not in listed:
@@ -71,6 +175,7 @@ def create(root, destination, sha, run_id, attempt, aapt):
     definitions = [
         ('app', 'app/build/outputs/apk/debug/app-debug.apk', 'app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk'),
         ('library', None, 'library-android/build/outputs/apk/androidTest/debug/library-android-debug-androidTest.apk'),
+        ('okhttp', None, 'library-okhttp/build/outputs/apk/androidTest/debug/library-okhttp-debug-androidTest.apk'),
         ('consumer-minified', 'fixtures/consumer/app/build/outputs/apk/minified/app-minified.apk', 'fixtures/consumer/app/build/outputs/apk/androidTest/minified/app-minified-androidTest.apk'),
     ]
     for name, app, test in definitions:
@@ -85,34 +190,47 @@ def create(root, destination, sha, run_id, attempt, aapt):
             suite['apk'] = f'apk/{name}.apk'
             shutil.copyfile(root / app, destination / suite['apk'])
         suites.append(suite)
-    for variant in ('debug', 'release'):
-        name = f'upgrade-{variant}'
-        suite = {'name': name, 'runner': 'androidx.test.runner.AndroidJUnitRunner'}
-        for stage in ('legacy', 'current'):
-            for test in (False, True):
-                folder = f'androidTest/{variant}' if test else variant
-                filename = f'app-{variant}' + ('-androidTest' if test else '') + '.apk'
-                source = root / f'fixtures/upgrade/build/{stage}/app/outputs/apk/{folder}/{filename}'
-                key = ('legacyTestApk' if test else 'legacyApk') if stage == 'legacy' else ('testApk' if test else 'apk')
-                suite[key] = f'apk/{name}-{stage}' + ('-test' if test else '') + '.apk'
-                package = apk_info(aapt, source)
-                expected = f'com.logan.multiurlmanager.upgrade.{variant}' + ('.test' if test else '')
-                if package != expected:
-                    raise ValueError('升级前后必须保持相同的夹具包名')
-                suite['testPackage' if test else 'package'] = package
-                shutil.copyfile(source, destination / suite[key])
-        suites.append(suite)
-    maven = root / 'build/ci/maven'
-    if not list(maven.rglob('*.aar')) or not list(maven.rglob('*.pom')) or not list(maven.rglob('*-sources.jar')):
-        raise ValueError('本地 Maven 候选缺少 AAR/POM/sources')
-    shutil.copytree(maven, destination / 'maven', symlinks=False)
+    for baseline, stages in (('', ('legacy', 'current')), ('11', ('legacy11', 'current11'))):
+        for variant in ('debug', 'release'):
+            name = f'upgrade{baseline}-{variant}'
+            suite = {'name': name, 'runner': 'androidx.test.runner.AndroidJUnitRunner'}
+            for stage in stages:
+                old = stage.startswith('legacy')
+                for test in (False, True):
+                    folder = f'androidTest/{variant}' if test else variant
+                    filename = f'app{baseline}-{variant}' + ('-androidTest' if test else '') + '.apk'
+                    source = root / f'fixtures/upgrade/build/{stage}/app/outputs/apk/{folder}/{filename}'
+                    key = ('legacyTestApk' if test else 'legacyApk') if old else ('testApk' if test else 'apk')
+                    suite[key] = f'apk/{name}-{stage}' + ('-test' if test else '') + '.apk'
+                    package = apk_info(aapt, source)
+                    expected = f'com.logan.multiurlmanager.upgrade{baseline}.{variant}' + ('.test' if test else '')
+                    if package != expected:
+                        raise ValueError('升级前后必须保持相同的夹具包名')
+                    suite['testPackage' if test else 'package'] = package
+                    shutil.copyfile(source, destination / suite[key])
+            suites.append(suite)
+    # 只封存本轮版本的实际坐标，避免共享文件仓库的旧版本混进候选。
+    version = os.environ['RELEASE_VERSION']
+    snapshots = {}
+    for artifact in release_artifacts(version):
+        relative = Path('io/github/logan0817') / artifact / version
+        source = root / 'build/ci/maven' / relative
+        selected, resolved = publication_files(source, artifact, version)
+        target = destination / 'maven' / relative
+        target.mkdir(parents=True)
+        for path in selected:
+            shutil.copyfile(path, target / path.name)
+        if version.endswith('-SNAPSHOT'):
+            snapshots[artifact] = resolved
     files = [{'path': p.relative_to(destination).as_posix(), 'sha256': digest(p)}
              for p in sorted(destination.rglob('*')) if p.is_file()]
-    manifest = {'schemaVersion': 1, 'sha': sha, 'runId': str(run_id), 'runAttempt': str(attempt),
+    manifest = {'schemaVersion': 2, 'sha': sha, 'runId': str(run_id), 'runAttempt': str(attempt),
                 'event': os.environ.get('GITHUB_EVENT_NAME', 'local'),
                 'prHead': os.environ.get('PR_HEAD_SHA', ''), 'version': os.environ['RELEASE_VERSION'],
                 'toolchain': {'jdk': '17', 'gradle': '8.14.3', 'compileSdk': 36},
                 'suites': suites, 'files': files}
+    if snapshots:
+        manifest['snapshotVersions'] = snapshots
     (destination / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
     verify(destination, sha, run_id, attempt)
 

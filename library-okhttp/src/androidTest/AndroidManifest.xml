@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 仅仪器测试访问设备自身的 MockWebServer，不改变宿主的明文网络策略。 -->
+    <application android:usesCleartextTraffic="true" />
+</manifest>

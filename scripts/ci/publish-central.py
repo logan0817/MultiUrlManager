@@ -17,7 +17,7 @@ import uuid
 import xml.etree.ElementTree as ET
 import zipfile
 
-from artifacts import verify
+from artifacts import release_artifacts, verify
 
 BASE = 'https://central.sonatype.com/api/v1/publisher/'
 
@@ -30,33 +30,36 @@ def request(path, data=b'', content_type='application/json', method='POST'):
 
 
 def payload_files(maven, version):
-    directory = maven / 'io/github/logan0817/multiurlmanager' / version
     if not re.fullmatch(r'\d+\.\d+\.\d+', version):
         raise ValueError('只允许正式版本发布')
-    required = [f'multiurlmanager-{version}{suffix}' for suffix in ('.aar', '.pom', '-sources.jar', '-javadoc.jar')]
-    if any(not (directory / name).is_file() for name in required):
-        raise ValueError('发布候选缺少 AAR/POM/sources/javadoc')
-    files = [file for file in sorted(directory.iterdir()) if file.suffix in ('.aar', '.pom', '.jar', '.module')]
-    if any(file.name not in required + [f'multiurlmanager-{version}.module'] for file in files):
-        raise ValueError('候选版本目录包含未知发布文件')
-    pom = ET.parse(directory / f'multiurlmanager-{version}.pom').getroot()
-    namespace = {'m': 'http://maven.apache.org/POM/4.0.0'}
-    if tuple(pom.findtext(f'm:{key}', namespaces=namespace) for key in ('groupId', 'artifactId', 'version')) != (
-            'io.github.logan0817', 'multiurlmanager', version):
-        raise ValueError('POM 坐标与发布目标不一致')
+    files = []
+    for artifact in release_artifacts(version):
+        directory = maven / 'io/github/logan0817' / artifact / version
+        required = [f'{artifact}-{version}{suffix}' for suffix in ('.aar', '.pom', '-sources.jar', '-javadoc.jar')]
+        if any(not (directory / name).is_file() for name in required):
+            raise ValueError(f'发布候选缺少 {artifact} AAR/POM/sources/javadoc')
+        payload = [file for file in sorted(directory.iterdir()) if file.suffix in ('.aar', '.pom', '.jar', '.module')]
+        if any(file.name not in required + [f'{artifact}-{version}.module'] for file in payload):
+            raise ValueError('候选版本目录包含未知发布文件')
+        pom = ET.parse(directory / f'{artifact}-{version}.pom').getroot()
+        namespace = {'m': 'http://maven.apache.org/POM/4.0.0'}
+        if tuple(pom.findtext(f'm:{key}', namespaces=namespace) for key in ('groupId', 'artifactId', 'version')) != (
+                'io.github.logan0817', artifact, version):
+            raise ValueError('POM 坐标与发布目标不一致')
+        files.extend(payload)
     return files
 
 
 def verify_deployment_identity(status, deployment, version):
-    expected = f'pkg:maven/io.github.logan0817/multiurlmanager@{version}'
+    expected = {f'pkg:maven/io.github.logan0817/{artifact}@{version}' for artifact in release_artifacts(version)}
     purls = status.get('purls')
-    # PUBLISHED 后组件元数据可能被清理；此时仍须在 main 中逐文件验证公开仓库。
+    # PUBLISHED 后组件元数据可能被清理；此时仍须在 main 中逐文件验证两个坐标的公开仓库。
     if status.get('deploymentId') == deployment and status.get('deploymentState') == 'PUBLISHED' and purls == []:
         return
-    # Central 可同时报告基础坐标与 AAR 类型坐标；两者都必须属于同一受测版本。
     if (status.get('deploymentId') != deployment or not isinstance(purls, list) or not purls
-            or any(not isinstance(purl, str) or purl not in (expected, expected + '?type=aar') for purl in purls)
-            or len(set(purls)) != len(purls)):
+            or any(not isinstance(purl, str) or purl.removesuffix('?type=aar') not in expected for purl in purls)
+            or len(set(purls)) != len(purls)
+            or {purl.removesuffix('?type=aar') for purl in purls} != expected):
         raise ValueError('部署 ID 或坐标不匹配，禁止继续发布')
 
 

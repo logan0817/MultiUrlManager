@@ -5,6 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -15,6 +16,7 @@ class ConsumerTest {
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext, ConsumerActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as ConsumerActivity
         try {
             assertEquals("https://consumer.example.com/", activity.roundTrip())
+            assertTrue("混淆后的路由必须替换来源前缀并携带当前快照上下文", activity.routeIntegration())
             val editor = instrumentation.startActivitySync(Intent().setClassName(
                 instrumentation.targetContext.packageName,
                 "com.logan.multiurlmanager.library.BaseUrlManagerActivity"

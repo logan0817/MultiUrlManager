@@ -1,5 +1,7 @@
 # MultiUrlManager
 
+The source tree is developing **1.2.0-SNAPSHOT** (`io.github.logan0817:multiurlmanager:1.2.0-SNAPSHOT`); it has not been published. New capabilities include an explicit fixed environment, business display names, draft change summaries, and optional OkHttp routing. See the [implementation status](docs/plans/v1.2.0-implementation-plan.md) and [routing guide](docs/network-routing.md). Installation below still uses the published 1.1.0.
+
 [中文](README.md) · [Detailed documentation](docs/README.md) · [Changelog](CHANGELOG.md)
 
 An Android library for managing base URLs across services and environments. Maintain development, testing and production configurations, choose a URL for each service, and commit the complete configuration with one Save. The core has no Retrofit or OkHttp dependency.
@@ -266,7 +268,7 @@ The library reads the final `assets/base_urls_config.json` packaged in the host 
 
 Initial environment priority is **explicit `setDefaultEnvironment` / `setFileConfigKey` > JSON `defaultEnvironment` > legacy fallback `release_defaults`**. The selected environment must exist. Do not add the new field directly to legacy array JSON without a schemaVersion.
 
-The repository demo's main asset contains dev/test/production and defaults to dev. Its release asset contains only production and defaults to production. These defaults apply to first initialization: **installing an update preserves persisted state**, does not force production and does not delete saved environments. A production host requiring a locked production environment needs its own runtime and migration policy.
+The repository demo's main asset contains dev/test/production and defaults to dev. Its release asset contains only production and defaults to production. The 1.2.0 development demo additionally opts into fixed production mode through its own `FIXED_PRODUCTION` flag; that mode leaves stored debug data untouched. Ordinary mode continues to preserve existing selections on upgrade. The library does not infer the host environment from its own build type. See the [configuration guide](docs/configuration.md#固定环境模式12-开发版).
 
 On upgrade from 1.0.x, valid saved addresses—including defaults automatically written by the old version—move into the active `legacy` environment (or the first available `legacy-1` style ID if the host already uses that name). New defaults do not overwrite those selections or rename old service keys. Legacy `debug_defaults` / `release_defaults` arrays, `setFileConfigKey`, Activity launch and result-parsing entry points remain supported. The `dynamicUrls` getter now returns a copy, so mutating it has no effect. See [migration](docs/migration-1.1.md) for clearing, storage failure, default merging, backups and downgrade limits.
 

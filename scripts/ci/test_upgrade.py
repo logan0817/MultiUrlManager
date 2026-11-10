@@ -41,6 +41,21 @@ class UpgradeDriverTest(unittest.TestCase):
             self.assertEqual(group[6][:3], ['shell', 'am', 'instrument'])
             self.assertEqual(group[7][:3], ['shell', 'am', 'instrument'])
 
+    def test_11_upgrade_uses_real_snapshot_and_keeps_new_data_for_restart(self):
+        calls = []
+        def command(args, **kwargs):
+            calls.append(args)
+            return successful() if args[:3] == ['shell', 'am', 'instrument'] else 'Success'
+        suite = {'name': 'upgrade11-release', 'package': 'com.logan.multiurlmanager.upgrade11.release',
+                 'testPackage': 'com.logan.multiurlmanager.upgrade11.release.test', 'runner': 'test.Runner',
+                 'apk': 'new.apk', 'testApk': 'new-test.apk', 'legacyApk': 'old.apk', 'legacyTestApk': 'old-test.apk'}
+        with tempfile.TemporaryDirectory() as temp:
+            self.assertEqual(run_upgrade(Path(temp), suite, Path(temp), command), 3)
+        self.assertFalse(any('clear' in call for call in calls))
+        runs = [call for call in calls if call[:3] == ['shell', 'am', 'instrument']]
+        self.assertEqual(len(runs), 3)
+        self.assertTrue(all('snapshot' in call for call in runs))
+
     def test_refuses_to_clear_real_demo(self):
         with self.assertRaises(ValueError):
             run_upgrade(Path('.'), {'package': 'com.logan.multiurlmanager'}, Path('.'), lambda *args: self.fail())

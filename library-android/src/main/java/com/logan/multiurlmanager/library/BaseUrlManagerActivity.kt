@@ -53,6 +53,10 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         var form: Bundle? = null
         var lastKey: String? = null
         var reloadResult: Result<UrlSnapshot>? = null
+        var collapsedGroups = mutableSetOf<String>()
+        var summaryExpanded = false
+        var invalidKey: String? = null
+        var presentationRestored = false
     }
 
     private val editor by lazy { ViewModelProvider(this)[EditorState::class.java] }
@@ -62,8 +66,10 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     private lateinit var status: TextView
     private var bindingSpinner = false
     private var customRegex: Pattern? = null
+    private var originalSnapshot: UrlSnapshot? = null
     private var configurationError = false
     private val dialogs = mutableSetOf<AlertDialog>()
+    private val configurationListener = UrlChangeListener { _, _ -> renderUrls() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -106,6 +112,22 @@ class BaseUrlManagerActivity : AppCompatActivity() {
             }
             onSelect = { value -> changeUrls { UrlRules.upsert(it, value.copy(select = true)) } }
             onActions = { _, value -> showActions(value) }
+            groupTitle = { key -> businessTitle(key) }
+            groupSummary = { key ->
+                val selected = editor.draft?.urls?.firstOrNull { it.configKey == key && it.select }?.url
+                val value = selected ?: getString(R.string.base_url_no_selection)
+                getString(
+                    if (groupId(key) in editor.collapsedGroups) R.string.base_url_group_collapsed
+                    else R.string.base_url_group_expanded,
+                    value
+                )
+            }
+            isGroupCollapsed = { key -> groupId(key) in editor.collapsedGroups }
+            onToggleGroup = { key ->
+                val id = groupId(key)
+                if (!editor.collapsedGroups.remove(id)) editor.collapsedGroups.add(id)
+                renderUrls()
+            }
         }
         findViewById<RecyclerView>(R.id.recyclerView).apply {
             layoutManager = LinearLayoutManager(this@BaseUrlManagerActivity)
@@ -114,12 +136,26 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         }
         if (editor.draft == null) {
             try {
-                editor.draft = savedInstanceState?.getBundle(STATE_DRAFT)?.let(::restoreDraft) ?: manager?.snapshot()
-                editor.original = savedInstanceState?.getString(STATE_ORIGINAL) ?: editor.draft?.let(StateCodec::encode)
+                // 固定模式不能恢复普通模式遗留的草稿，否则只读页面会展示不生效的地址。
+                editor.draft = if (manager?.isReadOnly == true) manager?.snapshot()
+                    else savedInstanceState?.getBundle(STATE_DRAFT)?.let(::restoreDraft) ?: manager?.snapshot()
+                editor.original = if (manager?.isReadOnly == true) editor.draft?.let(StateCodec::encode)
+                    else savedInstanceState?.getString(STATE_ORIGINAL) ?: editor.draft?.let(StateCodec::encode)
             } catch (_: Exception) {
                 // 损坏的恢复数据不能静默替换成已提交状态，避免用户误以为草稿仍在。
                 configurationError = true
             }
+        }
+        try {
+            originalSnapshot = editor.original?.let(StateCodec::decode)
+        } catch (_: Exception) {
+            configurationError = true
+        }
+        if (!editor.presentationRestored) {
+            editor.collapsedGroups.addAll(savedInstanceState?.getStringArrayList(STATE_COLLAPSED).orEmpty())
+            editor.summaryExpanded = savedInstanceState?.getBoolean(STATE_SUMMARY) ?: false
+            editor.invalidKey = savedInstanceState?.getString(STATE_INVALID_KEY)
+            editor.presentationRestored = true
         }
         try {
             intent.getStringExtra(KEY_REGEX)?.let { customRegex = Pattern.compile(it) }
@@ -130,26 +166,31 @@ class BaseUrlManagerActivity : AppCompatActivity() {
             override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
                 val draft = editor.draft ?: return
                 val target = draft.environments.getOrNull(position)?.id ?: return
-                if (!bindingSpinner && !editor.saving && target != draft.environmentId) {
+                if (!bindingSpinner && !editor.saving && manager?.isReadOnly != true && target != draft.environmentId) {
                     editor.draft = draft.copy(environmentId = target)
+                    editor.invalidKey = null
                     renderUrls(environmentChanged = true)
                 }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>) = Unit
         }
-        if (editor.form == null) {
+        if (editor.form == null && manager?.isReadOnly != true) {
             editor.form = savedInstanceState?.getBundle(STATE_FORM)
         }
         if (editor.lastKey == null) {
             editor.lastKey = savedInstanceState?.getString(STATE_KEY)
         }
         findViewById<View>(R.id.btnSave).setOnClickListener { save() }
+        findViewById<View>(R.id.changeSummaryToggle)?.setOnClickListener {
+            editor.summaryExpanded = !editor.summaryExpanded
+            renderUrls()
+        }
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() = cancelEditing()
         })
         render()
-        if (!configurationError && editor.form != null) {
+        if (!configurationError && editor.form != null && manager?.isReadOnly != true) {
             showAddressForm(restoring = true)
         }
     }
@@ -181,13 +222,16 @@ class BaseUrlManagerActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+        manager?.addListener(configurationListener)
         editor.observer = { consumeResult() }
         consumeResult()
+        renderUrls()
     }
 
     override fun onStop() {
         // 暂停回调到页面；异步结果仍保存在 ViewModel，由下一次 onStart 消费。
         editor.observer = null
+        manager?.removeListener(configurationListener)
         super.onStop()
     }
 
@@ -206,6 +250,9 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         outState.putString(STATE_ORIGINAL, editor.original)
         outState.putBundle(STATE_FORM, editor.form)
         outState.putString(STATE_KEY, editor.lastKey)
+        outState.putStringArrayList(STATE_COLLAPSED, ArrayList(editor.collapsedGroups))
+        outState.putBoolean(STATE_SUMMARY, editor.summaryExpanded)
+        outState.putString(STATE_INVALID_KEY, editor.invalidKey)
         super.onSaveInstanceState(outState)
     }
 
@@ -263,9 +310,12 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         val draft = editor.draft
         val environment = draft?.environments?.firstOrNull { it.id == draft.environmentId }
         val sections = mutableListOf<BaseUrlSection>()
-        environment?.urls?.groupBy { it.configKey }?.forEach { (key, values) ->
+        businessKeys().forEach { key ->
             sections += BaseUrlSection(headerText = key)
-            sections += values.map { BaseUrlSection(baseUrl = it.copy()) }
+            if (groupId(key) !in editor.collapsedGroups) {
+                sections += environment?.urls.orEmpty().filter { it.configKey == key }
+                    .map { BaseUrlSection(baseUrl = it.copy()) }
+            }
         }
         if (environmentChanged) {
             findViewById<RecyclerView>(R.id.recyclerView).itemAnimator?.endAnimations()
@@ -273,20 +323,99 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         } else {
             listAdapter.setNewInstance(sections)
         }
-        status.text = getString(
-            when {
-                configurationError -> R.string.base_url_restore_error
-                draft == null || manager == null -> R.string.base_url_not_initialized
-                editor.saving -> R.string.base_url_saving
-                sections.isEmpty() -> R.string.base_url_empty
-                else -> R.string.base_url_actions_hint
-            }
+        listAdapter.refreshGroupHeaders()
+        val current = manager?.snapshot()
+        val label = if (manager?.isReadOnly == true) R.string.base_url_fixed_environment else R.string.base_url_draft_environment
+        findViewById<TextView>(R.id.draftEnvironmentLabel)?.setText(label)
+        environmentSpinner.contentDescription = getString(label)
+        findViewById<TextView>(R.id.activeEnvironmentText)?.text = getString(
+            R.string.base_url_active_environment, current?.let(::environmentName).orEmpty()
         )
-        val enabled = !editor.saving && !configurationError && draft != null && manager != null
+        val statusMessage = when {
+            configurationError -> R.string.base_url_restore_error
+            draft == null || manager == null -> R.string.base_url_not_initialized
+            editor.saving -> R.string.base_url_saving
+            manager?.isReadOnly == true -> R.string.base_url_read_only
+            sections.isEmpty() -> R.string.base_url_empty
+            else -> R.string.base_url_actions_hint
+        }
+        status.setText(statusMessage)
+        status.visibility = if (statusMessage == R.string.base_url_actions_hint &&
+            resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+        ) View.GONE else View.VISIBLE
+        val ready = !editor.saving && !configurationError && draft != null && manager != null
+        val enabled = ready && manager?.isReadOnly != true
         environmentSpinner.isEnabled = enabled
         findViewById<View>(R.id.btnSave).isEnabled = enabled
-        findViewById<RecyclerView>(R.id.recyclerView).isEnabled = enabled
+        val invalid = editor.invalidKey?.takeIf { key -> environment?.urls?.none { it.configKey == key && it.select } == true }
+        findViewById<TextView>(R.id.validationText)?.apply {
+            visibility = if (invalid == null) View.GONE else View.VISIBLE
+            text = invalid?.let { getString(R.string.base_url_missing_required, businessTitle(it)) }.orEmpty()
+        }
+        val baseline = originalSnapshot
+        val changes = if (!configurationError && draft != null && baseline != null) {
+            changeSummary(baseline, draft)
+        } else emptyList()
+        val summaryToggle = findViewById<TextView>(R.id.changeSummaryToggle)
+        val summaryText = findViewById<TextView>(R.id.changeSummaryText)
+        val summaryScroll = findViewById<View>(R.id.changeSummaryScroll)
+        // 旧宿主覆盖布局时仍可使用原地址列表，不能因为缺少新摘要区域而变成空白。
+        if (changes.isEmpty() || summaryToggle == null || summaryText == null || summaryScroll == null) {
+            editor.summaryExpanded = false
+        }
+        summaryToggle?.apply {
+            text = if (changes.isEmpty()) getString(R.string.base_url_no_changes)
+                else if (editor.summaryExpanded) resources.getQuantityString(
+                    R.plurals.base_url_hide_changes, changes.size, changes.size
+                ) else getString(R.string.base_url_review_changes, changes.size)
+            isEnabled = ready && changes.isNotEmpty()
+            isFocusable = changes.isNotEmpty()
+        }
+        summaryText?.text = changes.joinToString("\n\n")
+        summaryScroll?.visibility = if (editor.summaryExpanded) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.recyclerView).visibility = if (editor.summaryExpanded) View.GONE else View.VISIBLE
         invalidateOptionsMenu()
+    }
+
+    private fun environmentName(snapshot: UrlSnapshot): String =
+        snapshot.environments.firstOrNull { it.id == snapshot.environmentId }?.name ?: snapshot.environmentId
+
+    private fun businessTitle(key: String): String {
+        val name = manager?.businessName(key) ?: key
+        return if (name == key) key else "$name · $key"
+    }
+
+    private fun groupId(key: String): String = "${editor.draft?.environmentId?.length}:${editor.draft?.environmentId}$key"
+
+    /** 对照进入编辑时的完整状态，包含当前未展示环境的候选和备注修改。 */
+    private fun changeSummary(previous: UrlSnapshot, next: UrlSnapshot): List<String> = buildList {
+        if (previous.environmentId != next.environmentId) {
+            add(getString(R.string.base_url_change_environment, environmentName(previous), environmentName(next)))
+        }
+        next.environments.forEach { environment ->
+            val old = previous.environments.firstOrNull { it.id == environment.id }
+            val oldUrls = old?.urls.orEmpty()
+            val location = getString(R.string.base_url_change_location, environment.name)
+            val keys = (oldUrls.map { it.configKey } + environment.urls.map { it.configKey }).distinct()
+            keys.forEach { key ->
+                val before = oldUrls.firstOrNull { it.configKey == key && it.select }?.url
+                val after = environment.urls.firstOrNull { it.configKey == key && it.select }?.url
+                if (before != after) add(getString(
+                    R.string.base_url_change_selection, location, businessTitle(key),
+                    before ?: getString(R.string.base_url_no_selection), after ?: getString(R.string.base_url_no_selection)
+                ))
+            }
+            environment.urls.forEach { value ->
+                val before = oldUrls.firstOrNull { it.configKey == value.configKey && it.url == value.url }
+                if (before == null) add(getString(R.string.base_url_change_added, location, businessTitle(value.configKey), value.url))
+                else if (before.remark != value.remark) add(getString(
+                    R.string.base_url_change_remark, location, businessTitle(value.configKey), value.url,
+                    before.remark.orEmpty(), value.remark.orEmpty()
+                ))
+            }
+            oldUrls.filter { value -> environment.urls.none { it.configKey == value.configKey && it.url == value.url } }
+                .forEach { add(getString(R.string.base_url_change_removed, location, businessTitle(it.configKey), it.url)) }
+        }
     }
 
     private fun spinnerAdapter(items: List<String>) = ArrayAdapter(this, android.R.layout.simple_spinner_item, items).apply {
@@ -294,7 +423,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     }
 
     private fun changeUrls(update: (List<BaseUrl>) -> List<BaseUrl>): Boolean {
-        if (editor.saving || configurationError) return false
+        if (editor.saving || configurationError || manager?.isReadOnly == true) return false
         val draft = editor.draft ?: return false
         return try {
             val urls = update(draft.urls)
@@ -312,6 +441,11 @@ class BaseUrlManagerActivity : AppCompatActivity() {
 
     private fun showActions(value: BaseUrl) {
         if (editor.saving) return
+        if (manager?.isReadOnly == true) {
+            (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
+                .setPrimaryClip(ClipData.newPlainText(value.configKey, value.url))
+            return
+        }
         val actions = arrayOf(
             getString(R.string.base_url_edit),
             getString(R.string.base_url_delete),
@@ -352,7 +486,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
 
     @Suppress("DEPRECATION")
     private fun showAddressForm(value: BaseUrl? = null, restoring: Boolean = false) {
-        if (editor.saving || configurationError) return
+        if (editor.saving || configurationError || manager?.isReadOnly == true) return
         val keys = businessKeys()
         if (keys.isEmpty()) return
         val state = if (restoring) {
@@ -450,7 +584,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     }
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        val enabled = editor.draft != null && manager != null && !editor.saving && !configurationError
+        val enabled = editor.draft != null && manager != null && !editor.saving && !configurationError && manager?.isReadOnly != true
         menu.findItem(R.id.actionAdd)?.isEnabled = enabled && businessKeys().isNotEmpty()
         menu.findItem(R.id.actionReset)?.isEnabled =
             enabled && editor.draft?.environmentId?.let { defaultEnvironment(it) } != null
@@ -467,7 +601,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
             true
         }
         R.id.actionReset -> {
-            editor.draft?.let { draft ->
+            editor.draft?.takeIf { manager?.isReadOnly != true }?.let { draft ->
                 AlertDialog.Builder(this)
                     .setMessage(R.string.base_url_reset_confirm)
                     .setNegativeButton(android.R.string.cancel, null)
@@ -492,9 +626,22 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     }
 
     private fun save() {
-        if (editor.saving) return
+        if (editor.saving || manager?.isReadOnly == true) return
         val draft = editor.draft ?: return
         val currentManager = manager ?: return
+        val environment = draft.environments.first { it.id == draft.environmentId }
+        val missing = environment.requiredKeys.firstOrNull { key -> environment.urls.none { it.configKey == key && it.select } }
+        if (missing != null) {
+            editor.invalidKey = missing
+            editor.summaryExpanded = false
+            editor.collapsedGroups.remove(groupId(missing))
+            renderUrls()
+            findViewById<RecyclerView>(R.id.recyclerView).scrollToPosition(
+                listAdapter.listData.indexOfFirst { it.headerText == missing }.coerceAtLeast(0)
+            )
+            showError(getString(R.string.base_url_validation_error))
+            return
+        }
         editor.saving = true
         renderUrls()
         // 只捕获 ViewModel，重建时不会持有旧 Activity 或再次提交。
@@ -512,6 +659,8 @@ class BaseUrlManagerActivity : AppCompatActivity() {
             result.onSuccess {
                 editor.draft = it
                 editor.original = StateCodec.encode(it)
+                originalSnapshot = it
+                editor.invalidKey = null
                 render()
             }.onFailure { showStorageError() }
         }
@@ -541,6 +690,8 @@ class BaseUrlManagerActivity : AppCompatActivity() {
                         .setPositiveButton(R.string.base_url_reload) { _, _ ->
                             editor.draft = manager?.snapshot()
                             editor.original = editor.draft?.let(StateCodec::encode)
+                            originalSnapshot = editor.draft
+                            editor.invalidKey = null
                             render()
                         }
                         .create().showManaged()
@@ -606,6 +757,9 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         private const val STATE_ORIGINAL = "original"
         private const val STATE_FORM = "form"
         private const val STATE_KEY = "businessKey"
+        private const val STATE_COLLAPSED = "collapsedGroups"
+        private const val STATE_SUMMARY = "summaryExpanded"
+        private const val STATE_INVALID_KEY = "invalidKey"
         const val KEY_TITLE = "key_title"
         const val KEY_REGEX = "key_regex"
         const val HTTP_URL_REGEX = "^https?://.+"

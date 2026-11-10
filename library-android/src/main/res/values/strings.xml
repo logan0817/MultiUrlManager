@@ -34,4 +34,26 @@
     <string name="base_url_add_address">Add address</string>
     <string name="base_url_address">Base URL</string>
     <string name="base_url_duplicate">This address already exists for the business key. Edit the existing candidate instead.</string>
+    <string name="base_url_active_environment">Applied: %1$s</string>
+    <string name="base_url_draft_environment">Editing</string>
+    <string name="base_url_fixed_environment">Fixed</string>
+    <string name="base_url_read_only">Fixed environment: configuration is read-only. Hold an address to copy it.</string>
+    <string name="base_url_no_changes">No unsaved changes</string>
+    <string name="base_url_review_changes">Review changes (%1$d) ▾</string>
+    <plurals name="base_url_hide_changes">
+        <item quantity="one">Back to addresses (%1$d change) ▴</item>
+        <item quantity="other">Back to addresses (%1$d changes) ▴</item>
+    </plurals>
+    <string name="base_url_no_selection">No selected address</string>
+    <string name="base_url_expand_group">Expand %1$s</string>
+    <string name="base_url_collapse_group">Collapse %1$s</string>
+    <string name="base_url_group_collapsed">▸ Selected: %1$s</string>
+    <string name="base_url_group_expanded">▾ Selected: %1$s</string>
+    <string name="base_url_missing_required">Choose an address for required business: %1$s</string>
+    <string name="base_url_change_environment">Environment: %1$s → %2$s</string>
+    <string name="base_url_change_location">[%1$s]</string>
+    <string name="base_url_change_selection">%1$s %2$s · Selected address\n%3$s → %4$s</string>
+    <string name="base_url_change_added">%1$s %2$s · Added candidate\n%3$s</string>
+    <string name="base_url_change_removed">%1$s %2$s · Removed candidate\n%3$s</string>
+    <string name="base_url_change_remark">%1$s %2$s · Remark\n%3$s\n%4$s → %5$s</string>
 </resources>
