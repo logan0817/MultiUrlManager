@@ -11,7 +11,7 @@
 | `BaseUrlManager.instance` | 未初始化时为 null |
 | `snapshot()` | 与内部状态隔离的深拷贝；revision 用于编辑冲突检测 |
 | `getUrl(configKey)` | 当前环境选中地址的 String，未选中为 null |
-| `getBaseUrl(configKey, defaultUrl)` | 保留旧 BaseUrl? 返回类型；显式 fallback 经过校验且不持久化 |
+| `getBaseUrl(configKey, defaultUrl)` | 保留旧 BaseUrl? 返回类型；普通模式下显式 fallback 经过校验且不持久化，固定模式缺少选中地址时传 fallback 会抛出 IllegalArgumentException |
 | `snapshot().effectiveUrls()` | 当前环境业务键到地址的映射 |
 | `defaultEnvironment(id)` | 指定环境的默认候选副本；未知 id 失败 |
 

@@ -8,7 +8,7 @@
 - `library-okhttp`：1.2.0 可选网络路由、真实 Retrofit / MockWebServer 测试；原核心制品不新增网络依赖。
 - `fixtures/compatibility`：真实发行 1.1.0 编译后替换当前 AAR 运行，以及当前源码重编译；`fixtures/upgrade/app11` 验证真实 1.1.0 的保留数据升级。
 - `app`：实际接入示例。
-- `fixtures/consumer`：独立工程，从本轮文件 Maven 仓库解析真实 AAR/POM；包含 Kotlin 接口调用和开启 R8 的 minified 变体。`prepareReadmeExamples` 从中英文 README 各提取 5 份完整 Kotlin 示例，隔离包名后一起编译，源码正文保持不变；示例 app 另有实际编译的 Java 接入代码。
+- `fixtures/consumer`：独立工程，从本轮文件 Maven 仓库解析真实 AAR/POM；包含 Kotlin 接口调用和开启 R8 的 minified 变体。`prepareReadmeExamples` 从中英文 README 各提取 6 份完整 Kotlin 示例，并提取网络指南的完整请求页面，共 13 份。编译时隔离包名，将示例宿主 BuildConfig import 指向消费者实际生成的类，其余调用正文保持不变；Debug 和 minified 两种变体均编译，检查两种 BuildConfig 及真实 Retrofit 回调签名的编译兼容性。示例 app 另有实际编译的 Java 接入代码。
 - `scripts/ci`：文档检查、工作流检查、产物身份、仪器输出解析和受控发布。
 
 源码格式遵循根目录 [.editorconfig](../.editorconfig)。关键中文注释解释快照隔离、版本冲突、先落盘后发布、迁移备份、默认合并与页面重建边界；不以注释代替可运行验证。

@@ -1,14 +1,23 @@
 # 文档索引
 
-当前正式版本为 1.2.0，已于 2026-11-10 发布到 Maven Central，包含核心和可选 OkHttp 两个制品。[1.2.0 方案](plans/v1.2.0-implementation-plan.md)记录范围与验收，[网络路由](network-routing.md)说明可选制品。[发布记录](ci-and-release.md#120-上传验收记录)包含对应 CI、部署 ID、公开文件与签名核验结果；1.1.0 历史记录继续保留。
+当前稳定版 **1.2.0** 已发布到 Maven Central，提供核心 `multiurlmanager` 和可选网络制品 `multiurlmanager-okhttp`。第一次接入从 [README 快速接入](../README.md#快速接入)开始，按步骤完成配置、初始化、打开页面和切换验证；英文入口见 [English README](../README_EN.md)。
 
-建议先读 [接入入口](../README.md)，随后按需要阅读：
+## 接入与使用
 
-1. [配置](configuration.md)：环境、业务键、默认值、JSON 与校验。
-2. [API](api.md)：状态、写入、监听、线程与 Java。
-3. [页面与网络](ui-and-network.md)：草稿、结果、主题和网络生效。
-4. [1.1 迁移](migration-1.1.md)：旧数据与有意行为变化。
-5. [开发](development.md)：工具链和本地验证。
-6. [CI 与发布](ci-and-release.md)：检查门槛、候选身份、发布恢复。
+| 你想做什么 | 阅读入口 |
+| --- | --- |
+| 在自己的 App 中跑通第一个示例 | [README 快速接入](../README.md#快速接入) |
+| 了解 JSON、业务展示名、默认环境和代码配置 | [配置](configuration.md) |
+| 让 Retrofit / OkHttp 请求随保存的地址切换 | [可选网络路由](network-routing.md)；手动更新网络对象见[页面与网络](ui-and-network.md#网络对象何时更新) |
+| 让正式包只使用生产环境 | [固定环境模式](configuration.md#固定环境模式120)与[源码集打包](configuration.md#debug--release-打包使用哪份配置) |
+| 在代码中查询、修改、保存或监听 | [API](api.md)，包含线程约定与 Java 调用 |
+| 理解页面草稿、变更摘要、返回结果与主题 | [页面与网络](ui-and-network.md) |
+| 从旧版本升级，了解已有数据会怎样 | [迁移](migration-1.1.md)；该文重点覆盖 1.0.x 到 1.1+ 的数据变化 |
+| 排查初始化、地址未生效、保存或构建问题 | [常见问题](../TROUBLESHOOTING.md) |
 
-[实现方案](plans/v1.1.0-implementation-plan.md) 保存目标设计、验收清单与待验证项；它不能代替实际 API 文档。[更新记录](../CHANGELOG.md) 区分开发内容和已发布内容。[排障入口](../TROUBLESHOOTING.md) 按现象定位。
+## 参与开发与维护
+
+- [开发](development.md)：工具链、本地测试、真实 AAR / R8 消费验证。
+- [CI 与发布](ci-and-release.md)：检查门槛、产物身份、发布与失败恢复；[1.2.0 发布记录](ci-and-release.md#120-上传验收记录)包含 CI、公开制品与签名核验结果。
+- [贡献要求](../CONTRIBUTING.md)与[更新记录](../CHANGELOG.md)：提交变更前的要求，以及各版本实际变化。
+- [1.2.0 实现方案](plans/v1.2.0-implementation-plan.md)与[1.1.0 历史方案](plans/v1.1.0-implementation-plan.md)：设计范围与验收记录；接入时以当前配置和 API 文档为准。
