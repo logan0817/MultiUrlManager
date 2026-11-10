@@ -1,6 +1,6 @@
-# 可选 OkHttp 动态路由（1.2 开发版）
+# 可选 OkHttp 动态路由（1.2.0 待发布）
 
-本能力正在 `1.2.0-SNAPSHOT` 开发中，尚未发布。核心 `multiurlmanager` 不引入 OkHttp 或 Retrofit。只有选择网络适配时，才依赖 `io.github.logan0817:multiurlmanager-okhttp:1.2.0-SNAPSHOT`；开发验证使用本轮文件 Maven 仓库。已发布的 1.1.0 不包含此制品。
+本能力已进入 `1.2.0` 正式版本候选，尚未发布到 Maven Central。核心 `multiurlmanager` 不引入 OkHttp 或 Retrofit。只有选择网络适配时，才依赖 `io.github.logan0817:multiurlmanager-okhttp:1.2.0`；候选验证使用本轮文件 Maven 仓库。已发布的 1.1.0 不包含此制品。
 
 ## 接入
 
@@ -57,4 +57,4 @@ fun orderApi(manager: BaseUrlManager): OrderApi {
 
 ## 验证
 
-网络模块的单元测试使用本机 MockWebServer，通过实际 Retrofit / OkHttp 调用核对目标、编码路径、query、body、鉴权一致性、延迟进入、在途切换、重定向和错误；不访问线上服务。设备测试另用真实管理器的 saveAsync、冲突、存储失败及固定模式驱动回环 HTTP，验证保存状态与请求的一致性。设备持久化、旧版升级、R8 消费分别由对应模块与消费工程验证，当前通过范围见[开发验收记录](development.md#120-snapshot-本地开发验收2026-10-30)，不能用纯路由测试替代。
+网络模块的单元测试使用本机 MockWebServer，通过实际 Retrofit / OkHttp 调用核对目标、编码路径、query、body、鉴权一致性、延迟进入、在途切换、重定向和错误；不访问线上服务。设备测试另用真实管理器的 saveAsync、冲突、存储失败及固定模式驱动回环 HTTP，验证保存状态与请求的一致性。设备持久化、旧版升级、R8 消费分别由对应模块与消费工程验证，当前通过范围见[开发验收记录](development.md#120-正式版本候选准备2026-11-10)，不能用纯路由测试替代。

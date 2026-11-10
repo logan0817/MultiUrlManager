@@ -5,7 +5,7 @@
 ## 工程与工具链
 
 - `library-android`：公开管理器、配置页面、存储与测试。
-- `library-okhttp`：1.2 开发版可选网络路由、真实 Retrofit / MockWebServer 测试；原核心制品不新增网络依赖。
+- `library-okhttp`：1.2.0 可选网络路由、真实 Retrofit / MockWebServer 测试；原核心制品不新增网络依赖。
 - `fixtures/compatibility`：真实发行 1.1.0 编译后替换当前 AAR 运行，以及当前源码重编译；`fixtures/upgrade/app11` 验证真实 1.1.0 的保留数据升级。
 - `app`：实际接入示例。
 - `fixtures/consumer`：独立工程，从本轮文件 Maven 仓库解析真实 AAR/POM；包含 Kotlin 接口调用和开启 R8 的 minified 变体。`prepareReadmeExamples` 从中英文 README 各提取 5 份完整 Kotlin 示例，隔离包名后一起编译，源码正文保持不变；示例 app 另有实际编译的 Java 接入代码。
@@ -44,7 +44,17 @@ bash ./gradlew -p fixtures/consumer :app:connectedMinifiedAndroidTest
 
 JVM 测试关注 URL、单选、环境和失败结果，并直接用真实配置解析器读取中英文 README 的 JSON 示例，检查两份配置一致。文档脚本校验 Markdown/HTML 本地链接和图片、围栏、JSON/XML 示例语法；仪器测试覆盖 AtomicFile、迁移与页面；独立消费工程检验真实发布依赖和 R8。普通 Debug 编译不等于设备、混淆或发布已通过。
 
-新增逻辑应提供行为测试，明确预期和错误路径，不依赖公网真实站点、设备已有数据或集合遍历顺序。版本升级同步迁移文档与 [变更记录](../CHANGELOG.md)。CI 的实际执行路径与报告见 [CI 与发布](ci-and-release.md)。1.2 开发版在 API 24/36 上收集 8 套必需设备套件（app、library、okhttp、R8 consumer、1.0.6/1.1.0 Debug/Release 升级），候选共 22 个 APK 和两个同版本 Maven 坐标；候选 schema 2 保留旧 schema 1 / 1.1 发布恢复读取能力。
+新增逻辑应提供行为测试，明确预期和错误路径，不依赖公网真实站点、设备已有数据或集合遍历顺序。版本升级同步迁移文档与 [变更记录](../CHANGELOG.md)。CI 的实际执行路径与报告见 [CI 与发布](ci-and-release.md)。1.2.0 在 API 24/36 上收集 8 套必需设备套件（app、library、okhttp、R8 consumer、1.0.6/1.1.0 Debug/Release 升级），候选共 22 个 APK 和两个同版本 Maven 坐标；候选 schema 2 保留旧 schema 1 / 1.1 发布恢复读取能力。
+
+## 1.2.0 正式版本候选准备（2026-11-10）
+
+开发验收收尾提交 `0bc3fa5` 的 [完整 CI #20](https://github.com/logan0817/MultiUrlManager/actions/runs/42771730604) 已通过 quality、API 24、API 36 和 required，两端原始报告均核对为 42 项测试、24 个升级阶段通过、零跳过。此前功能提交 #19 的详细范围保留在下文。
+
+本轮将根工程版本从 `1.2.0-SNAPSHOT` 调整为 `1.2.0`；Demo versionCode 保持 `8`，高于 1.1.0 的 `7`。两个 publication 与消费/升级夹具继续读取同一版本属性，不单独维护版本。中英文 README 和能力文档明确候选尚未发布，公共安装示例继续使用 Central 已有的 1.1.0；候选在本轮文件 Maven 仓库验证。
+
+本地验证已通过：41 项 JVM、51 项脚本测试、Debug/Release 与仪器 APK 构建、应用 Debug/Release 及两库 Debug Lint、双 publication/批次名、两代公开 ABI、Kotlin/Java 旧二进制与源码消费、独立 Debug/R8 消费构建及中英文 10 份 README 示例编译。复用 Android Studio 的 JDK 17、SDK 与共享缓存，Gradle 限制 `--max-workers=2`，未强制重建；本地主构建 391 项任务中执行 103 项，其余 288 项增量复用。直接核对两变体 APK 为 `1.2.0 / versionCode 8`、打包 JSON 与源文件逐字节一致，两个制品的 AAR/POM/sources/javadoc/module 齐全，核心不引入 OkHttp，可选制品依赖同版本核心与 OkHttp 4.12.0。日志与 publication 核验记录在忽略目录 `build/verification/v1.2-release-candidate-20261110/`。
+
+开发分支完整 CI 的最终结论以本次提交对应的运行结果为准；前述 SNAPSHOT 成功不能代替正式版本产物验收。尚未合并 main、创建 tag、签名、上传或发布，开发分支候选不满足正式发布的 main push CI 来源门槛。
 
 ## 1.2.0-SNAPSHOT 本地开发验收（2026-10-30）
 

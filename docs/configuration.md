@@ -32,7 +32,7 @@
 
 `id` 与 `name` 必须非空；id 不能重复。`requiredKeys` 默认空，作为当前环境提交时，声明的键必须存在选中地址。`select` 默认 false，`remark` 可省略。未知 schema 版本、缺失文件、非法字段或同组多选导致初始化失败，不静默加载其他服务器。
 
-1.2 开发版可添加顶层 `businessNames` 对象，例如 `"businessNames": {"order": "订单服务", "login": "登录服务"}`。键必须来自配置中已有业务，值为非空字符串；显示名称不改变 `configKey`、URL 或持久化数据。也可通过 `setBusinessNames(mapOf("order" to "订单服务"))` 显式替换 JSON 映射；输入会被复制，未配置的业务显示原键。旧数组格式不添加此字段。
+1.2.0（待发布）可添加顶层 `businessNames` 对象，例如 `"businessNames": {"order": "订单服务", "login": "登录服务"}`。键必须来自配置中已有业务，值为非空字符串；显示名称不改变 `configKey`、URL 或持久化数据。也可通过 `setBusinessNames(mapOf("order" to "订单服务"))` 显式替换 JSON 映射；输入会被复制，未配置的业务显示原键。旧数组格式不添加此字段。
 
 JSON 可通过顶层 `defaultEnvironment` 声明首次初始化的环境，例如 `dev` 或 `production`，地址也全部保存在 JSON 中。Application 只需调用 `BaseUrlManager.builder(this).build()`。环境 id 必须存在；字段错误时初始化失败。
 
@@ -91,7 +91,7 @@ Debug Demo 包含环境 id `dev`、`test`、`production`，以及业务键 `orde
 
 ## Debug / Release 打包使用哪份配置
 
-Demo 的地址和首次默认环境由固定 JSON 提供，不在代码中硬编码 URL。1.2 开发版的 `App.kt` 另外根据宿主自身的 `BuildConfig.FIXED_PRODUCTION` 决定运行策略：Debug 使用普通模式，Release 显式调用 `setFixedEnvironment("production")`，只使用包内 production 定义；旧设备配置保留但不参与固定模式选址。
+Demo 的地址和首次默认环境由固定 JSON 提供，不在代码中硬编码 URL。1.2.0（待发布）的 `App.kt` 另外根据宿主自身的 `BuildConfig.FIXED_PRODUCTION` 决定运行策略：Debug 使用普通模式，Release 显式调用 `setFixedEnvironment("production")`，只使用包内 production 定义；旧设备配置保留但不参与固定模式选址。
 
 | 构建 | 生效的源码配置文件 | APK 内文件 | 无已存数据时的默认值 | 包内环境 |
 | --- | --- | --- | --- | --- |
@@ -104,9 +104,9 @@ Demo 的地址和首次默认环境由固定 JSON 提供，不在代码中硬编
 
 当前 Release Demo 固定选择 `production`。若将它的 JSON 换成仅含旧数组键的配置，必须同步把 `App.kt` 的固定 id 改为实际存在的键（例如 `setFixedEnvironment("release_defaults")`）；若宿主需要继续使用设备保存的选择，则移除固定模式调用，采用普通模式。仅修改 JSON 默认环境不能覆盖固定策略，缺少指定固定 id 会导致初始化失败。
 
-**普通模式下，Release 打包只决定包内默认配置，不会清空设备数据。** 覆盖安装同 applicationId 的 Release 包时，新版快照或旧版迁移数据仍优先，原来选中的 dev/test/legacy 可以继续保留，已存环境也不会因从包内移除而被删除。只有无已存数据的首次初始化才默认 production。1.2 开发版 Demo 额外使用下面的固定模式，示范宿主显式约束；1.1.0 没有此能力。
+**普通模式下，Release 打包只决定包内默认配置，不会清空设备数据。** 覆盖安装同 applicationId 的 Release 包时，新版快照或旧版迁移数据仍优先，原来选中的 dev/test/legacy 可以继续保留，已存环境也不会因从包内移除而被删除。只有无已存数据的首次初始化才默认 production。1.2.0 候选 Demo 额外使用下面的固定模式，示范宿主显式约束；1.1.0 没有此能力。
 
-## 固定环境模式（1.2 开发版）
+## 固定环境模式（1.2.0 待发布）
 
 ```kotlin
 BaseUrlManager.builder(context)
