@@ -3,8 +3,8 @@ package com.logan.multiurlmanager.app
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.accessibilityservice.AccessibilityServiceInfo
 import android.os.Build
+import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import android.widget.Spinner
 import android.widget.FrameLayout
@@ -226,20 +226,19 @@ class EditorPresentationTest {
     private fun waitForClipboardOverlayToClose() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
         val automation = instrumentation.uiAutomation
-        val originalInfo = automation.serviceInfo
-        val originalFlags = originalInfo.flags
-        automation.serviceInfo = originalInfo.apply {
-            flags = flags or AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
-        }
-        try {
-            waitForWindow()
-            val deadline = SystemClock.uptimeMillis() + 10_000
-            while (automation.windows.any { it.title?.toString() == "ClipboardOverlay" }) {
-                check(SystemClock.uptimeMillis() < deadline) { "系统剪贴板浮层未退出，会拦截后续用例触摸" }
-                SystemClock.sleep(100)
+        waitForWindow()
+        val deadline = SystemClock.uptimeMillis() + 10_000
+        while (true) {
+            // 系统浮层可能不在可访问窗口列表中，但仍能截获输入；只读核对实际窗口。
+            val windows = ParcelFileDescriptor.AutoCloseInputStream(
+                automation.executeShellCommand("dumpsys window windows")
+            ).bufferedReader().use { it.readText() }
+            val overlayPresent = windows.lineSequence().any {
+                it.trimStart().startsWith("Window #") && it.contains(" ClipboardOverlay}")
             }
-        } finally {
-            automation.serviceInfo = originalInfo.apply { flags = originalFlags }
+            if (!overlayPresent) return
+            check(SystemClock.uptimeMillis() < deadline) { "系统剪贴板浮层未退出，会拦截后续用例触摸" }
+            SystemClock.sleep(100)
         }
     }
 
