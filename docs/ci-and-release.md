@@ -1,6 +1,6 @@
 # CI 与发布
 
-工作流源文件：[ci.yml](../.github/workflows/ci.yml)、[release.yml](../.github/workflows/release.yml)。1.1.0 的普通 CI 已在云端执行；1.2 开发版工作流改动目前仅在本地验证，具体提交是否通过以 [GitHub Actions 的对应运行](https://github.com/logan0817/MultiUrlManager/actions/workflows/ci.yml) 为准。1.1.0 已在本机上传并正式发布到 Central，公开文件与签名核对通过，见[本次记录](#110-上传验收记录)。本项目采用与 FlowBus 一致的本机发布方式：普通 CI 验证候选，本机 GPG 签名后上传并在 Central 正式发布。`release.yml` 保留为可选云端入口，尚未启用；无需为本机发布创建 GitHub release environment 或上传发布凭据。
+工作流源文件：[ci.yml](../.github/workflows/ci.yml)、[release.yml](../.github/workflows/release.yml)。1.1.0 的普通 CI 已在云端执行；1.2 开发分支功能提交 `7b69cc3` 的 [完整 CI #19](https://github.com/logan0817/MultiUrlManager/actions/runs/42769822120) 也已通过 quality、API 24、API 36 和 required，详细范围见[开发验证记录](development.md#120-snapshot-云端完整验收2026-11-10)。该结果是 `1.2.0-SNAPSHOT` 开发验收，正式发布仍须使用符合发布入口条件的 main 正式版本候选。1.1.0 已在本机上传并正式发布到 Central，公开文件与签名核对通过，见[本次记录](#110-上传验收记录)。本项目采用与 FlowBus 一致的本机发布方式：普通 CI 验证候选，本机 GPG 签名后上传并在 Central 正式发布。`release.yml` 保留为可选云端入口，尚未启用；无需为本机发布创建 GitHub release environment 或上传发布凭据。
 
 ## 普通验证
 

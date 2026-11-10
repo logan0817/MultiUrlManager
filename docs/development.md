@@ -134,6 +134,23 @@ API 24 的固定模式复制用例在 instrumentation 线程首次获取 Clipboa
 
 修正后运行 #17 的 API 24 全部通过，API 36 新增候选已恢复，但原备用选择断言失败。该轮 logcat 在备用地址点击期间明确记录系统 `ClipboardOverlay` 触摸窗口被移除；前一复制用例遗留的系统浮层拦截触摸。#18 尝试从可访问窗口标题等待退出未识别到系统浮层，后续日志仍在触摸时记录 ClipboardOverlay，因此该轮不能计为修复成功。复制用例现在在恢复剪贴板后，通过 UiAutomation 执行只读的 `dumpsys window windows`，有界等待实际窗口列表中该浮层退出；不关闭系统浮层功能、不跳过复制断言，也不调整默认测试顺序。若 10 秒内浮层不退出则明确失败。具体云端结果以新提交为准。
 
+## 1.2.0-SNAPSHOT 云端完整验收（2026-11-10）
+
+开发分支 `feat/v1.2.0-development` 的功能提交 `7b69cc3730ba78880c24eb52e70da0b373eb7125` 已通过 [完整 CI #19](https://github.com/logan0817/MultiUrlManager/actions/runs/42769822120)：quality、API 24、API 36 和 required 全部成功。quality 覆盖 41 项 JVM、51 项 Python、Lint、Debug/Release、两代公开 ABI、Kotlin/Java 源码及旧二进制消费、真实双制品候选构建与校验。设备 job 下载并核验同轮候选身份及摘要后执行测试。
+
+| 每端设备套件 | API 24 | API 36 |
+| --- | --- | --- |
+| 页面（默认类顺序） | 19 项通过 | 19 项通过 |
+| 存储与固定模式 | 20 项通过 | 20 项通过 |
+| 网络端到端 | 2 项通过 | 2 项通过 |
+| R8 实际路由消费 | 1 项通过 | 1 项通过 |
+| 真实 1.0.6 Debug / Release 覆盖升级 | 各 9 阶段通过 | 各 9 阶段通过 |
+| 真实 1.1.0 Debug / Release 覆盖升级 | 各 3 阶段通过 | 各 3 阶段通过 |
+
+两端下载的原始报告均通过严格仪器终态解析，并额外核对零跳过；每端合计 **42 项测试、24 个升级阶段**。本地汇总为 `build/verification/v1.2-ci-20261110/42769822120/verification.json`，报告与逐阶段原文在同目录 API 子目录。未额外下载云端完整候选归档做本机摘要复核，候选检查结果来自两端成功的 CI 身份校验步骤。
+
+此轮证明主线程获取剪贴板服务、小屏列表恢复检查及系统 ClipboardOverlay 实际窗口等待修正后的完整默认顺序通过；#17、#18 的失败记录保留。云端自动化结果不替代 API 33 真机的真实进程退出恢复、大字号专项，也不证明小米真机系统干扰已消除。本轮本机未启动模拟器，API 24/36 模拟器仅在已授权的云端矩阵运行。版本保持 `1.2.0-SNAPSHOT`，未创建 PR、合并或发布。
+
 ## 发布前本地审核记录
 
 2026-10-19，发布收尾文档提交 `097df12` 的 [CI run 39232161996 / attempt 1](https://github.com/logan0817/MultiUrlManager/actions/runs/39232161996/attempts/1) 在 API 36 页面用例 `deletingRequiredSelectionSurvivesRotationAndBlocksSave` 的删除确认点击处失败。日志显示删除菜单点击已执行，随后 Espresso 选中 `has-window-focus=false`、类型为 `BASE_APPLICATION` 的 Activity 根窗口，约 10 秒后抛出 `RootViewWithoutFocusException`；重建和保存断言尚未执行。同轮 quality、API 24，以及 API 36 的存储 16 项、R8 1 项、Debug/Release 升级各 9 阶段均通过。修正仅将该用例的菜单与确认按钮限定在 Dialog 根窗口，保留真实点击、重建、必选校验及未落盘断言；不修改库实现或放宽测试。修正后的结果以对应提交 CI 为准，不将失败轮次计为通过。
