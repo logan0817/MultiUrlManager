@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main, codex/v1.2.0-development]
+    branches: [main, feat/v1.2.0-development]
   merge_group:
   workflow_dispatch:
 

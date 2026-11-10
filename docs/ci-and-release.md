@@ -4,7 +4,7 @@
 
 ## 普通验证
 
-CI 覆盖 PR、main push、merge_group 与手动验证，使用标准 Ubuntu 24.04、JDK 17。本轮 1.2 验收另允许 `codex/v1.2.0-development` 分支的 push 触发完整验证，便于直接推送修复并收集 API 24/36 结果；其他功能分支没有额外 push 验证。本轮不创建 PR，避免与开发分支 push 重复运行。PR 新提交取消该 PR 旧运行；非 PR 按 run ID 独立分组，避免同一 main 分支的后续提交替换此前 pending 验证。发布单独串行，不取消正在执行的发布。
+CI 覆盖 PR、main push、merge_group 与手动验证，使用标准 Ubuntu 24.04、JDK 17。本轮 1.2 验收另允许 `feat/v1.2.0-development` 分支的 push 触发完整验证，便于直接推送修复并收集 API 24/36 结果；其他功能分支没有额外 push 验证。本轮不创建 PR，避免与开发分支 push 重复运行。PR 新提交取消该 PR 旧运行；非 PR 按 run ID 独立分组，避免同一 main 分支的后续提交替换此前 pending 验证。发布单独串行，不取消正在执行的发布。
 
 quality 显式初始化 SDK 命令路径，并创建仅包含 `android-36` 平台的临时 SDK 视图，复用已安装的构建工具和已接受的许可。这样运行器预装 API 37 等新平台时，不会改变 Lint 的最高平台判断；所有 Lint 检查保持启用。升级项目 SDK 基线时须同步该步骤。设备 job 仍分别使用 API 24/36 的完整模拟器环境。
 
