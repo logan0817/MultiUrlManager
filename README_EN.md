@@ -1,6 +1,6 @@
 # MultiUrlManager
 
-The source tree is preparing the **1.2.0 release candidate** (`io.github.logan0817:multiurlmanager:1.2.0`); it has not been published to Maven Central. New capabilities include an explicit fixed environment, business display names, draft change summaries, and optional OkHttp routing. See the [implementation status](docs/plans/v1.2.0-implementation-plan.md) and [routing guide](docs/network-routing.md). Candidate verification uses the current file-based Maven repository; installation below still uses the published 1.1.0.
+**1.2.0 is available from Maven Central.** It adds an explicit fixed environment, business display names, draft change summaries, and optional OkHttp routing. See the [implementation status](docs/plans/v1.2.0-implementation-plan.md) and [routing guide](docs/network-routing.md). The core can be used independently; add the networking artifact only when automatic routing is needed.
 
 [中文](README.md) · [Detailed documentation](docs/README.md) · [Changelog](CHANGELOG.md)
 
@@ -12,7 +12,7 @@ An Android library for managing base URLs across services and environments. Main
 - **Legacy integration**: 1.0.x fixed-array JSON and major entry points remain available, and migration preserves saved addresses. Behavior changes are explained below.
 - **Native Android screen**: light/dark modes, English/Chinese resources, theme customization and Activity Result support.
 
-**1.1.0 was published to Maven Central on 2026-10-19**. Release commit `063c92c` passed [the complete CI run and API 24/36 cloud matrix](https://github.com/logan0817/MultiUrlManager/actions/runs/39211596505); the preceding implementation passed Android 16 physical-device checks. Public artifacts, signatures and checksums have been verified; see the [release record](docs/ci-and-release.md#110-上传验收记录). Follow the instructions below to install directly from Maven Central.
+**1.2.0 was published on 2026-11-10.** Tag `v1.2.0` fixes commit `dd662cb`, which passed [the complete CI run and API 24/36 cloud matrix](https://github.com/logan0817/MultiUrlManager/actions/runs/42779772691). Public artifacts, signatures and checksums for both artifacts have been verified; see the [release record](docs/ci-and-release.md#120-上传验收记录). Follow the instructions below to install directly from Maven Central.
 
 ## Screenshots
 
@@ -45,13 +45,15 @@ Add the dependency to the host app module's `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("io.github.logan0817:multiurlmanager:1.1.0")
+    implementation("io.github.logan0817:multiurlmanager:1.2.0")
+    // Optional: automatic routing of OkHttp / Retrofit requests by service key.
+    // implementation("io.github.logan0817:multiurlmanager-okhttp:1.2.0")
 }
 ```
 
 The built-in editor uses AppCompat, whose dependency is resolved automatically by Gradle. Host screens do not need to extend `AppCompatActivity` or share an AppCompat application theme. If host code directly uses AppCompat or AndroidX Activity Result APIs, explicitly declare the corresponding dependencies; the example-specific setup is explained below.
 
-Version `1.1.0` is available from the [public Maven Central repository](https://repo.maven.apache.org/maven2/io/github/logan0817/multiurlmanager/1.1.0/); no local Maven repository is needed. The repository's standalone [consumer fixture](fixtures/consumer) defaults to verifying the current local publication. See [development instructions](docs/development.md) for contributor build and validation commands.
+Version `1.2.0` is available from Maven Central for both the [core](https://repo.maven.apache.org/maven2/io/github/logan0817/multiurlmanager/1.2.0/) and [optional networking artifact](https://repo.maven.apache.org/maven2/io/github/logan0817/multiurlmanager-okhttp/1.2.0/); no local Maven repository is needed. The repository's standalone [consumer fixture](fixtures/consumer) defaults to verifying the current local publication. See [development instructions](docs/development.md) for contributor build and validation commands.
 
 ## Quick start
 
@@ -268,7 +270,7 @@ The library reads the final `assets/base_urls_config.json` packaged in the host 
 
 Initial environment priority is **explicit `setDefaultEnvironment` / `setFileConfigKey` > JSON `defaultEnvironment` > legacy fallback `release_defaults`**. The selected environment must exist. Do not add the new field directly to legacy array JSON without a schemaVersion.
 
-The repository demo's main asset contains dev/test/production and defaults to dev. Its release asset contains only production and defaults to production. The 1.2.0 candidate demo additionally opts into fixed production mode through its own `FIXED_PRODUCTION` flag; that mode leaves stored debug data untouched. Ordinary mode continues to preserve existing selections on upgrade. The library does not infer the host environment from its own build type. See the [configuration guide](docs/configuration.md#固定环境模式120-待发布).
+The repository demo's main asset contains dev/test/production and defaults to dev. Its release asset contains only production and defaults to production. The 1.2.0 demo additionally opts into fixed production mode through its own `FIXED_PRODUCTION` flag; that mode leaves stored debug data untouched. Ordinary mode continues to preserve existing selections on upgrade. The library does not infer the host environment from its own build type. See the [configuration guide](docs/configuration.md#固定环境模式120).
 
 On upgrade from 1.0.x, valid saved addresses—including defaults automatically written by the old version—move into the active `legacy` environment (or the first available `legacy-1` style ID if the host already uses that name). New defaults do not overwrite those selections or rename old service keys. Legacy `debug_defaults` / `release_defaults` arrays, `setFileConfigKey`, Activity launch and result-parsing entry points remain supported. The `dynamicUrls` getter now returns a copy, so mutating it has no effect. See [migration](docs/migration-1.1.md) for clearing, storage failure, default merging, backups and downgrade limits.
 

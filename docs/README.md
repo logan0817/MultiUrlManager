@@ -1,6 +1,6 @@
 # 文档索引
 
-当前源码为 1.2.0 正式版本候选，尚未发布；新增能力标记为 1.2.0（待发布）。[1.2.0 方案](plans/v1.2.0-implementation-plan.md)记录范围与验收，[网络路由](network-routing.md)说明可选制品。2026-10-19 已正式发布的版本仍为 1.1.0，[发布记录](ci-and-release.md#110-上传验收记录)包含对应 CI、部署 ID、公开文件与签名核验结果。
+当前正式版本为 1.2.0，已于 2026-11-10 发布到 Maven Central，包含核心和可选 OkHttp 两个制品。[1.2.0 方案](plans/v1.2.0-implementation-plan.md)记录范围与验收，[网络路由](network-routing.md)说明可选制品。[发布记录](ci-and-release.md#120-上传验收记录)包含对应 CI、部署 ID、公开文件与签名核验结果；1.1.0 历史记录继续保留。
 
 建议先读 [接入入口](../README.md)，随后按需要阅读：
 

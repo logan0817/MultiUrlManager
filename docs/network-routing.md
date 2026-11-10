@@ -1,6 +1,6 @@
-# 可选 OkHttp 动态路由（1.2.0 待发布）
+# 可选 OkHttp 动态路由（1.2.0）
 
-本能力已进入 `1.2.0` 正式版本候选，尚未发布到 Maven Central。核心 `multiurlmanager` 不引入 OkHttp 或 Retrofit。只有选择网络适配时，才依赖 `io.github.logan0817:multiurlmanager-okhttp:1.2.0`；候选验证使用本轮文件 Maven 仓库。已发布的 1.1.0 不包含此制品。
+本能力已随 `1.2.0` 发布到 Maven Central。核心 `multiurlmanager` 不引入 OkHttp 或 Retrofit。只有选择网络适配时，才依赖 `io.github.logan0817:multiurlmanager-okhttp:1.2.0`；宿主配置 `mavenCentral()` 即可解析，无需本地 Maven 仓库。已发布的 1.1.0 不包含此制品。
 
 ## 接入
 

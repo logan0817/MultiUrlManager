@@ -50,11 +50,11 @@ JVM 测试关注 URL、单选、环境和失败结果，并直接用真实配置
 
 开发验收收尾提交 `0bc3fa5` 的 [完整 CI #20](https://github.com/logan0817/MultiUrlManager/actions/runs/42771730604) 已通过 quality、API 24、API 36 和 required，两端原始报告均核对为 42 项测试、24 个升级阶段通过、零跳过。此前功能提交 #19 的详细范围保留在下文。
 
-本轮将根工程版本从 `1.2.0-SNAPSHOT` 调整为 `1.2.0`；Demo versionCode 保持 `8`，高于 1.1.0 的 `7`。两个 publication 与消费/升级夹具继续读取同一版本属性，不单独维护版本。中英文 README 和能力文档明确候选尚未发布，公共安装示例继续使用 Central 已有的 1.1.0；候选在本轮文件 Maven 仓库验证。
+本轮将根工程版本从 `1.2.0-SNAPSHOT` 调整为 `1.2.0`；Demo versionCode 保持 `8`，高于 1.1.0 的 `7`。两个 publication 与消费/升级夹具继续读取同一版本属性，不单独维护版本。准备阶段中英文 README 和能力文档明确候选尚未发布，公共安装示例保留 Central 已有的 1.1.0；正式发布后已更新为可公开解析的 1.2.0。
 
 本地验证已通过：41 项 JVM、51 项脚本测试、Debug/Release 与仪器 APK 构建、应用 Debug/Release 及两库 Debug Lint、双 publication/批次名、两代公开 ABI、Kotlin/Java 旧二进制与源码消费、独立 Debug/R8 消费构建及中英文 10 份 README 示例编译。复用 Android Studio 的 JDK 17、SDK 与共享缓存，Gradle 限制 `--max-workers=2`，未强制重建；本地主构建 391 项任务中执行 103 项，其余 288 项增量复用。直接核对两变体 APK 为 `1.2.0 / versionCode 8`、打包 JSON 与源文件逐字节一致，两个制品的 AAR/POM/sources/javadoc/module 齐全，核心不引入 OkHttp，可选制品依赖同版本核心与 OkHttp 4.12.0。日志与 publication 核验记录在忽略目录 `build/verification/v1.2-release-candidate-20261110/`。
 
-开发分支完整 CI 的最终结论以本次提交对应的运行结果为准；前述 SNAPSHOT 成功不能代替正式版本产物验收。尚未合并 main、创建 tag、签名、上传或发布，开发分支候选不满足正式发布的 main push CI 来源门槛。
+正式候选 `dd662cb` 的开发分支 CI #21 通过后，已快进合并 main，并取得 [main push CI #22](https://github.com/logan0817/MultiUrlManager/actions/runs/42779772691) 全部成功结果；每端 42 项测试、24 个升级阶段通过，零跳过。原始 main 候选归档与 72 个文件摘要均在本机核验通过，后续 tag 与签名固定这份候选。2026-11-10 已创建 `v1.2.0` 并完成本机 Central 上传验收，随后对原部署正式发布到 PUBLISHED，公开 100 个文件与原签名包一致、10 份签名通过；身份与恢复信息见 [1.2.0 上传验收记录](ci-and-release.md#120-上传验收记录)。公开依赖独立 Debug/R8/测试 APK 与 10 份 README 示例构建通过，API 33 真机消费 1 项通过、零跳过（1.548 秒），包含实际路由。前述 SNAPSHOT 成功不作为本次正式版本产物验收证据。
 
 ## 1.2.0-SNAPSHOT 本地开发验收（2026-10-30）
 
