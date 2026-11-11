@@ -17,6 +17,7 @@ import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
 import androidx.test.espresso.action.ViewActions.longClick
 import androidx.test.espresso.action.ViewActions.replaceText
+import androidx.test.espresso.action.ViewActions.scrollTo
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
@@ -102,7 +103,7 @@ class EditorPresentationTest {
             onView(withText("https://order.dev.example.com/")).perform(longClick())
             onView(withText(LibraryR.string.base_url_edit)).inRoot(isDialog()).perform(click())
             onView(withId(LibraryR.id.etRemark)).inRoot(isDialog())
-                .perform(replaceText("updated development remark"), closeSoftKeyboard())
+                .perform(scrollTo(), replaceText("updated development remark"), closeSoftKeyboard())
             onView(withId(android.R.id.button1)).inRoot(isDialog()).perform(click())
             scenario.onActivity { it.findViewById<Spinner>(LibraryR.id.environmentSpinner).setSelection(1) }
             instrumentation.waitForIdleSync()
