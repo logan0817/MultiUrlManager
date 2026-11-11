@@ -9,15 +9,15 @@
 当前稳定版 **1.2.0**，已发布到 Maven Central。核心库不依赖 Retrofit 或 OkHttp；本版新增固定环境模式、业务展示名、配置变更摘要和可选 OkHttp 路由。
 
 
-> 当前分支正在开发 **1.3.0-SNAPSHOT**，尚未正式发布。新增文件导入导出及可靠性修复，完整规则见[配置交换](docs/configuration-transfer.md)，进度见[1.3.0 计划](docs/plans/v1.3.0-implementation-plan.md)。下方稳定接入仍使用 Maven Central 的 1.2.0。
+> 当前分支正在准备 **1.3.0 正式候选**，尚未正式发布。新增文件导入导出及可靠性修复，完整规则见[配置交换](docs/configuration-transfer.md)，进度见[1.3.0 计划](docs/plans/v1.3.0-implementation-plan.md)。下方稳定接入仍使用 Maven Central 的 1.2.0。
 
-开发者验证当前源码的本地 Maven 候选时使用以下坐标；本地仓库生成方式见[开发说明](docs/development.md)，不能仅配置 Maven Central 就假定此 SNAPSHOT 已公开：
+开发者验证当前源码的本地 Maven 候选时使用以下坐标；本地仓库生成方式见[开发说明](docs/development.md)，不能仅配置 Maven Central 就假定此候选已公开：
 
 ```kotlin
 dependencies {
-    implementation("io.github.logan0817:multiurlmanager:1.3.0-SNAPSHOT")
+    implementation("io.github.logan0817:multiurlmanager:1.3.0")
     // 需要路由时添加同版本网络制品。
-    implementation("io.github.logan0817:multiurlmanager-okhttp:1.3.0-SNAPSHOT")
+    implementation("io.github.logan0817:multiurlmanager-okhttp:1.3.0")
 }
 ```
 
@@ -290,9 +290,9 @@ android {
 
 要让 Release APK 仅包含生产配置，再将生产专用的完整 JSON 放入 `app/src/release/assets/base_urls_config.json`，它会整文件覆盖 main 同名文件，不合并环境数组。普通模式下，单独覆盖此文件仍不会清除设备已存选择。固定模式也不负责裁剪其他源码中的测试地址，详见[配置与打包说明](docs/configuration.md#debug--release-打包使用哪份配置)。
 
-## 团队交换配置（1.3.0 开发中）
+## 团队交换配置（1.3.0 候选）
 
-此功能需要当前开发版本，1.2.0 尚不支持。无需相机或存储权限，直接使用系统文件选择器：
+此功能需要当前 1.3.0 候选版本，稳定版 1.2.0 尚不支持。无需相机或存储权限，直接使用系统文件选择器：
 
 1. 发送方在管理页菜单选择“导出配置”，勾选环境并保存 JSON；导出的是已保存状态，不含当前草稿。
 2. 接收方选择“导入配置”，打开同事提供的文件，选择环境和“合并”或“替换选定环境”。

@@ -55,6 +55,16 @@ JVM 测试关注 URL、单选、环境和失败结果，并直接用真实配置
 
 本机红米验证、截图采样不稳定性、候选身份和浏览器归档下载限制见 [1.3.0 验收记录](plans/v1.3.0-implementation-plan.md)。开发版本保持 `1.3.0-SNAPSHOT`，本次验收不包含合并、tag、签名或正式发布。
 
+## 1.3.0 正式版本候选准备（2026-11-11）
+
+最终开发提交 `b86d668` 的[完整 CI #26](https://github.com/logan0817/MultiUrlManager/actions/runs/42973128774)首轮通过 quality、API 24/36 和 required。两端各 63 项测试、36 个升级阶段通过；这是 `1.3.0-SNAPSHOT` 的验收证据。
+
+本轮将源码版本切换为 `1.3.0`，Demo versionCode 保持 `9`。两个 publication、独立消费及升级夹具继续读取同一属性。稳定接入文档保留 Central 已发布的 1.2.0，当前源码的本地依赖示例标为未发布候选。
+
+正式版本本地已通过核心 JVM 45 项、网络 JVM 16 项、脚本 56 项、文档链接与 JSON/XML 示例检查、Demo Debug/Release、双 publication 及批次名检查。独立宿主 Debug/R8/仪器 APK 构建通过，包含中英文 14 份完整 README Kotlin 示例和 Java 配置交换调用。直接核验两个变体 APK 均为 `1.3.0 / versionCode 9`，打包 JSON 与源文件一致；每个 publication 的 AAR/POM/sources/javadoc/module 及校验和共 25 个文件完整，OkHttp 制品依赖同版本核心。主构建 240 项任务执行 64 项、增量复用 176 项，消费构建 112 项任务执行 10 项、增量复用 102 项。
+
+本地记录在忽略目录 `build/verification/v1.3.0-release-candidate/`。本轮未重复设备安装，正式版本设备与升级验证交由同轮完整 CI；开发版本既有测试不冒充正式候选结果。签名与发布须取得授权，并使用满足 main CI 来源门槛的原始候选。
+
 ## 1.2.0 正式版本候选准备（2026-11-10）
 
 开发验收收尾提交 `0bc3fa5` 的 [完整 CI #20](https://github.com/logan0817/MultiUrlManager/actions/runs/42771730604) 已通过 quality、API 24、API 36 和 required，两端原始报告均核对为 42 项测试、24 个升级阶段通过、零跳过。此前功能提交 #19 的详细范围保留在下文。

@@ -9,15 +9,15 @@ For example, your app calls both order and sign-in services. Switch to developme
 The current stable version is **1.2.0**, available from Maven Central. The core has no Retrofit or OkHttp dependency. This release adds fixed environment mode, service display names, draft change summaries and optional OkHttp routing.
 
 
-> This branch develops **1.3.0-SNAPSHOT**, which is not a stable release. It adds JSON file exchange and reliability fixes; see the [exchange guide](docs/configuration-transfer.md) and [1.3.0 plan](docs/plans/v1.3.0-implementation-plan.md). The stable quick start below continues to use 1.2.0 from Maven Central.
+> This branch prepares the **1.3.0 release candidate**, which has not been published. It adds JSON file exchange and reliability fixes; see the [exchange guide](docs/configuration-transfer.md) and [1.3.0 plan](docs/plans/v1.3.0-implementation-plan.md). The stable quick start below continues to use 1.2.0 from Maven Central.
 
-To verify the current source against a locally published Maven candidate, use these coordinates and the repository setup in [development](docs/development.md). Do not assume this SNAPSHOT is available from Maven Central:
+To verify the current source against a locally published Maven candidate, use these coordinates and the repository setup in [development](docs/development.md). Do not assume this candidate is available from Maven Central:
 
 ```kotlin
 dependencies {
-    implementation("io.github.logan0817:multiurlmanager:1.3.0-SNAPSHOT")
+    implementation("io.github.logan0817:multiurlmanager:1.3.0")
     // Add the matching networking artifact when routing is needed.
-    implementation("io.github.logan0817:multiurlmanager-okhttp:1.3.0-SNAPSHOT")
+    implementation("io.github.logan0817:multiurlmanager-okhttp:1.3.0")
 }
 ```
 
@@ -290,9 +290,9 @@ Fixed mode uses only that environment's packaged definitions; `production` must 
 
 To package only production definitions in the Release APK, also place a complete production-only JSON in `app/src/release/assets/base_urls_config.json`. It replaces the entire main asset rather than merging environment arrays. In ordinary mode, this override alone still preserves saved device selections. Fixed mode does not remove test addresses from other source code; see [configuration and packaging](docs/configuration.md#debug--release-打包使用哪份配置).
 
-## Exchange team configurations (1.3.0 in development)
+## Exchange team configurations (1.3.0 candidate)
 
-This requires the development version; stable 1.2.0 does not include it. The system file picker needs no camera or storage permission:
+This requires the current 1.3.0 candidate; stable 1.2.0 does not include it. The system file picker needs no camera or storage permission:
 
 1. On the sending device, choose **Export configuration**, select environments, and save JSON. Export contains committed state, not the current draft.
 2. On the receiving device, choose **Import configuration**, open the file, select environments, and choose **Merge** or **Replace selected environments**.
