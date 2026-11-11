@@ -1,9 +1,9 @@
 package com.logan.multiurlmanager.library.utils
 
 import android.content.Context
-import com.google.gson.JsonParser
 import com.logan.multiurlmanager.library.UrlEnvironment
 import com.logan.multiurlmanager.library.bean.BaseUrl
+import com.logan.multiurlmanager.library.internal.ConfigurationJson
 import com.logan.multiurlmanager.library.internal.StateCodec
 import com.logan.multiurlmanager.library.internal.UrlRules
 
@@ -23,21 +23,21 @@ object BaseUrlConfigLoader {
             parseConfiguration(it.readText())
         }
 
-    internal fun parseConfiguration(text: String): Configuration {
-        val root = JsonParser.parseString(text).asJsonObject
+    // 保留旧版已进入 JVM ABI 的单参数入口。
+    internal fun parseConfiguration(text: String): Configuration = parseConfiguration(text, checkRequired = true)
+
+    internal fun parseConfiguration(text: String, checkRequired: Boolean): Configuration {
+        var root = ConfigurationJson.document(text, strict = false)
         val modern = root.has("schemaVersion")
         val environments = if (modern) {
+            root = ConfigurationJson.document(text)
             StateCodec.requireSupportedVersion(root)
-            root.getAsJsonArray("environments").map { raw ->
-                val env = raw.asJsonObject
-                UrlRules.validate(
-                    UrlEnvironment(
-                        env.get("id").asString,
-                        env.get("name").asString,
-                        env.getAsJsonArray("urls").map { StateCodec.parseUrl(it.asJsonObject) },
-                        env.getAsJsonArray("requiredKeys")?.map { it.asString }?.toSet() ?: emptySet()
-                    )
-                )
+            ConfigurationJson.array(root.get("environments"), "environments").mapIndexed { index, raw ->
+                val environment = ConfigurationJson.environment(raw, "environments[$index]")
+                require(!checkRequired || environment.requiredKeys.all { key -> environment.urls.any { it.configKey == key && it.select } }) {
+                    "environments[$index].requiredKeys: required business has no selection"
+                }
+                environment
             }
         } else {
             // 旧格式顶层键就是环境 id，不能把新版字段混进旧数组对象中。

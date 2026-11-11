@@ -30,7 +30,7 @@
 }
 ```
 
-`id` 与 `name` 必须非空；id 不能重复。`requiredKeys` 默认空，作为当前环境提交时，声明的键必须存在选中地址。`select` 默认 false，`remark` 可省略。未知 schema 版本、缺失文件、非法字段或同组多选导致初始化失败，不静默加载其他服务器。
+`id` 与 `name` 必须非空；id 不能重复。`requiredKeys` 默认空，作为当前环境提交时，声明的键必须存在选中地址。`select` 默认 false，`remark` 可省略。未知 schema 版本、非法字段或同组多选导致初始化失败，不静默加载其他服务器。AAR 内含旧格式空配置用于兼容；宿主没有提供同名 JSON 时，可能初始化为空环境。请核对宿主 assets，不能仅以初始化成功判断接入完成。1.3.0 对带 schemaVersion 的新格式严格校验字段类型与重复字段，错误包含字段路径；旧数组和已存数据保留兼容读取。
 
 1.2.0可添加顶层 `businessNames` 对象，例如 `"businessNames": {"order": "订单服务", "login": "登录服务"}`。键必须来自配置中已有业务，值为非空字符串；显示名称不改变 `configKey`、URL 或持久化数据。也可通过 `setBusinessNames(mapOf("order" to "订单服务"))` 显式替换 JSON 映射；输入会被复制，未配置的业务显示原键。旧数组格式不添加此字段。
 

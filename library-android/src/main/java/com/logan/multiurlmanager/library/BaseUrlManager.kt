@@ -6,6 +6,8 @@ import android.os.Looper
 import android.util.Log
 import com.logan.multiurlmanager.library.bean.BaseUrl
 import com.logan.multiurlmanager.library.internal.FileStateStore
+import com.logan.multiurlmanager.library.internal.ConfigurationTransferCodec
+import com.logan.multiurlmanager.library.internal.ImportException
 import com.logan.multiurlmanager.library.internal.StateStore
 import com.logan.multiurlmanager.library.internal.UrlRules
 import com.logan.multiurlmanager.library.utils.BaseUrlConfigLoader
@@ -56,6 +58,78 @@ class BaseUrlManager internal constructor(
 
     /** 返回隔离副本；revision 必须随草稿保留，保存时用于检测并发编辑。 */
     fun snapshot(): UrlSnapshot = copy(state)
+
+    /** 可供页面重新添加候选的业务声明；导入文件不能自行扩展此集合。 */
+    fun knownBusinessKeys(): Set<String> {
+        val current = state
+        val definitions = if (isReadOnly) current.environments else defaults + current.environments
+        return definitions.flatMap { env -> env.urls.map { it.configKey } + env.requiredKeys }.toSet()
+    }
+
+    /** 只导出已提交内容，不含 revision、内部默认基线和鉴权状态。 */
+    fun exportConfiguration(environmentIds: Set<String>): String =
+        ConfigurationTransferCodec.export(snapshot(), environmentIds.toSet())
+
+    /** 读取可选环境清单；不采用文件中的默认环境，不创建草稿或持久化。 */
+    fun inspectImport(json: String): ImportInspectionResult {
+        if (isReadOnly) return ImportInspectionResult.Failure(ImportFailureReason.READ_ONLY, "Fixed environment is read-only")
+        return try {
+            val environments = ConfigurationTransferCodec.parse(json, knownBusinessKeys())
+            ImportInspectionResult.Success(environments.map { ImportEnvironmentInfo(it.id, it.name, it.urls.size) })
+        } catch (error: ImportException) {
+            ImportInspectionResult.Failure(error.reason, error.message.orEmpty())
+        } catch (error: IllegalArgumentException) {
+            ImportInspectionResult.Failure(ImportFailureReason.VALIDATION, error.message ?: "Invalid configuration")
+        } catch (_: Exception) {
+            ImportInspectionResult.Failure(ImportFailureReason.VALIDATION, "Invalid configuration")
+        }
+    }
+
+    /** 以本机草稿为基础生成导入预览；调用方确认后仍需 saveAsync，且不能丢弃 revision。 */
+    @Synchronized
+    fun previewImport(
+        json: String,
+        baseDraft: UrlSnapshot,
+        environmentIds: Set<String>,
+        mode: ImportMode
+    ): ImportResult {
+        if (isReadOnly) return ImportResult.Failure(ImportFailureReason.READ_ONLY, "Fixed environment is read-only")
+        if (baseDraft.revision != state.revision) {
+            return ImportResult.Failure(ImportFailureReason.CONFLICT, "Configuration changed; preview again")
+        }
+        return try {
+            val knownKeys = knownBusinessKeys()
+            val base = copy(baseDraft).let { snapshot ->
+                snapshot.copy(environments = snapshot.environments.map { UrlRules.validate(it, checkRequired = false) })
+            }
+            require(base.environments.isNotEmpty() && base.environments.map { it.id }.distinct().size == base.environments.size) {
+                "Invalid draft environments"
+            }
+            require(base.environments.any { it.id == base.environmentId }) { "Unknown current draft environment" }
+            base.environments.forEachIndexed { index, environment ->
+                if ((environment.urls.map { it.configKey } + environment.requiredKeys).any { it !in knownKeys }) {
+                    throw ImportException(ImportFailureReason.UNKNOWN_BUSINESS, "draft.environments[$index]: undeclared business key")
+                }
+                val declaration = defaults.find { it.id == environment.id } ?: state.environments.find { it.id == environment.id }
+                require(declaration == null || environment.requiredKeys == declaration.requiredKeys) { "Required key declarations cannot be changed" }
+            }
+            val imported = ConfigurationTransferCodec.parse(json, knownKeys)
+            require((defaults + state.environments).none { declaration ->
+                declaration.id in environmentIds && base.environments.none { it.id == declaration.id }
+            }) { "Existing import environment is missing from draft" }
+            val declaredGroups = (defaults + state.environments).groupBy { it.id }.mapValues { (_, environments) ->
+                environments.flatMap { it.urls.map { value -> value.configKey } + it.requiredKeys }.toSet()
+            }
+            val (draft, changes) = ConfigurationTransferCodec.preview(base, imported, environmentIds.toSet(), mode, declaredGroups)
+            ImportResult.Ready(copy(draft), changes)
+        } catch (error: ImportException) {
+            ImportResult.Failure(error.reason, error.message.orEmpty())
+        } catch (error: IllegalArgumentException) {
+            ImportResult.Failure(ImportFailureReason.VALIDATION, error.message ?: "Invalid configuration")
+        } catch (_: Exception) {
+            ImportResult.Failure(ImportFailureReason.VALIDATION, "Invalid configuration")
+        }
+    }
 
     /** 获取内置默认值副本；未知环境抛出 NoSuchElementException。 */
     fun defaultEnvironment(id: String): UrlEnvironment = defaults.first {
@@ -226,7 +300,13 @@ class BaseUrlManager internal constructor(
     @Synchronized
     override fun refreshData() {
         if (isReadOnly) return
-        val loaded = store.read() ?: throw IllegalStateException("No persisted state; cannot reload")
+        val loaded = try {
+            store.read() ?: throw IllegalStateException("No persisted state; cannot reload")
+        } catch (error: Exception) {
+            // 读取可能包含默认定义升级写入；失败后必须先确认磁盘，不能继续覆盖不确定结果。
+            storageUncertain = true
+            throw error
+        }
         val previous = state
         state = copy(loaded)
         storageUncertain = false

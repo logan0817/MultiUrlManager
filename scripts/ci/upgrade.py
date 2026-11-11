@@ -5,10 +5,12 @@ from instrumentation import validate_output
 def run_upgrade(candidate, suite, reports, command):
     package = suite['package']
     if package not in ('com.logan.multiurlmanager.upgrade.debug', 'com.logan.multiurlmanager.upgrade.release',
-                       'com.logan.multiurlmanager.upgrade11.debug', 'com.logan.multiurlmanager.upgrade11.release'):
+                       'com.logan.multiurlmanager.upgrade11.debug', 'com.logan.multiurlmanager.upgrade11.release',
+                       'com.logan.multiurlmanager.upgrade12.debug', 'com.logan.multiurlmanager.upgrade12.release'):
         raise ValueError('升级测试只允许清理专用夹具包')
     count = 0
-    scenarios = ('snapshot',) if package.startswith('com.logan.multiurlmanager.upgrade11.') else ('asset', 'custom', 'code')
+    scenarios = ('snapshot', 'fixed') if package.startswith('com.logan.multiurlmanager.upgrade12.') else (
+        ('snapshot',) if package.startswith('com.logan.multiurlmanager.upgrade11.') else ('asset', 'custom', 'code'))
     for scenario in scenarios:
         # 上一个场景为新版，先卸载仅属于夹具的应用，下一场景才能重新安装 versionCode=1。
         installed = command(['shell', 'pm', 'list', 'packages', package]).splitlines()
@@ -21,7 +23,11 @@ def run_upgrade(candidate, suite, reports, command):
                     raise RuntimeError('升级夹具安装失败')
             # current 使用 -r 保留旧数据，绝不能 pm clear；第二次调用验证新进程不会重复迁移。
             for attempt in range(1 if stage == 'legacy' else 2):
-                output = command(['shell', 'am', 'instrument', '-w', '-r', '-e', 'scenario', scenario,
+                selection = []
+                if package.startswith('com.logan.multiurlmanager.upgrade12.'):
+                    test_class = 'FixedUpgrade12Test' if scenario == 'fixed' else 'Upgrade11Test'
+                    selection = ['-e', 'class', 'com.logan.multiurlmanager.upgrade11.' + test_class]
+                output = command(['shell', 'am', 'instrument', '-w', '-r', *selection, '-e', 'scenario', scenario,
                                   '-e', 'attempt', str(attempt),
                                   f'{suite["testPackage"]}/{suite["runner"]}'], timeout=120)
                 (reports / f'{suite["name"]}-{scenario}-{stage}-{attempt}.txt').write_text(output)

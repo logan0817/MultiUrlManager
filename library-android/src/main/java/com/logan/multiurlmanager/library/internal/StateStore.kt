@@ -22,18 +22,23 @@ internal class FileStateStore(
 ) : StateStore {
     private val file = AtomicFile(File(context.filesDir, "multiurlmanager-state.json"))
 
-    override fun read(): UrlSnapshot? = try {
-        file.openRead().bufferedReader(Charsets.UTF_8).use {
-            val text = it.readText()
-            val saved = StateCodec.decode(text)
-            val oldDefaults = JsonParser.parseString(text).asJsonObject.get("defaults")?.let { definition ->
-                StateCodec.decode(definition.toString()).environments
-            } ?: emptyList()
-            DefaultMerger.merge(saved, oldDefaults, defaults)
+    override fun read(): UrlSnapshot? {
+        val text = try {
+            file.openRead().bufferedReader(Charsets.UTF_8).use { it.readText() }
+        } catch (e: FileNotFoundException) {
+            if (file.baseFile.exists() || File(file.baseFile.path + ".bak").exists()) throw e
+            return null
         }
-    } catch (e: FileNotFoundException) {
-        if (file.baseFile.exists() || File(file.baseFile.path + ".bak").exists()) throw e
-        null
+        val saved = StateCodec.decode(text)
+        val oldDefaults = JsonParser.parseString(text).asJsonObject.get("defaults")?.let { definition ->
+            StateCodec.decode(definition.toString()).environments
+        } ?: emptyList()
+        val merged = DefaultMerger.merge(saved, oldDefaults, defaults)
+        // 先关闭读取流，再原子提交合并结果和默认基线；失败不能把新状态发布到内存。
+        if (merged != saved || defaults.isNotEmpty() && !DefaultMerger.sameContent(oldDefaults, defaults)) {
+            write(merged)
+        }
+        return merged
     }
 
     override fun write(state: UrlSnapshot) {

@@ -26,8 +26,15 @@ internal object DefaultMerger {
             next.copy(urls = urls)
         }.toMutableList()
         defaults.filterNot { env -> merged.any { it.id == env.id } }.forEach(merged::add)
-        return state.copy(environments = merged)
+        // 默认定义升级也是一次状态变更。恢复自旧进程的草稿不能凭相同 revision 覆盖新定义。
+        if (sameContent(state.environments, merged)) return state
+        check(state.revision < Long.MAX_VALUE) { "Configuration revision exhausted" }
+        return state.copy(revision = state.revision + 1, environments = merged)
     }
+
+    internal fun sameContent(first: List<UrlEnvironment>, second: List<UrlEnvironment>): Boolean =
+        first.map { it.copy(urls = it.urls.map { url -> url.copy(time = 0) }) } ==
+            second.map { it.copy(urls = it.urls.map { url -> url.copy(time = 0) }) }
 
     // 时间不参与默认比较，否则每次构造 BaseUrl 都会把相同配置误判为用户覆盖。
     private fun signature(urls: List<BaseUrl>) = urls.map { listOf(it.configKey, it.url, it.select, it.remark) }.toSet()

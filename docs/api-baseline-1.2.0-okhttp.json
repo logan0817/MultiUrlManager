@@ -1,0 +1,176 @@
+{
+  "artifact": "https://repo.maven.apache.org/maven2/io/github/logan0817/multiurlmanager-okhttp/1.2.0/multiurlmanager-okhttp-1.2.0.aar",
+  "sha256": "de6a423019da48c6bb0b2b8221627ad6b8da78f4ea82e3afc76c45d8c017da13",
+  "classes": {
+    "com.logan.multiurlmanager.okhttp.RouteKey": {
+      "kind": "class",
+      "supertypes": [],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Ljava/lang/String;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component1",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "copy",
+          "descriptor": "(Ljava/lang/String;)Lcom/logan/multiurlmanager/okhttp/RouteKey;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "copy$default",
+          "descriptor": "(Lcom/logan/multiurlmanager/okhttp/RouteKey;Ljava/lang/String;ILjava/lang/Object;)Lcom/logan/multiurlmanager/okhttp/RouteKey;",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "equals",
+          "descriptor": "(Ljava/lang/Object;)Z",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getConfigKey",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "hashCode",
+          "descriptor": "()I",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "toString",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.okhttp.RouteContext": {
+      "kind": "class",
+      "supertypes": [],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Ljava/lang/String;JLjava/lang/String;Lokhttp3/HttpUrl;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component1",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component2",
+          "descriptor": "()J",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component3",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "component4",
+          "descriptor": "()Lokhttp3/HttpUrl;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "copy",
+          "descriptor": "(Ljava/lang/String;JLjava/lang/String;Lokhttp3/HttpUrl;)Lcom/logan/multiurlmanager/okhttp/RouteContext;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "copy$default",
+          "descriptor": "(Lcom/logan/multiurlmanager/okhttp/RouteContext;Ljava/lang/String;JLjava/lang/String;Lokhttp3/HttpUrl;ILjava/lang/Object;)Lcom/logan/multiurlmanager/okhttp/RouteContext;",
+          "static": true
+        },
+        {
+          "kind": "method",
+          "name": "equals",
+          "descriptor": "(Ljava/lang/Object;)Z",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getConfigKey",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getEnvironmentId",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getRevision",
+          "descriptor": "()J",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "getTargetBaseUrl",
+          "descriptor": "()Lokhttp3/HttpUrl;",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "hashCode",
+          "descriptor": "()I",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "toString",
+          "descriptor": "()Ljava/lang/String;",
+          "static": false
+        }
+      ]
+    },
+    "com.logan.multiurlmanager.okhttp.UrlRoutingInterceptor": {
+      "kind": "class",
+      "supertypes": [
+        "okhttp3.Interceptor"
+      ],
+      "members": [
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Lcom/logan/multiurlmanager/library/BaseUrlManager;Ljava/util/Map;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "<init>",
+          "descriptor": "(Lkotlin/jvm/functions/Function0;Ljava/util/Map;)V",
+          "static": false
+        },
+        {
+          "kind": "method",
+          "name": "intercept",
+          "descriptor": "(Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;",
+          "static": false
+        }
+      ]
+    }
+  }
+}

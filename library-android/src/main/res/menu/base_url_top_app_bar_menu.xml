@@ -10,4 +10,12 @@
         android:id="@+id/actionReset"
         android:title="@string/base_url_reset"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/actionImport"
+        android:title="@string/base_url_import"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/actionExport"
+        android:title="@string/base_url_export"
+        app:showAsAction="never" />
 </menu>

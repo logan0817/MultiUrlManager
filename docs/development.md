@@ -6,12 +6,14 @@
 
 - `library-android`：公开管理器、配置页面、存储与测试。
 - `library-okhttp`：1.2.0 可选网络路由、真实 Retrofit / MockWebServer 测试；原核心制品不新增网络依赖。
-- `fixtures/compatibility`：真实发行 1.1.0 编译后替换当前 AAR 运行，以及当前源码重编译；`fixtures/upgrade/app11` 验证真实 1.1.0 的保留数据升级。
+- `fixtures/compatibility`：真实发行 1.1.0、1.2.0 编译后替换当前 AAR 运行，以及当前源码重编译；`fixtures/upgrade/app11`、`app12` 验证对应版本的保留数据升级。
 - `app`：实际接入示例。
-- `fixtures/consumer`：独立工程，从本轮文件 Maven 仓库解析真实 AAR/POM；包含 Kotlin 接口调用和开启 R8 的 minified 变体。`prepareReadmeExamples` 从中英文 README 各提取 6 份完整 Kotlin 示例，并提取网络指南的完整请求页面，共 13 份。编译时隔离包名，将示例宿主 BuildConfig import 指向消费者实际生成的类，其余调用正文保持不变；Debug 和 minified 两种变体均编译，检查两种 BuildConfig 及真实 Retrofit 回调签名的编译兼容性。示例 app 另有实际编译的 Java 接入代码。
+- `fixtures/consumer`：独立工程，从本轮文件 Maven 仓库解析真实 AAR/POM；包含 Kotlin 接口调用和开启 R8 的 minified 变体。`prepareReadmeExamples` 从中英文 README 各提取 6 份完整 Kotlin 示例，并提取网络指南的完整请求页面，再加配置交换指南示例，共 14 份。编译时隔离包名，将示例宿主 BuildConfig import 指向消费者实际生成的类，其余调用正文保持不变；Debug 和 minified 两种变体均编译，检查两种 BuildConfig 及真实 Retrofit 回调签名的编译兼容性。示例 app 另有实际编译的 Java 接入代码；独立消费工程的 `JavaConfigurationExchange` 直接调用新导出、检查和两种预览入口，随 Debug/R8 编译并在仪器测试中执行。
 - `scripts/ci`：文档检查、工作流检查、产物身份、仪器输出解析和受控发布。
 
 源码格式遵循根目录 [.editorconfig](../.editorconfig)。关键中文注释解释快照隔离、版本冲突、先落盘后发布、迁移备份、默认合并与页面重建边界；不以注释代替可运行验证。
+
+1.3.0 开发验收沿用工具链，版本与实际结果见 [1.3.0 计划](plans/v1.3.0-implementation-plan.md)。候选 schema 3 新增 1.2.0 Debug/Release 升级套件，共 10 套件、30 APK、每端 36 个升级阶段；兼容旧 schema 1/2 的历史候选读取。
 
 工具链固定为 Gradle 8.14.3、AGP 8.13.0、Kotlin 1.9.23、JDK 17、SDK 36，最低 API 24。AGP 支持范围依据 [Android 官方版本说明](https://developer.android.com/build/releases/past-releases/agp-8-13-0-release-notes)。Gradle Wrapper 包含分发校验和；使用 Wrapper，不另外安装全局 Gradle。
 
@@ -25,6 +27,7 @@ python3 scripts/ci/check-docs.py
 bash ./gradlew :app:testDebugUnitTest :library-android:testDebugUnitTest :library-okhttp:testDebugUnitTest :app:lintDebug :library-android:lintDebug :library-okhttp:lintDebug :app:assembleDebug :app:assembleRelease :app:assembleDebugAndroidTest :library-android:assembleDebugAndroidTest :library-okhttp:assembleDebugAndroidTest :library-android:publishReleasePublicationToCiRepository :library-okhttp:publishReleasePublicationToCiRepository verifyCentralDeploymentName
 python3 scripts/ci/check-api.py
 bash ./gradlew -p fixtures/compatibility run
+bash ./gradlew -p fixtures/compatibility -PcompatBaseline=1.2.0 run
 bash ./gradlew -p fixtures/compatibility -PcompatBaseline=current run
 bash ./gradlew -p fixtures/consumer :app:assembleDebug :app:assembleMinified :app:assembleMinifiedAndroidTest
 ```

@@ -259,11 +259,13 @@ class MainActivityTest {
     }
 
     @Test fun addressFormSurvivesRecreationAndRemembersBusinessKey() {
+        val name = manager.businessName("login")
+        val title = if (name == "login") name else "$name · login"
         ActivityScenario.launch(BaseUrlManagerActivity::class.java).use { scenario ->
             waitForWindowIdle()
             onView(withId(LibraryR.id.actionAdd)).perform(click())
             onView(withId(LibraryR.id.configKeySpinner)).perform(click())
-            androidx.test.espresso.Espresso.onData(org.hamcrest.Matchers.equalTo("login"))
+            androidx.test.espresso.Espresso.onData(org.hamcrest.Matchers.equalTo(title))
                 .inRoot(androidx.test.espresso.matcher.RootMatchers.isPlatformPopup()).perform(click())
             onView(withId(LibraryR.id.etUrl)).perform(replaceText("https://login-new.example.com"), closeSoftKeyboard())
             onView(withId(LibraryR.id.etRemark)).perform(replaceText("kept remark"), closeSoftKeyboard())
@@ -281,7 +283,7 @@ class MainActivityTest {
             onView(withText("https://order-backup.dev.example.com/")).perform(click())
             onView(withId(LibraryR.id.actionAdd)).perform(click())
             onView(withId(LibraryR.id.configKeySpinner)).check(matches(
-                androidx.test.espresso.matcher.ViewMatchers.withSpinnerText("login")))
+                androidx.test.espresso.matcher.ViewMatchers.withSpinnerText(title)))
             // 新弹窗的输入法可能尚在展开，先收起以免取消按钮坐标落到输入法窗口。
             onView(withId(LibraryR.id.etUrl)).perform(closeSoftKeyboard())
             onView(withId(android.R.id.button2)).perform(click())

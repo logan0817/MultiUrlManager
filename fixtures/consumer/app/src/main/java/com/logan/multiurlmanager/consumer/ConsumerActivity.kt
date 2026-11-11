@@ -4,6 +4,9 @@ import android.app.Activity
 import android.os.Bundle
 import com.logan.multiurlmanager.library.BaseUrlManager
 import com.logan.multiurlmanager.library.UrlEnvironment
+import com.logan.multiurlmanager.library.ImportMode
+import com.logan.multiurlmanager.library.ImportResult
+import com.logan.multiurlmanager.library.utils.BaseUrlConfigLoader
 import com.logan.multiurlmanager.library.bean.BaseUrl
 import com.logan.multiurlmanager.okhttp.RouteContext
 import com.logan.multiurlmanager.okhttp.RouteKey
@@ -56,5 +59,20 @@ class ConsumerActivity : Activity() {
         manager.addBaseURL(BaseUrl("api", "https://consumer.example.com/", true))
         manager.refreshData()
         return manager.getUrl("api")
+    }
+
+    fun emptyBundledConfiguration(): Boolean =
+        BaseUrlConfigLoader.loadEnvironments(this).let { environments ->
+            environments.map { it.id }.toSet() == setOf("release_defaults", "debug_defaults") &&
+                environments.all { it.urls.isEmpty() }
+        }
+
+    fun configurationExchange(): Boolean {
+        val manager = checkNotNull(BaseUrlManager.instance)
+        val before = manager.snapshot()
+        val json = manager.exportConfiguration(setOf(before.environmentId))
+        val preview = manager.previewImport(json, before, setOf(before.environmentId), ImportMode.MERGE)
+        return preview is ImportResult.Ready && preview.draft == before &&
+            preview.changes.isEmpty() && manager.snapshot() == before && JavaConfigurationExchange.verify(manager)
     }
 }

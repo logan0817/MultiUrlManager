@@ -56,6 +56,27 @@ class UpgradeDriverTest(unittest.TestCase):
         self.assertEqual(len(runs), 3)
         self.assertTrue(all('snapshot' in call for call in runs))
 
+    def test_12_upgrade_checks_snapshot_and_fixed_mode_without_clearing_between_stages(self):
+        calls = []
+        def command(args, **kwargs):
+            calls.append(args)
+            if args[:4] == ['shell', 'pm', 'list', 'packages']:
+                return 'package:com.logan.multiurlmanager.upgrade12.debug\n'
+            return successful() if args[:3] == ['shell', 'am', 'instrument'] else 'Success'
+        suite = {'name': 'upgrade12-debug', 'package': 'com.logan.multiurlmanager.upgrade12.debug',
+                 'testPackage': 'com.logan.multiurlmanager.upgrade12.debug.test', 'runner': 'test.Runner',
+                 'apk': 'new.apk', 'testApk': 'new-test.apk', 'legacyApk': 'old.apk', 'legacyTestApk': 'old-test.apk'}
+        with tempfile.TemporaryDirectory() as temp:
+            self.assertEqual(run_upgrade(Path(temp), suite, Path(temp), command), 6)
+            self.assertEqual(len(list(Path(temp).glob('*.txt'))), 6)
+        self.assertFalse(any('clear' in call for call in calls))
+        self.assertEqual(len([call for call in calls if call[0] == 'uninstall']), 2)
+        runs = [call for call in calls if call[:3] == ['shell', 'am', 'instrument']]
+        self.assertEqual(sum('snapshot' in call for call in runs), 3)
+        self.assertEqual(sum('fixed' in call for call in runs), 3)
+        self.assertEqual(sum('com.logan.multiurlmanager.upgrade11.FixedUpgrade12Test' in call for call in runs), 3)
+        self.assertEqual(sum('com.logan.multiurlmanager.upgrade11.Upgrade11Test' in call for call in runs), 3)
+
     def test_refuses_to_clear_real_demo(self):
         with self.assertRaises(ValueError):
             run_upgrade(Path('.'), {'package': 'com.logan.multiurlmanager'}, Path('.'), lambda *args: self.fail())

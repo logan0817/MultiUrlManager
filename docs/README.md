@@ -2,6 +2,8 @@
 
 当前稳定版 **1.2.0** 已发布到 Maven Central，提供核心 `multiurlmanager` 和可选网络制品 `multiurlmanager-okhttp`。第一次接入从 [README 快速接入](../README.md#快速接入)开始，按步骤完成配置、初始化、打开页面和切换验证；英文入口见 [English README](../README_EN.md)。
 
+当前分支为未发布的 **1.3.0-SNAPSHOT**：[开发计划](plans/v1.3.0-implementation-plan.md) · [JSON 文件交换](configuration-transfer.md)。稳定版仍为 1.2.0。
+
 ## 接入与使用
 
 | 你想做什么 | 阅读入口 |

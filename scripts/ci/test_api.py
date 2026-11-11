@@ -38,3 +38,22 @@ class ApiBaselineTest(unittest.TestCase):
             path.write_bytes(b'not an official artifact')
             with self.assertRaisesRegex(ValueError, '摘要不匹配'):
                 api.verified_baseline(path, '1.1.0')
+
+    def test_12_network_artifact_digest_is_verified_independently(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / 'multiurlmanager-okhttp-1.2.0.aar'
+            path.write_bytes(b'wrong network artifact')
+            with self.assertRaisesRegex(ValueError, '摘要不匹配'):
+                api.verified_baseline(path, '1.2.0', 'multiurlmanager-okhttp')
+            with self.assertRaisesRegex(ValueError, '未知发行坐标'):
+                api.verified_baseline(path, '1.1.0', 'multiurlmanager-okhttp')
+
+    def test_12_baselines_include_fixed_mode_and_network_entrypoints(self):
+        import json
+        root = Path(__file__).resolve().parents[2]
+        core = json.loads((root / 'docs/api-baseline-1.2.0.json').read_text())
+        network = json.loads((root / 'docs/api-baseline-1.2.0-okhttp.json').read_text())
+        builder = core['classes'][api.PACKAGE + 'BaseUrlManager$Companion$Builder']
+        self.assertTrue({'setFixedEnvironment', 'setBusinessNames'} <= {item['name'] for item in builder['members']})
+        self.assertEqual(set(network['classes']), set(api.NETWORK_CLASSES))
+        self.assertEqual(network['sha256'], api.NETWORK_SHA256)

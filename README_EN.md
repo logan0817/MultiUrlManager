@@ -8,6 +8,19 @@ For example, your app calls both order and sign-in services. Switch to developme
 
 The current stable version is **1.2.0**, available from Maven Central. The core has no Retrofit or OkHttp dependency. This release adds fixed environment mode, service display names, draft change summaries and optional OkHttp routing.
 
+
+> This branch develops **1.3.0-SNAPSHOT**, which is not a stable release. It adds JSON file exchange and reliability fixes; see the [exchange guide](docs/configuration-transfer.md) and [1.3.0 plan](docs/plans/v1.3.0-implementation-plan.md). The stable quick start below continues to use 1.2.0 from Maven Central.
+
+To verify the current source against a locally published Maven candidate, use these coordinates and the repository setup in [development](docs/development.md). Do not assume this SNAPSHOT is available from Maven Central:
+
+```kotlin
+dependencies {
+    implementation("io.github.logan0817:multiurlmanager:1.3.0-SNAPSHOT")
+    // Add the matching networking artifact when routing is needed.
+    implementation("io.github.logan0817:multiurlmanager-okhttp:1.3.0-SNAPSHOT")
+}
+```
+
 ## Start here
 
 - **First integration**: follow the [quick start](#quick-start) to configure, initialize, open the screen and verify a switch.
@@ -123,7 +136,7 @@ This defines production and development environments, each with order and sign-i
 
 **Existing installations preserve saved selections first.** Changing `defaultEnvironment` does not force the device to switch environments. The reserved `example.com` domains are for illustration and cannot verify real API availability.
 
-URLs must use HTTP(S) and cannot contain credentials, query strings (`?…`) or fragments (`#…`). Include the trailing `/`; the core also adds it automatically. Missing files, unknown format versions, duplicate candidates or multiple selections per service fail explicitly. See [configuration](docs/configuration.md) for full rules.
+URLs must use HTTP(S) and cannot contain credentials, query strings (`?…`) or fragments (`#…`). Include the trailing `/`; the core also adds it automatically. Unknown format versions, duplicate candidates or multiple selections per service fail explicitly. The AAR contains an empty compatibility configuration: omitting the host JSON can therefore show empty environments instead of failing initialization. Check the host assets file; successful initialization alone does not prove service URLs are configured. See [configuration](docs/configuration.md) for full rules.
 
 ### 3. Initialize once in Application
 
@@ -276,6 +289,18 @@ This example uses the host's `BuildConfig.DEBUG`; adjust the condition for custo
 Fixed mode uses only that environment's packaged definitions; `production` must exist. The editor is read-only, and previously saved debug state is neither read nor overwritten. A later process using ordinary mode can restore those selections. **If a service has no selected URL in fixed mode, `getBaseUrl(key, fallback)` throws instead of using fallback.** Define required services in the packaged configuration or handle the `null` returned by `getUrl(key)`.
 
 To package only production definitions in the Release APK, also place a complete production-only JSON in `app/src/release/assets/base_urls_config.json`. It replaces the entire main asset rather than merging environment arrays. In ordinary mode, this override alone still preserves saved device selections. Fixed mode does not remove test addresses from other source code; see [configuration and packaging](docs/configuration.md#debug--release-打包使用哪份配置).
+
+## Exchange team configurations (1.3.0 in development)
+
+This requires the development version; stable 1.2.0 does not include it. The system file picker needs no camera or storage permission:
+
+1. On the sending device, choose **Export configuration**, select environments, and save JSON. Export contains committed state, not the current draft.
+2. On the receiving device, choose **Import configuration**, open the file, select environments, and choose **Merge** or **Replace selected environments**.
+3. Review additions, removals, remarks and selections. Confirmation updates only the draft; press **Save** to apply it.
+
+Merge preserves local selections by default. Replacement preserves the host's required service constraints. New environments are allowed, but unknown service keys are rejected and the active environment does not switch automatically. Fixed mode can export only its fixed configuration.
+
+See the [team configuration file](docs/examples/team-development.json) and [full workflow, limits and errors](docs/configuration-transfer.md). Invalid or oversized imports never partially apply; existing state and draft remain intact.
 
 ## Optional advanced usage
 

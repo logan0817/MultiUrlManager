@@ -4,16 +4,16 @@
 
 ## 普通验证
 
-当前源码版本为 `1.2.0`，Demo versionCode 为 `8`；正式候选 `dd662cb` 已快进合并到 main，并通过 [main push CI #22](https://github.com/logan0817/MultiUrlManager/actions/runs/42779772691)。tag `v1.2.0` 固定该提交，已完成本机签名、Central 上传验收和正式发布，状态为 PUBLISHED，见 [1.2.0 上传验收记录](#120-上传验收记录)。此前 SNAPSHOT 候选不用于此次正式版本上传。
+当前开发源码版本为 `1.3.0-SNAPSHOT`，Demo versionCode 为 `9`；尚未提交云端验证或发布，实际进度见 [1.3.0 开发计划](plans/v1.3.0-implementation-plan.md)。已发布 1.2.0 的正式候选、tag 和 Central 记录保留在下文，不作为 1.3.0 的验收证据。
 
-CI 覆盖 PR、main push、merge_group 与手动验证，使用标准 Ubuntu 24.04、JDK 17。本轮 1.2 验收另允许 `feat/v1.2.0-development` 分支的 push 触发完整验证，便于直接推送修复并收集 API 24/36 结果；其他功能分支没有额外 push 验证。本轮不创建 PR，避免与开发分支 push 重复运行。PR 新提交取消该 PR 旧运行；非 PR 按 run ID 独立分组，避免同一 main 分支的后续提交替换此前 pending 验证。发布单独串行，不取消正在执行的发布。
+CI 覆盖 PR、main push、merge_group 与手动验证，使用标准 Ubuntu 24.04、JDK 17。1.3.0 工作流另配置 `feat/v1.3.0-development` 分支 push，便于获授权后收集 API 24/36 结果；配置触发条件不等于本轮已获推送或云端执行授权。使用开发分支 push 验收时避免同时触发等价 PR 验证。PR 新提交取消该 PR 旧运行；非 PR 按 run ID 独立分组，避免同一 main 分支的后续提交替换此前 pending 验证。发布单独串行，不取消正在执行的发布。
 
 quality 显式初始化 SDK 命令路径，并创建仅包含 `android-36` 平台的临时 SDK 视图，复用已安装的构建工具和已接受的许可。这样运行器预装 API 37 等新平台时，不会改变 Lint 的最高平台判断；所有 Lint 检查保持启用。升级项目 SDK 基线时须同步该步骤。设备 job 仍分别使用 API 24/36 的完整模拟器环境。
 
 | job | 内容 | 超时 |
 | --- | --- | --- |
-| quality | Python 脚本测试（含真实临时 GPG 密钥）、文档/图片/JSON/XML、actionlint、JVM（含 README JSON）、Lint、Debug/Release、仪器 APK、本地 Maven、publication/项目批次名、1.0.6/1.1.0 公开 ABI、Kotlin/Java 源码及旧二进制消费、真实双制品 AAR/R8 与中英文 README Kotlin 示例编译 | 30 分钟 |
-| device / API 24、36 | 下载同轮候选，校验身份与摘要，安装应用/库/混淆消费 APK，执行 8 套件、22 APK 的仪器测试及 1.0.6/1.1.0 Debug/Release 真实旧库覆盖升级 | 各 35 分钟 |
+| quality | Python 脚本测试（含真实临时 GPG 密钥）、文档/图片/JSON/XML、actionlint、JVM（含 README JSON）、Lint、Debug/Release、仪器 APK、本地 Maven、publication/项目批次名、1.0.6/1.1.0/1.2.0 核心及 1.2.0 网络公开 ABI、Kotlin/Java 源码及旧二进制消费、真实双制品 AAR/R8 与中英文 README Kotlin 示例编译 | 30 分钟 |
+| device / API 24、36 | 下载同轮候选，校验身份与摘要，安装应用/库/混淆消费 APK，执行 10 套件、30 APK 的仪器测试及 1.0.6/1.1.0/1.2.0 Debug/Release 真实旧库覆盖升级，共 36 个升级阶段 | 各 35 分钟 |
 | required | 总是汇总 quality、device 的结果；失败、取消、跳过均不通过 | 5 分钟 |
 
 设备矩阵 `fail-fast: false`，收集两端结果，不在设备 job 重建应用。`google_apis;x86_64` API 24/36 镜像已在云端完成下载、启动和测试执行；不能把设备启动成功视为测试通过，仍须核对该提交全部套件与 required 的终态。
@@ -24,11 +24,11 @@ Actions 固定完整 SHA，checkout 不保留写凭据，PR 不使用 secrets，
 
 ## 公开 ABI 门槛
 
-quality 在 publication 完成后、独立消费前运行 `python3 scripts/ci/check-api.py`。脚本下载并校验固定 SHA-256 的真实 Maven Central 1.0.6 和 1.1.0 AAR，再核对仓库基线与当前 Release AAR。两代分别覆盖 17 类/105 成员与 27 类/239 成员，检查类型关系、JVM 成员描述符、默认构造与 copy、SaveResult 封闭分支及枚举值。独立 compatibility 工程分别以 1.1.0 和 current 编译同一 Kotlin/Java 消费端，再运行于 current AAR；具体版本的通过状态见开发验证记录。范围与行为兼容限制见 [API 文档](api.md#已发布二进制兼容基线)。
+quality 在 publication 完成后、独立消费前运行 `python3 scripts/ci/check-api.py`。脚本核验固定 SHA-256 的真实 Maven Central 1.0.6、1.1.0、1.2.0 核心 AAR 和 1.2.0 OkHttp AAR，再比较仓库基线与当前 Release AAR。核心三代分别覆盖 17 类/105 成员、27 类/239 成员、27 类/261 成员；网络覆盖 3 类/25 成员。检查类型关系、JVM 成员描述符、默认构造与 copy、SaveResult 封闭分支及枚举值。独立 compatibility 工程分别以 1.1.0、1.2.0 和 current 编译 Kotlin/Java 消费端，再运行于 current AAR。具体结果见开发验证记录；范围与行为兼容限制见 [API 文档](api.md#已发布二进制兼容基线)。
 
 ## 同轮候选与测试判定
 
-`scripts/ci/artifacts.py` 生成 `build/ci/candidate/manifest.json`，记录实际受测 SHA、PR head、event、run ID、attempt、版本、工具链、APK 包名/runner 与逐文件 SHA-256。1.2.0 起候选使用 schema 2，包含 8 套件、22 APK，以及同版本的核心与可选 OkHttp 两个 Maven 制品；缺少任一制品的 AAR/POM/sources 即失败。旧 schema 1 的 1.1.0 单制品候选仍可用于历史发布恢复。
+`scripts/ci/artifacts.py` 生成 `build/ci/candidate/manifest.json`，记录实际受测 SHA、PR head、event、run ID、attempt、版本、工具链、APK 包名/runner 与逐文件 SHA-256。1.3.0 起候选使用 schema 3，包含 10 套件、30 APK，以及同版本的核心与可选 OkHttp 两个 Maven 制品；缺少任一制品的 AAR/POM/sources/javadoc 即失败。新增 1.2.0 普通配置保留及固定模式文件隔离升级，保留 1.0.6/1.1.0 覆盖。旧 schema 1/2 仍可用于相应历史版本恢复，不能用于绕过 1.3.0 的新套件门槛。
 
 设备只下载 artifact `candidate-<run-id>-<attempt>`，核验身份、文件摘要与必需套件，拒绝未声明文件或越界路径。不能从历史成功运行补取缺失产物。
 

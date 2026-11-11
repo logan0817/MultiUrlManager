@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""核验已发布 1.0.6/1.1.0 的公开 JVM ABI；只允许新增 API，不允许删除旧入口。"""
+"""核验已发布 1.0.6/1.1.0/1.2.0 双制品的公开 JVM ABI；只允许新增 API，不允许删除旧入口。"""
 import argparse
 import hashlib
 import io
@@ -34,6 +34,7 @@ CLASSES = [PACKAGE + name for name in (
 BASELINES = {
     "1.0.6": ARTIFACT_SHA256,
     "1.1.0": "d4237ddba47f663b2c73f80f3a18e380fdea0b62d87ab5eda10813ca39a6e897",
+    "1.2.0": "a17a749232ccdeab14c0b209493f10a2281409e8c2d219457d0b5d095a7335b5",
 }
 MODERN_CLASSES = CLASSES + [PACKAGE + name for name in (
     "UrlEnvironment", "UrlSnapshot", "SaveResult", "SaveResult$Success", "SaveResult$Failure",
@@ -42,9 +43,15 @@ MODERN_CLASSES = CLASSES + [PACKAGE + name for name in (
 )]
 
 
-def verified_baseline(path, version="1.0.6"):
-    expected = BASELINES[version]
-    url = f"https://repo.maven.apache.org/maven2/io/github/logan0817/multiurlmanager/{version}/multiurlmanager-{version}.aar"
+NETWORK_SHA256 = "de6a423019da48c6bb0b2b8221627ad6b8da78f4ea82e3afc76c45d8c017da13"
+NETWORK_CLASSES = ["com.logan.multiurlmanager.okhttp." + name for name in ("RouteKey", "RouteContext", "UrlRoutingInterceptor")]
+
+
+def verified_baseline(path, version="1.0.6", artifact="multiurlmanager"):
+    expected = NETWORK_SHA256 if artifact == "multiurlmanager-okhttp" and version == "1.2.0" else BASELINES[version]
+    if artifact not in ("multiurlmanager", "multiurlmanager-okhttp") or (artifact == "multiurlmanager-okhttp" and version != "1.2.0"):
+        raise ValueError("未知发行坐标")
+    url = f"https://repo.maven.apache.org/maven2/io/github/logan0817/{artifact}/{version}/{artifact}-{version}.aar"
     if not path.exists():
         path.parent.mkdir(parents=True, exist_ok=True)
         # 完整下载并校验成功后才替换缓存，避免中断留下可复用的坏文件。
@@ -137,7 +144,7 @@ def main():
     parser.add_argument('--aar', type=Path, default=ROOT / 'library-android/build/outputs/aar/library-android-release.aar')
     parser.add_argument('--baseline-aar', type=Path, default=ROOT / 'build/compat-baseline/multiurlmanager-1.0.6.aar')
     parser.add_argument('--baseline', type=Path, default=ROOT / 'docs/api-baseline-1.0.6.json')
-    parser.add_argument('--version', choices=tuple(BASELINES), help='缺省同时检查两个已发行基线')
+    parser.add_argument('--version', choices=tuple(BASELINES), help='缺省检查全部已发行基线（1.2 含网络制品）')
     parser.add_argument('--write-baseline', action='store_true', help='从摘要固定的已发布 AAR 重新生成基线')
     args = parser.parse_args()
     java_home = os.environ.get('JAVA_HOME')
@@ -145,7 +152,7 @@ def main():
     if not javap:
         raise ValueError('需要 JDK 17 的 javap，请设置 JAVA_HOME')
     for version in (args.version,) if args.version else BASELINES:
-        modern = version == '1.1.0'
+        modern = version != '1.0.6'
         classes = MODERN_CLASSES if modern else CLASSES
         aar = ROOT / f'build/compat-baseline/multiurlmanager-{version}.aar' if modern else args.baseline_aar
         baseline = ROOT / f'docs/api-baseline-{version}.json' if modern else args.baseline
@@ -176,6 +183,26 @@ def main():
             raise ValueError(f'{version} 公开 ABI 缺失或不兼容:\n' + '\n'.join(f'  {entry}' for entry in failures))
         count = sum(len(value['members']) for value in published.values())
         print(f'{version} 公开 ABI 校验通过: {len(published)} 个类、{count} 个字段/方法')
+
+    if args.version in (None, '1.2.0'):
+        artifact = 'multiurlmanager-okhttp'
+        path = ROOT / 'build/compat-baseline/multiurlmanager-okhttp-1.2.0.aar'
+        baseline = ROOT / 'docs/api-baseline-1.2.0-okhttp.json'
+        published = inspect(verified_baseline(path, '1.2.0', artifact), javap, NETWORK_CLASSES, True)
+        if set(published) != set(NETWORK_CLASSES):
+            raise ValueError('1.2.0 网络发行 AAR 缺少公开类')
+        document = {'artifact': f'https://repo.maven.apache.org/maven2/io/github/logan0817/{artifact}/1.2.0/{artifact}-1.2.0.aar',
+                    'sha256': NETWORK_SHA256, 'classes': published}
+        if args.write_baseline:
+            baseline.write_text(json.dumps(document, ensure_ascii=False, indent=2) + '\n')
+        else:
+            if json.loads(baseline.read_text()) != document:
+                raise ValueError('网络 ABI 基线与已发布 1.2.0 不一致')
+            current = inspect(ROOT / 'library-okhttp/build/outputs/aar/library-okhttp-release.aar', javap, NETWORK_CLASSES, True)
+            failures = missing_api(published, current)
+            if failures:
+                raise SystemExit('\n'.join(failures))
+            print('1.2.0 网络制品 ABI 兼容检查通过')
 
 
 if __name__ == '__main__':

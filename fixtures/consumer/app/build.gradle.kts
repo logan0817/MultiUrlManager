@@ -9,7 +9,8 @@ plugins {
 val readmeExamples = listOf(
     rootProject.file("../../README.md") to 6,
     rootProject.file("../../README_EN.md") to 6,
-    rootProject.file("../../docs/network-routing.md") to 1
+    rootProject.file("../../docs/network-routing.md") to 1,
+    rootProject.file("../../docs/configuration-transfer.md") to 1
 )
 val readmeSources = layout.buildDirectory.dir("generated/readme/kotlin")
 val compileReadmeInputs = tasks.register("prepareReadmeExamples") {

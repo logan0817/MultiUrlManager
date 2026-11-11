@@ -8,6 +8,19 @@
 
 当前稳定版 **1.2.0**，已发布到 Maven Central。核心库不依赖 Retrofit 或 OkHttp；本版新增固定环境模式、业务展示名、配置变更摘要和可选 OkHttp 路由。
 
+
+> 当前分支正在开发 **1.3.0-SNAPSHOT**，尚未正式发布。新增文件导入导出及可靠性修复，完整规则见[配置交换](docs/configuration-transfer.md)，进度见[1.3.0 计划](docs/plans/v1.3.0-implementation-plan.md)。下方稳定接入仍使用 Maven Central 的 1.2.0。
+
+开发者验证当前源码的本地 Maven 候选时使用以下坐标；本地仓库生成方式见[开发说明](docs/development.md)，不能仅配置 Maven Central 就假定此 SNAPSHOT 已公开：
+
+```kotlin
+dependencies {
+    implementation("io.github.logan0817:multiurlmanager:1.3.0-SNAPSHOT")
+    // 需要路由时添加同版本网络制品。
+    implementation("io.github.logan0817:multiurlmanager-okhttp:1.3.0-SNAPSHOT")
+}
+```
+
 ## 从这里开始
 
 - **第一次接入**：按下方[快速接入](#快速接入)完成配置、初始化、打开页面和切换验证。
@@ -123,7 +136,7 @@ dependencies {
 
 **已有安装会优先保留保存过的选择。** 改 `defaultEnvironment` 不会强制覆盖设备当前环境。示例中的 `example.com` 域名仅用于演示，不能用来验证真实接口是否可用。
 
-URL 只接受 HTTP(S)，不能带用户名密码、查询参数 `?…` 或片段 `#…`；建议写完整的末尾 `/`，核心也会自动补齐。缺失文件、未知格式版本、重复候选或同组多选会明确报错。完整规则见[配置说明](docs/configuration.md)。
+URL 只接受 HTTP(S)，不能带用户名密码、查询参数 `?…` 或片段 `#…`；建议写完整的末尾 `/`，核心也会自动补齐。未知格式版本、重复候选或同组多选会明确报错。AAR 内含兼容用空配置，宿主漏放 JSON 时可能显示空环境；请核对宿主 assets 文件，不能把初始化成功当作业务地址已配置。完整规则见[配置说明](docs/configuration.md)。
 
 ### 3. 在 Application 初始化一次
 
@@ -276,6 +289,18 @@ android {
 固定模式只使用指定环境的包内定义，`production` 必须存在。管理页只读，不读取或覆盖设备之前保存的调试配置；下次新进程使用普通模式，仍可恢复原有选择。**固定模式缺少某业务的选中地址时，不能通过 fallback 补入其他地址；`getBaseUrl(key, fallback)` 会抛出异常。** 应在包内配置所需业务，或通过 `getUrl(key)` 的 `null` 结果处理缺失。
 
 要让 Release APK 仅包含生产配置，再将生产专用的完整 JSON 放入 `app/src/release/assets/base_urls_config.json`，它会整文件覆盖 main 同名文件，不合并环境数组。普通模式下，单独覆盖此文件仍不会清除设备已存选择。固定模式也不负责裁剪其他源码中的测试地址，详见[配置与打包说明](docs/configuration.md#debug--release-打包使用哪份配置)。
+
+## 团队交换配置（1.3.0 开发中）
+
+此功能需要当前开发版本，1.2.0 尚不支持。无需相机或存储权限，直接使用系统文件选择器：
+
+1. 发送方在管理页菜单选择“导出配置”，勾选环境并保存 JSON；导出的是已保存状态，不含当前草稿。
+2. 接收方选择“导入配置”，打开同事提供的文件，选择环境和“合并”或“替换选定环境”。
+3. 查看新增、删除、备注及选择变化；确认后仅进入草稿，最后点击“保存”才生效。
+
+合并默认保留本机选择；替换保留宿主的必选业务约束。可以新增环境，但不能新增未声明的业务键，也不会自动切换当前环境。固定模式只能导出当前固定配置。
+
+可直接参考[团队开发配置文件](docs/examples/team-development.json)和[完整操作、容量与错误说明](docs/configuration-transfer.md)。超限或解析失败不部分应用，原配置和草稿保留。
 
 ## 按需进阶
 

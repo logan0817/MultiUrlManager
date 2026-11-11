@@ -16,6 +16,8 @@ class ConsumerTest {
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext, ConsumerActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as ConsumerActivity
         try {
             assertEquals("https://consumer.example.com/", activity.roundTrip())
+            assertTrue("未提供宿主asset时保留AAR兼容空配置", activity.emptyBundledConfiguration())
+            assertTrue("混淆后的导入导出必须保留快照且预览不落盘", activity.configurationExchange())
             assertTrue("混淆后的路由必须替换来源前缀并携带当前快照上下文", activity.routeIntegration())
             val editor = instrumentation.startActivitySync(Intent().setClassName(
                 instrumentation.targetContext.packageName,

@@ -109,7 +109,7 @@ def publication_files(directory, artifact, version, sealed=False):
 
 def verify(root, sha, run_id, attempt):
     manifest = json.loads((root / 'manifest.json').read_text())
-    if manifest.get('schemaVersion') not in (1, 2):
+    if manifest.get('schemaVersion') not in (1, 2, 3):
         raise ValueError('未知 manifest 版本')
     if (manifest['sha'], manifest['runId'], manifest['runAttempt']) != (sha, str(run_id), str(attempt)):
         raise ValueError('候选不属于本轮受测提交/运行')
@@ -125,13 +125,17 @@ def verify(root, sha, run_id, attempt):
         raise ValueError('候选包含未声明文件')
     names = {s['name'] for s in manifest['suites']}
     expected = {'app', 'library', 'consumer-minified', 'upgrade-debug', 'upgrade-release'}
-    if manifest['schemaVersion'] == 2:
+    if manifest['schemaVersion'] >= 2:
         expected |= {'upgrade11-debug', 'upgrade11-release', 'okhttp'}
+    if manifest['schemaVersion'] >= 3:
+        expected |= {'upgrade12-debug', 'upgrade12-release'}
+    if manifest.get('version') and tuple(map(int, manifest['version'].split('-')[0].split('.')[:2])) >= (1, 3) and manifest['schemaVersion'] < 3:
+        raise ValueError('1.3 起必须包含 1.2 升级套件')
     if names != expected or len(manifest['suites']) != len(expected):
         raise ValueError('必需的仪器测试套件缺失或重复')
     listed = {f['path'] for f in files}
     if manifest.get('version') and len(release_artifacts(manifest['version'])) == 2:
-        if manifest['schemaVersion'] != 2:
+        if manifest['schemaVersion'] < 2:
             raise ValueError('1.2 起必须使用完整新候选套件')
         snapshots = {}
         publication_paths = set()
@@ -148,7 +152,7 @@ def verify(root, sha, run_id, attempt):
         if snapshots and manifest.get('snapshotVersions') != snapshots:
             raise ValueError('封存 SNAPSHOT 轮次与候选身份不一致')
     for suite in manifest['suites']:
-        if suite['name'].startswith(('upgrade-', 'upgrade11-')) and not all(suite.get(key) for key in ('apk', 'testApk', 'legacyApk', 'legacyTestApk')):
+        if suite['name'].startswith(('upgrade-', 'upgrade11-', 'upgrade12-')) and not all(suite.get(key) for key in ('apk', 'testApk', 'legacyApk', 'legacyTestApk')):
             raise ValueError('升级套件缺少旧包或新包')
         for key in ('testApk', 'apk', 'legacyApk', 'legacyTestApk'):
             if suite.get(key) and suite[key] not in listed:
@@ -190,7 +194,12 @@ def create(root, destination, sha, run_id, attempt, aapt):
             suite['apk'] = f'apk/{name}.apk'
             shutil.copyfile(root / app, destination / suite['apk'])
         suites.append(suite)
-    for baseline, stages in (('', ('legacy', 'current')), ('11', ('legacy11', 'current11'))):
+    version = os.environ['RELEASE_VERSION']
+    baselines = [('', ('legacy', 'current')), ('11', ('legacy11', 'current11'))]
+    modern = tuple(map(int, version.split('-')[0].split('.')[:2])) >= (1, 3)
+    if modern:
+        baselines.append(('12', ('legacy12', 'current12')))
+    for baseline, stages in baselines:
         for variant in ('debug', 'release'):
             name = f'upgrade{baseline}-{variant}'
             suite = {'name': name, 'runner': 'androidx.test.runner.AndroidJUnitRunner'}
@@ -224,7 +233,7 @@ def create(root, destination, sha, run_id, attempt, aapt):
             snapshots[artifact] = resolved
     files = [{'path': p.relative_to(destination).as_posix(), 'sha256': digest(p)}
              for p in sorted(destination.rglob('*')) if p.is_file()]
-    manifest = {'schemaVersion': 2, 'sha': sha, 'runId': str(run_id), 'runAttempt': str(attempt),
+    manifest = {'schemaVersion': 3 if modern else 2, 'sha': sha, 'runId': str(run_id), 'runAttempt': str(attempt),
                 'event': os.environ.get('GITHUB_EVENT_NAME', 'local'),
                 'prHead': os.environ.get('PR_HEAD_SHA', ''), 'version': os.environ['RELEASE_VERSION'],
                 'toolchain': {'jdk': '17', 'gradle': '8.14.3', 'compileSdk': 36},

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:versionCode="1"
+    android:versionName="verification">
+    <application>
+        <!-- 仅测试 APK 的受控文件源，不进入宿主或库发布产物。 -->
+        <provider
+            android:name="com.logan.multiurlmanager.app.ConfigurationTestProvider"
+            android:authorities="${applicationId}.configuration-files"
+            android:exported="true" />
+    </application>
+</manifest>

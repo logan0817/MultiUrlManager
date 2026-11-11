@@ -26,9 +26,8 @@ def release_payload(target, artifact="multiurlmanager", version="1.1.0"):
         (target / (f'{artifact}-{version}' + suffix)).write_bytes(content)
 
 
-def snapshot_payload(target, artifact='multiurlmanager', timestamp='20261030.091951', number=2):
-    version = '1.2.0-SNAPSHOT'
-    resolved = f'1.2.0-{timestamp}-{number}'
+def snapshot_payload(target, artifact='multiurlmanager', timestamp='20261030.091951', number=2, version='1.2.0-SNAPSHOT'):
+    resolved = f'{version.removesuffix("-SNAPSHOT")}-{timestamp}-{number}'
     release_payload(target, artifact, version)
     entries = []
     updated = timestamp.replace('.', '')
@@ -204,6 +203,12 @@ class CandidateCreationTest(unittest.TestCase):
     def test_timestamped_snapshot_can_be_created_verified_and_rejects_wrong_round(self):
         self.assert_candidate('1.2.0-SNAPSHOT')
 
+    def test_13_candidate_requires_12_upgrade_and_keeps_older_suites(self):
+        self.assert_candidate('1.3.0')
+
+    def test_13_snapshot_candidate_has_all_current_publications(self):
+        self.assert_candidate('1.3.0-SNAPSHOT')
+
     def assert_candidate(self, version):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -219,7 +224,11 @@ class CandidateCreationTest(unittest.TestCase):
             packages = {}
             for path in base:
                 packages[path] = 'test.app'
-            for baseline, stages in (('', ('legacy', 'current')), ('11', ('legacy11', 'current11'))):
+            modern = version.startswith('1.3.')
+            baselines = [('', ('legacy', 'current')), ('11', ('legacy11', 'current11'))]
+            if modern:
+                baselines.append(('12', ('legacy12', 'current12')))
+            for baseline, stages in baselines:
                 for variant in ('debug', 'release'):
                     for stage in stages:
                         for test in (False, True):
@@ -234,8 +243,8 @@ class CandidateCreationTest(unittest.TestCase):
             for artifact in ('multiurlmanager', 'multiurlmanager-okhttp'):
                 target = root / 'build/ci/maven/io/github/logan0817' / artifact / version
                 if version.endswith('-SNAPSHOT'):
-                    snapshot_payload(target, artifact, '20261030.084946', 1)
-                    snapshot_payload(target, artifact)
+                    snapshot_payload(target, artifact, '20261030.084946', 1, version)
+                    snapshot_payload(target, artifact, version=version)
                 else:
                     release_payload(target, artifact, version)
             release_payload(root / 'build/ci/maven/io/github/logan0817/multiurlmanager/1.1.0')
@@ -243,18 +252,29 @@ class CandidateCreationTest(unittest.TestCase):
                     patch('artifacts.apk_info', side_effect=lambda aapt, path: packages[path.relative_to(root).as_posix()]):
                 create(root, candidate, 'abc', '3', '1', 'aapt')
             manifest = verify(candidate, 'abc', '3', '1')
-            self.assertEqual(len(manifest['suites']), 8)
-            self.assertEqual(len(list((candidate / 'apk').glob('*.apk'))), 22)
+            self.assertEqual(manifest['schemaVersion'], 3 if modern else 2)
+            self.assertEqual(len(manifest['suites']), 10 if modern else 8)
+            self.assertEqual(len(list((candidate / 'apk').glob('*.apk'))), 30 if modern else 22)
+            if modern:
+                incomplete = {**manifest, 'suites': [suite for suite in manifest['suites'] if suite['name'] != 'upgrade12-release']}
+                (candidate / 'manifest.json').write_text(json.dumps(incomplete))
+                with self.assertRaisesRegex(ValueError, '套件'):
+                    verify(candidate, 'abc', '3', '1')
+                downgraded = {**manifest, 'schemaVersion': 2, 'suites': [suite for suite in manifest['suites'] if not suite['name'].startswith('upgrade12-')]}
+                (candidate / 'manifest.json').write_text(json.dumps(downgraded))
+                with self.assertRaisesRegex(ValueError, '1.3'):
+                    verify(candidate, 'abc', '3', '1')
+                (candidate / 'manifest.json').write_text(json.dumps(manifest))
             self.assertFalse(any('1.1.0' in entry['path'] for entry in manifest['files']))
             if version.endswith('-SNAPSHOT'):
                 self.assertEqual(manifest['snapshotVersions'], {
-                    artifact: '1.2.0-20261030.091951-2' for artifact in ('multiurlmanager', 'multiurlmanager-okhttp')})
+                    artifact: version.removesuffix('-SNAPSHOT') + '-20261030.091951-2' for artifact in ('multiurlmanager', 'multiurlmanager-okhttp')})
                 self.assertFalse(any('084946-1' in entry['path'] for entry in manifest['files']))
-                manifest['snapshotVersions']['multiurlmanager'] = '1.2.0-20261030.084946-1'
+                manifest['snapshotVersions']['multiurlmanager'] = version.removesuffix('-SNAPSHOT') + '-20261030.084946-1'
                 (candidate / 'manifest.json').write_text(json.dumps(manifest))
                 with self.assertRaisesRegex(ValueError, '轮次'):
                     verify(candidate, 'abc', '3', '1')
-                manifest['snapshotVersions']['multiurlmanager'] = '1.2.0-20261030.091951-2'
+                manifest['snapshotVersions']['multiurlmanager'] = version.removesuffix('-SNAPSHOT') + '-20261030.091951-2'
                 extra = candidate / 'maven/io/github/logan0817/multiurlmanager/1.1.0/old.aar'
                 extra.parent.mkdir(parents=True)
                 extra.write_bytes(b'old')

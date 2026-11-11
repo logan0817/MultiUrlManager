@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "defaultEnvironment": "team-dev",
+  "environments": [
+    {
+      "id": "team-dev",
+      "name": "Team development",
+      "requiredKeys": ["order", "login"],
+      "urls": [
+        {"configKey": "order", "url": "https://order.dev.example.com/", "select": true},
+        {"configKey": "login", "url": "https://login.dev.example.com/", "select": true}
+      ]
+    }
+  ]
+}

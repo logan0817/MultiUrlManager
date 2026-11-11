@@ -61,6 +61,14 @@ Builder 可从 `BaseUrlManager.builder(context)` 调用，Java 中通过 `BaseUr
 
 ## 已发布二进制兼容基线
 
-1.0.6 的发行 AAR SHA-256 为 `cffa13b0bf3fb43c209621e135701d7925024ff83ca5354910ca8aafc790be9e`，[旧 ABI 基线](api-baseline-1.0.6.json) 覆盖 17 个公开类、105 个字段/方法。1.2.0增加真实 1.1.0 AAR，SHA-256 为 `d4237ddba47f663b2c73f80f3a18e380fdea0b62d87ab5eda10813ca39a6e897`，[新基线](api-baseline-1.1.0.json)覆盖 27 类、239 成员，包含默认构造和复制入口。[check-api.py](../scripts/ci/check-api.py) 同时检查两份真实发行基线的类/接口类型、父类型、成员名称、JVM descriptor 与 static 属性。1.2 当前 AAR 的实际结果以开发验收记录为准。
+1.0.6 的发行 AAR SHA-256 为 `cffa13b0bf3fb43c209621e135701d7925024ff83ca5354910ca8aafc790be9e`，[旧 ABI 基线](api-baseline-1.0.6.json)覆盖 17 个公开类、105 个字段/方法。1.1.0 AAR 的 SHA-256 为 `d4237ddba47f663b2c73f80f3a18e380fdea0b62d87ab5eda10813ca39a6e897`，[1.1.0 基线](api-baseline-1.1.0.json)覆盖 27 类、239 成员，包含默认构造和复制入口。
+
+1.3.0 开发阶段追加已发布的 1.2.0 双制品：[核心基线](api-baseline-1.2.0.json)覆盖 27 类、261 成员，AAR SHA-256 为 `a17a749232ccdeab14c0b209493f10a2281409e8c2d219457d0b5d095a7335b5`；[OkHttp 基线](api-baseline-1.2.0-okhttp.json)覆盖 3 类、25 成员，AAR SHA-256 为 `de6a423019da48c6bb0b2b8221627ad6b8da78f4ea82e3afc76c45d8c017da13`。[check-api.py](../scripts/ci/check-api.py)核验发行文件摘要，并检查所有基线的类/接口类型、父类型、成员名称、JVM descriptor 与 static 属性。实际验收状态见[1.3.0 开发计划](plans/v1.3.0-implementation-plan.md)。
 
 该门槛允许新增入口，禁止删除旧基线入口，CI 在生成本地 Maven 候选后执行。它不证明所有行为完全相同；可变集合、环境选择、保存与清空的有意行为变化仍以 [迁移说明](migration-1.1.md) 为准。基线不包含 BuildConfig、匿名类、编译器访问桥，也不代替实际旧宿主运行与 API 36 设备验收。
+
+## 配置文件交换（1.3.0 开发中）
+
+新增 `knownBusinessKeys()`、`exportConfiguration(environmentIds)`、`inspectImport(json)` 与 `previewImport(json, baseDraft, environmentIds, mode)`。查询业务声明只来自包内和已提交配置，文件不能自声明未知业务。导出返回 JSON，非法选择或容量超限抛出异常；检查和预览返回独立结果类型，预览不持久化，确认后沿用 `saveAsync`。
+
+具体模式、容量、错误结果与可编译示例见[配置交换](configuration-transfer.md)。默认配置升级改变状态时也会递增 revision 并原子保存，升级前保留的草稿需要重新加载，不得手动改 revision 强行提交。

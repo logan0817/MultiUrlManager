@@ -1,6 +1,7 @@
 package com.logan.multiurlmanager.library
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -8,6 +9,8 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.os.Parcelable
+import android.util.SparseArray
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.TypedValue
@@ -21,6 +24,7 @@ import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.ColorUtils
@@ -37,6 +41,8 @@ import androidx.recyclerview.widget.SimpleItemAnimator
 import com.logan.multiurlmanager.library.adapter.BaseUrlAdapter
 import com.logan.multiurlmanager.library.bean.BaseUrl
 import com.logan.multiurlmanager.library.bean.BaseUrlSection
+import com.logan.multiurlmanager.library.internal.ConfigurationTransferState
+import com.logan.multiurlmanager.library.internal.ConfigurationTransferUi
 import com.logan.multiurlmanager.library.internal.StateCodec
 import com.logan.multiurlmanager.library.internal.UrlRules
 import java.util.regex.Pattern
@@ -57,9 +63,12 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         var summaryExpanded = false
         var invalidKey: String? = null
         var presentationRestored = false
+        var knownKeys = linkedSetOf<String>()
     }
 
     private val editor by lazy { ViewModelProvider(this)[EditorState::class.java] }
+    private val transfer by lazy { ViewModelProvider(this)[ConfigurationTransferState::class.java] }
+    private var transferDialog: AlertDialog? = null
     private val manager get() = BaseUrlManager.instance
     private lateinit var listAdapter: BaseUrlAdapter
     private lateinit var environmentSpinner: Spinner
@@ -70,6 +79,48 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     private var configurationError = false
     private val dialogs = mutableSetOf<AlertDialog>()
     private val configurationListener = UrlChangeListener { _, _ -> renderUrls() }
+
+    private val importDocument = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) {
+            transfer.clear()
+            showError(getString(R.string.base_url_transfer_cancelled))
+        } else {
+            val currentManager = manager
+            if (currentManager == null || currentManager.isReadOnly) {
+                transfer.clear()
+                showError(getString(R.string.base_url_read_only))
+            } else {
+                val resolver = applicationContext.contentResolver
+                transfer.submit(R.string.base_url_import_read_error) {
+                    val json = requireNotNull(resolver.openInputStream(uri)).use(ConfigurationTransferUi::readUtf8)
+                    when (val result = currentManager.inspectImport(json)) {
+                        is ImportInspectionResult.Success -> ConfigurationTransferState.Outcome.Loaded(json, result.environments)
+                        is ImportInspectionResult.Failure -> ConfigurationTransferState.Outcome.Notice(
+                            R.string.base_url_import_invalid, result.message
+                        )
+                    }
+                }
+            }
+        }
+        renderUrls()
+    }
+    private val exportDocument = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        val json = transfer.exportJson
+        if (uri == null) {
+            transfer.clear()
+            showError(getString(R.string.base_url_transfer_cancelled))
+        } else if (json == null) {
+            transfer.clear()
+            showError(getString(R.string.base_url_transfer_restart))
+        } else {
+            val resolver = applicationContext.contentResolver
+            transfer.submit(R.string.base_url_export_write_error) {
+                requireNotNull(resolver.openOutputStream(uri, "wt")).bufferedWriter(Charsets.UTF_8).use { it.write(json) }
+                ConfigurationTransferState.Outcome.Notice(R.string.base_url_export_success)
+            }
+        }
+        renderUrls()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -155,6 +206,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
             editor.collapsedGroups.addAll(savedInstanceState?.getStringArrayList(STATE_COLLAPSED).orEmpty())
             editor.summaryExpanded = savedInstanceState?.getBoolean(STATE_SUMMARY) ?: false
             editor.invalidKey = savedInstanceState?.getString(STATE_INVALID_KEY)
+            editor.knownKeys.addAll(savedInstanceState?.getStringArrayList(STATE_KNOWN_KEYS).orEmpty())
             editor.presentationRestored = true
         }
         try {
@@ -166,7 +218,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
             override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
                 val draft = editor.draft ?: return
                 val target = draft.environments.getOrNull(position)?.id ?: return
-                if (!bindingSpinner && !editor.saving && manager?.isReadOnly != true && target != draft.environmentId) {
+                if (!bindingSpinner && !editor.saving && !transfer.busy && manager?.isReadOnly != true && target != draft.environmentId) {
                     editor.draft = draft.copy(environmentId = target)
                     editor.invalidKey = null
                     renderUrls(environmentChanged = true)
@@ -189,6 +241,12 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() = cancelEditing()
         })
+        if (!transfer.initialized) {
+            transfer.initialized = true
+            if (savedInstanceState?.getBoolean(STATE_TRANSFER_PENDING) == true) {
+                transfer.outcome = ConfigurationTransferState.Outcome.Notice(R.string.base_url_transfer_restart)
+            }
+        }
         render()
         if (!configurationError && editor.form != null && manager?.isReadOnly != true) {
             showAddressForm(restoring = true)
@@ -225,12 +283,15 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         manager?.addListener(configurationListener)
         editor.observer = { consumeResult() }
         consumeResult()
+        transfer.observer = { consumeTransfer() }
+        consumeTransfer()
         renderUrls()
     }
 
     override fun onStop() {
         // 暂停回调到页面；异步结果仍保存在 ViewModel，由下一次 onStart 消费。
         editor.observer = null
+        transfer.observer = null
         manager?.removeListener(configurationListener)
         super.onStop()
     }
@@ -246,14 +307,32 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        editor.draft?.let { outState.putBundle(STATE_DRAFT, storeDraft(it)) }
+        writeEditorState(outState, editor.draft)
+        super.onSaveInstanceState(outState)
+    }
+
+    private fun writeEditorState(outState: Bundle, draft: UrlSnapshot?) {
+        draft?.let { outState.putBundle(STATE_DRAFT, storeDraft(it)) }
         outState.putString(STATE_ORIGINAL, editor.original)
         outState.putBundle(STATE_FORM, editor.form)
         outState.putString(STATE_KEY, editor.lastKey)
         outState.putStringArrayList(STATE_COLLAPSED, ArrayList(editor.collapsedGroups))
+        outState.putStringArrayList(STATE_KNOWN_KEYS, ArrayList(editor.knownKeys))
         outState.putBoolean(STATE_SUMMARY, editor.summaryExpanded)
         outState.putString(STATE_INVALID_KEY, editor.invalidKey)
-        super.onSaveInstanceState(outState)
+        outState.putBoolean(STATE_TRANSFER_PENDING, transfer.stage != ConfigurationTransferState.Stage.IDLE)
+    }
+
+    private fun fitsImportBudget(draft: UrlSnapshot): Boolean {
+        val state = Bundle()
+        writeEditorState(state, draft)
+        val hierarchy = SparseArray<Parcelable>()
+        window.decorView.saveHierarchyState(hierarchy)
+        state.putSparseParcelableArray("viewHierarchy", hierarchy)
+        if (!ConfigurationTransferUi.fitsRestorationBudget(state)) return false
+        // 保存后重新打开时，原始快照也会变为导入后的大配置；必须同时覆盖这份恢复状态。
+        state.putString(STATE_ORIGINAL, StateCodec.encode(draft))
+        return ConfigurationTransferUi.fitsRestorationBudget(state)
     }
 
     private fun storeDraft(draft: UrlSnapshot) = Bundle().apply {
@@ -335,6 +414,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
             configurationError -> R.string.base_url_restore_error
             draft == null || manager == null -> R.string.base_url_not_initialized
             editor.saving -> R.string.base_url_saving
+            transfer.busy -> R.string.base_url_transfer_working
             manager?.isReadOnly == true -> R.string.base_url_read_only
             sections.isEmpty() -> R.string.base_url_empty
             else -> R.string.base_url_actions_hint
@@ -343,7 +423,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         status.visibility = if (statusMessage == R.string.base_url_actions_hint &&
             resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
         ) View.GONE else View.VISIBLE
-        val ready = !editor.saving && !configurationError && draft != null && manager != null
+        val ready = !editor.saving && !transfer.busy && !configurationError && draft != null && manager != null
         val enabled = ready && manager?.isReadOnly != true
         environmentSpinner.isEnabled = enabled
         findViewById<View>(R.id.btnSave).isEnabled = enabled
@@ -423,7 +503,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     }
 
     private fun changeUrls(update: (List<BaseUrl>) -> List<BaseUrl>): Boolean {
-        if (editor.saving || configurationError || manager?.isReadOnly == true) return false
+        if (editor.saving || transfer.busy || configurationError || manager?.isReadOnly == true) return false
         val draft = editor.draft ?: return false
         return try {
             val urls = update(draft.urls)
@@ -440,7 +520,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     }
 
     private fun showActions(value: BaseUrl) {
-        if (editor.saving) return
+        if (editor.saving || transfer.busy) return
         if (manager?.isReadOnly == true) {
             (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
                 .setPrimaryClip(ClipData.newPlainText(value.configKey, value.url))
@@ -479,14 +559,17 @@ class BaseUrlManagerActivity : AppCompatActivity() {
 
     private fun businessKeys(): List<String> {
         val environment = editor.draft?.environments?.firstOrNull { it.id == editor.draft?.environmentId }
-        return (environment?.urls?.map { it.configKey }.orEmpty() + environment?.requiredKeys.orEmpty()).distinct()
+        editor.knownKeys.addAll(manager?.knownBusinessKeys().orEmpty())
+        editor.knownKeys.addAll(environment?.urls?.map { it.configKey }.orEmpty())
+        editor.knownKeys.addAll(environment?.requiredKeys.orEmpty())
+        return (environment?.urls?.map { it.configKey }.orEmpty() + environment?.requiredKeys.orEmpty() + editor.knownKeys).distinct()
     }
 
     private fun edit(value: BaseUrl) = showAddressForm(value)
 
     @Suppress("DEPRECATION")
     private fun showAddressForm(value: BaseUrl? = null, restoring: Boolean = false) {
-        if (editor.saving || configurationError || manager?.isReadOnly == true) return
+        if (editor.saving || transfer.busy || configurationError || manager?.isReadOnly == true) return
         val keys = businessKeys()
         if (keys.isEmpty()) return
         val state = if (restoring) {
@@ -505,7 +588,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         val key = form.findViewById<Spinner>(R.id.configKeySpinner)
         val url = form.findViewById<EditText>(R.id.etUrl)
         val remark = form.findViewById<EditText>(R.id.etRemark)
-        key.adapter = spinnerAdapter(keys)
+        key.adapter = spinnerAdapter(keys.map(::businessTitle))
         key.setSelection(keys.indexOf(state.getString("key")).coerceAtLeast(0))
         key.isEnabled = original == null
         url.setText(state.getString("url"))
@@ -540,7 +623,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val edited = try {
                     normalized(
-                        (original ?: BaseUrl(key.selectedItem.toString(), "")).copy(
+                        (original ?: BaseUrl(keys[key.selectedItemPosition], "")).copy(
                             url = url.text.toString(),
                             remark = remark.text.toString()
                         )
@@ -584,10 +667,12 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     }
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        val enabled = editor.draft != null && manager != null && !editor.saving && !configurationError && manager?.isReadOnly != true
+        val enabled = editor.draft != null && manager != null && !editor.saving && !transfer.busy && !configurationError && manager?.isReadOnly != true
         menu.findItem(R.id.actionAdd)?.isEnabled = enabled && businessKeys().isNotEmpty()
         menu.findItem(R.id.actionReset)?.isEnabled =
             enabled && editor.draft?.environmentId?.let { defaultEnvironment(it) } != null
+        menu.findItem(R.id.actionImport)?.isEnabled = enabled
+        menu.findItem(R.id.actionExport)?.isEnabled = editor.draft != null && manager != null && !editor.saving && !transfer.busy && !configurationError
         return super.onPrepareOptionsMenu(menu)
     }
 
@@ -598,6 +683,14 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         }
         R.id.actionAdd -> {
             showAddressForm()
+            true
+        }
+        R.id.actionImport -> {
+            launchImport()
+            true
+        }
+        R.id.actionExport -> {
+            beginExport()
             true
         }
         R.id.actionReset -> {
@@ -619,6 +712,212 @@ class BaseUrlManagerActivity : AppCompatActivity() {
         else -> super.onOptionsItemSelected(item)
     }
 
+    private fun launchImport() {
+        if (editor.saving || transfer.busy || configurationError || manager?.isReadOnly != false) return
+        transfer.clear()
+        transfer.stage = ConfigurationTransferState.Stage.IMPORT_PICKER
+        try {
+            importDocument.launch(arrayOf("application/json", "text/plain", "application/octet-stream"))
+        } catch (_: ActivityNotFoundException) {
+            transfer.clear()
+            showError(getString(R.string.base_url_transfer_provider_missing))
+        }
+        renderUrls()
+    }
+
+    private fun beginExport() {
+        if (editor.saving || transfer.busy || configurationError) return
+        val snapshot = manager?.snapshot() ?: return
+        transfer.clear()
+        transfer.environments = snapshot.environments.map { ImportEnvironmentInfo(it.id, it.name, it.urls.size) }
+        transfer.selectedIds.add(snapshot.environmentId)
+        transfer.stage = ConfigurationTransferState.Stage.EXPORT_SELECTION
+        consumeTransfer()
+    }
+
+    private fun consumeTransfer() {
+        val outcome = transfer.outcome
+        transfer.outcome = null
+        when (outcome) {
+            is ConfigurationTransferState.Outcome.Loaded -> {
+                transfer.json = outcome.json
+                transfer.environments = outcome.environments
+                transfer.selectedIds = outcome.environments.map { it.id }.toCollection(linkedSetOf())
+                transfer.mode = ImportMode.MERGE
+                transfer.stage = ConfigurationTransferState.Stage.IMPORT_SELECTION
+            }
+            is ConfigurationTransferState.Outcome.Preview -> {
+                when (val result = outcome.result) {
+                    is ImportResult.Ready -> {
+                        transfer.preview = result
+                        transfer.previewBase = outcome.base
+                        transfer.previewRevision = outcome.revision
+                        transfer.stage = ConfigurationTransferState.Stage.PREVIEW
+                    }
+                    is ImportResult.Failure -> {
+                        transfer.stage = ConfigurationTransferState.Stage.IMPORT_SELECTION
+                        showError(getString(R.string.base_url_import_invalid) + "\n" + result.message)
+                        renderUrls()
+                        return
+                    }
+                }
+            }
+            is ConfigurationTransferState.Outcome.Export -> {
+                transfer.exportJson = outcome.json
+                transfer.stage = ConfigurationTransferState.Stage.EXPORT_PICKER
+                try {
+                    exportDocument.launch("multiurlmanager-configuration.json")
+                } catch (_: ActivityNotFoundException) {
+                    transfer.clear()
+                    showError(getString(R.string.base_url_transfer_provider_missing))
+                }
+            }
+            is ConfigurationTransferState.Outcome.Notice -> {
+                transfer.clear()
+                showError(getString(outcome.resource) + outcome.detail?.let { "\n$it" }.orEmpty())
+            }
+            null -> Unit
+        }
+        renderUrls()
+        if (transferDialog?.isShowing == true) return
+        when (transfer.stage) {
+            ConfigurationTransferState.Stage.IMPORT_SELECTION -> showTransferSelection(importing = true)
+            ConfigurationTransferState.Stage.EXPORT_SELECTION -> showTransferSelection(importing = false)
+            ConfigurationTransferState.Stage.PREVIEW -> showImportPreview()
+            else -> Unit
+        }
+    }
+
+    private fun showTransferSelection(importing: Boolean) {
+        val environments = transfer.environments
+        val checked = environments.map { it.id in transfer.selectedIds }.toBooleanArray()
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(if (importing) R.string.base_url_import_select else R.string.base_url_export_select)
+            .setMultiChoiceItems(environments.map { "${it.name} · ${it.id} (${it.candidateCount})" }.toTypedArray(), checked) { _, index, selected ->
+                if (selected) transfer.selectedIds.add(environments[index].id)
+                else transfer.selectedIds.remove(environments[index].id)
+            }
+            .setNegativeButton(android.R.string.cancel) { _, _ -> transfer.clear() }
+            .setPositiveButton(if (importing) R.string.base_url_import_merge else R.string.base_url_export, null)
+            .apply {
+                if (importing) setNeutralButton(R.string.base_url_import_replace, null)
+            }
+            .create()
+        dialog.setOnShowListener {
+            fun proceed(mode: ImportMode) {
+                if (transfer.selectedIds.isEmpty()) {
+                    showError(getString(R.string.base_url_transfer_choose_environment))
+                    return
+                }
+                if (importing) {
+                    transfer.mode = mode
+                    requestImportPreview()
+                } else {
+                    val currentManager = manager ?: return
+                    val ids = transfer.selectedIds.toSet()
+                    transfer.submit(R.string.base_url_export_write_error) {
+                        ConfigurationTransferState.Outcome.Export(currentManager.exportConfiguration(ids))
+                    }
+                }
+                dialog.dismiss()
+                renderUrls()
+            }
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener { proceed(ImportMode.MERGE) }
+            if (importing) dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener { proceed(ImportMode.REPLACE_ENVIRONMENTS) }
+        }
+        dialog.setOnCancelListener { transfer.clear() }
+        transferDialog = dialog
+        dialog.showManaged {
+            // dismiss 回调可能晚于后台结果，不能清掉下一步预览或失败后待重试的输入。
+            if (transferDialog === dialog) transferDialog = null
+        }
+        if (!importing && editor.draft?.let(StateCodec::encode) != editor.original) {
+            showError(getString(R.string.base_url_export_committed_only))
+        }
+    }
+
+    private fun requestImportPreview() {
+        val currentManager = manager ?: return
+        val json = transfer.json ?: return
+        val draft = editor.draft ?: return
+        val base = StateCodec.encode(draft)
+        val revision = currentManager.snapshot().revision
+        val ids = transfer.selectedIds.toSet()
+        val mode = transfer.mode
+        val rule = customRegex
+        val ruleError = getString(R.string.base_url_import_custom_rule)
+        transfer.submit(R.string.base_url_import_read_error) {
+            val result = currentManager.previewImport(json, draft, ids, mode)
+            // 文件添加地址与手工表单遵守同一宿主规则；既有候选继续允许选择或修改备注。
+            val checked = if (result is ImportResult.Ready && rule != null &&
+                result.draft.environments.any { environment ->
+                    val existing = draft.environments.firstOrNull { it.id == environment.id }?.urls.orEmpty()
+                    environment.urls.any { candidate ->
+                        existing.none { it.configKey == candidate.configKey && it.url == candidate.url } &&
+                            !rule.matcher(candidate.url).matches()
+                    }
+                }
+            ) ImportResult.Failure(ImportFailureReason.VALIDATION, ruleError) else result
+            ConfigurationTransferState.Outcome.Preview(
+                checked, base, revision
+            )
+        }
+    }
+
+    private fun showImportPreview() {
+        val preview = transfer.preview ?: return
+        val summary = preview.changes.joinToString("\n\n") { change ->
+            val type = when (change.type) {
+                ImportChangeType.ENVIRONMENT_ADDED -> R.string.base_url_import_environment_added
+                ImportChangeType.CANDIDATE_ADDED -> R.string.base_url_import_candidate_added
+                ImportChangeType.CANDIDATE_REMOVED -> R.string.base_url_import_candidate_removed
+                ImportChangeType.REMARK_CHANGED -> R.string.base_url_import_remark_changed
+                ImportChangeType.SELECTION_CHANGED -> R.string.base_url_import_selection_changed
+                ImportChangeType.LOCAL_PRESERVED -> R.string.base_url_import_local_preserved
+            }
+            listOfNotNull(
+                "[${change.environmentId}] ${getString(type)}",
+                change.configKey?.let(::businessTitle), change.url,
+                change.previous?.let { getString(R.string.base_url_import_before, it) },
+                change.current?.let { getString(R.string.base_url_import_after, it) }
+            ).joinToString("\n")
+        }.ifEmpty { getString(R.string.base_url_no_changes) }
+        val modeLabel = getString(if (transfer.mode == ImportMode.MERGE) R.string.base_url_import_merge else R.string.base_url_import_replace)
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.base_url_import_preview, modeLabel))
+            .setMessage(getString(R.string.base_url_import_draft_only) + "\n\n" + summary)
+            .setNegativeButton(android.R.string.cancel) { _, _ -> transfer.clear() }
+            .setPositiveButton(R.string.base_url_import_apply, null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                if (manager?.snapshot()?.revision != transfer.previewRevision || editor.draft?.let(StateCodec::encode) != transfer.previewBase) {
+                    transfer.stage = ConfigurationTransferState.Stage.IMPORT_SELECTION
+                    dialog.dismiss()
+                    showError(getString(R.string.base_url_import_stale))
+                    return@setOnClickListener
+                }
+                if (!fitsImportBudget(preview.draft)) {
+                    dialog.dismiss()
+                    transfer.clear()
+                    showError(getString(R.string.base_url_import_capacity))
+                    return@setOnClickListener
+                }
+                editor.draft = preview.draft
+                editor.invalidKey = null
+                transfer.clear()
+                dialog.dismiss()
+                render()
+                showError(getString(R.string.base_url_import_applied))
+            }
+        }
+        dialog.setOnCancelListener { transfer.clear() }
+        transferDialog = dialog
+        dialog.showManaged {
+            if (transferDialog === dialog) transferDialog = null
+        }
+    }
+
     private fun defaultEnvironment(id: String): UrlEnvironment? = try {
         manager?.defaultEnvironment(id)
     } catch (_: NoSuchElementException) {
@@ -626,7 +925,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     }
 
     private fun save() {
-        if (editor.saving || manager?.isReadOnly == true) return
+        if (editor.saving || transfer.busy || manager?.isReadOnly == true) return
         val draft = editor.draft ?: return
         val currentManager = manager ?: return
         val environment = draft.environments.first { it.id == draft.environmentId }
@@ -724,7 +1023,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     }
 
     private fun cancelEditing() {
-        if (editor.saving) return
+        if (editor.saving || transfer.busy) return
         val dirty = editor.draft?.let(StateCodec::encode) != editor.original
         if (!dirty) {
             finish()
@@ -748,11 +1047,17 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     private fun showError(message: String) {
         AlertDialog.Builder(this)
             .setMessage(message)
-            .setPositiveButton(android.R.string.ok, null)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                if (transfer.stage == ConfigurationTransferState.Stage.IMPORT_SELECTION) {
+                    window.decorView.post { consumeTransfer() }
+                }
+            }
             .create().showManaged()
     }
 
     companion object {
+        private const val STATE_KNOWN_KEYS = "knownBusinessKeys"
+        private const val STATE_TRANSFER_PENDING = "transferPending"
         private const val STATE_DRAFT = "draft"
         private const val STATE_ORIGINAL = "original"
         private const val STATE_FORM = "form"

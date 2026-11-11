@@ -45,13 +45,22 @@ class Upgrade11Test {
             expected.writeText(gson.toJson(manager.snapshot()))
         } else {
             assertTrue("不能清除数据代替覆盖升级", expected.isFile)
-            assertEquals(JsonParser.parseString(expected.readText()), gson.toJsonTree(manager.snapshot()))
+            val firstUpgrade = InstrumentationRegistry.getArguments().getString("attempt") == "0"
+            val expectedSnapshot = JsonParser.parseString(expected.readText()).asJsonObject
+            if (firstUpgrade) {
+                // 旧版 refresh 只在内存中按业务归组；1.3 首次将同一归组结果落盘，revision 必须加一。
+                expectedSnapshot.addProperty("revision", expectedSnapshot.get("revision").asLong + 1)
+            }
+            assertEquals(expectedSnapshot, gson.toJsonTree(manager.snapshot()))
             assertEquals("dev", manager.snapshot().environmentId)
             assertEquals("https://custom.example.com/v2/", manager.getUrl("order"))
             assertFalse(manager.snapshot().urls.any { it.url == "https://backup-dev.example.com/api/" })
+            val persisted = File(context.filesDir, "multiurlmanager-state.json").readBytes()
             manager.refreshData()
-            assertEquals(JsonParser.parseString(expected.readText()), gson.toJsonTree(manager.snapshot()))
-            if (InstrumentationRegistry.getArguments().getString("attempt") == "0") {
+            assertEquals(expectedSnapshot, gson.toJsonTree(manager.snapshot()))
+            assertArrayEquals("重复刷新不得重新写入或继续增加 revision", persisted,
+                File(context.filesDir, "multiurlmanager-state.json").readBytes())
+            if (firstUpgrade) {
                 val draft = manager.snapshot()
                 val edited = draft.copy(environments = draft.environments.map { env ->
                     if (env.id == "dev") env.copy(urls = env.urls.map { it.copy(remark = "Edited in new version") }) else env

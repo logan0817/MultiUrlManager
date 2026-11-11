@@ -203,6 +203,12 @@ class EditorPresentationTest {
                 onView(withId(LibraryR.id.btnSave)).check(matches(not(isEnabled())))
                 onView(withId(LibraryR.id.environmentSpinner)).check(matches(not(isEnabled())))
                 onView(withId(LibraryR.id.actionAdd)).check(matches(not(isEnabled())))
+                scenario.onActivity { activity ->
+                    val menu = activity.findViewById<androidx.appcompat.widget.Toolbar>(LibraryR.id.toolbar).menu
+                    activity.onPrepareOptionsMenu(menu)
+                    assertFalse(menu.findItem(LibraryR.id.actionImport).isEnabled)
+                    assertTrue(menu.findItem(LibraryR.id.actionExport).isEnabled)
+                }
                 onView(withId(LibraryR.id.statusText)).check(matches(withText(LibraryR.string.base_url_read_only)))
                 onView(withText("https://order.example.com/")).perform(click(), longClick())
                 scenario.onActivity {
