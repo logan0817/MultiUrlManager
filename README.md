@@ -1,14 +1,12 @@
 # MultiUrlManager
 
-[English](README_EN.md) · [详细文档](docs/README.md) · [更新记录](CHANGELOG.md) · [1.3.0 Release](https://github.com/logan0817/MultiUrlManager/releases/tag/v1.3.0)
+[English](README_EN.md) · [详细文档](docs/README.md) · [更新记录](CHANGELOG.md) · [1.3.1 Release](https://github.com/logan0817/MultiUrlManager/releases/tag/v1.3.1)
 
 **在 Android 应用内切换开发、测试、生产环境，并为不同业务管理各自的服务器地址。** 自带管理页面，选择地址后点击“保存”，整套配置一起生效，重启应用后保留选择。
 
 例如：你的 App 同时调用订单和登录服务。联调时切到开发环境，两项业务一起切换；开发环境的订单主服务不可用时，也可以只选择订单备用地址，登录服务保持原样。
 
-当前稳定版 **1.3.0**，已发布到 Maven Central。核心库不依赖 Retrofit 或 OkHttp；本版新增 JSON 文件导入导出、差异预览，并修复默认配置升级和页面编辑的可靠性问题。
-
-当前源码准备 **1.3.1（尚未发布）**，包含深色样式修正和选中态主题属性；候选核心坐标为 `io.github.logan0817:multiurlmanager:1.3.1`。下方安装示例继续使用已发布的 `1.3.0`。
+当前稳定版 **1.3.1**，已发布到 Maven Central。核心库不依赖 Retrofit 或 OkHttp；本版改善深色页面与选中态对比，并支持自定义选中底色和边框。
 
 配置文件可通过系统文件选择器在同事之间交换，支持默认合并和选定环境替换，操作步骤见[团队交换配置](#团队交换配置)。
 
@@ -73,7 +71,7 @@ dependencyResolutionManagement {
 
 ```kotlin
 dependencies {
-    implementation("io.github.logan0817:multiurlmanager:1.3.0")
+    implementation("io.github.logan0817:multiurlmanager:1.3.1")
 }
 ```
 
@@ -116,7 +114,7 @@ dependencies {
 
 | 字段 | 如何填写 |
 | --- | --- |
-| `schemaVersion` | 当前填 `1`，表示配置格式版本，与库版本 `1.3.0` 不同 |
+| `schemaVersion` | 当前填 `1`，表示配置格式版本，与库版本 `1.3.1` 不同 |
 | `defaultEnvironment` | 首次使用的环境 id；示例为 `production`，改为 `dev` 可让新安装默认开发环境 |
 | `id` / `name` | 环境的稳定标识 / 页面显示名称；`id` 必须唯一，其他字段引用它时保持一致 |
 | `businessNames` | 可选的业务展示名映射；例如让 `order` 在页面显示为 Order service，代码仍使用 `order` |
@@ -232,7 +230,7 @@ override fun onResume() {
 
 ```kotlin
 dependencies {
-    implementation("io.github.logan0817:multiurlmanager-okhttp:1.3.0")
+    implementation("io.github.logan0817:multiurlmanager-okhttp:1.3.1")
 }
 ```
 
@@ -504,13 +502,15 @@ Java 调用见 [Java 示例](app/src/main/java/com/logan/multiurlmanager/JavaInt
 </manifest>
 ```
 
-为 `values-night` 提供对应深色主题颜色。1.3.1 源码新增 `base_url_item_selected_bg_color`（选中底色）和 `base_url_item_selected_stroke_color`（选中边框），可在自定义主题中覆盖；正文与备注沿用原颜色。深色默认使用灰阶，选中卡片保持深底浅字，弹窗、菜单和下拉列表沿用页面主题。完整深浅色示例见[主题配置](docs/ui-and-network.md#自定义主题)。状态栏安全区与 Toolbar 共用 `base_url_toolbar_bg_color`，系统栏图标随实际背景明暗适配。完整属性见 [attrs.xml](library-android/src/main/res/values/attrs.xml)；保留的 `base_url_btn_add_*` 属性名现用于底部保存主按钮，以兼容旧主题。
+为 `values-night` 提供对应深色主题颜色。1.3.1 新增 `base_url_item_selected_bg_color`（选中底色）和 `base_url_item_selected_stroke_color`（选中边框），可在自定义主题中覆盖；正文与备注沿用原颜色。深色默认使用灰阶，选中卡片保持深底浅字，弹窗、菜单和下拉列表沿用页面主题。完整深浅色示例见[主题配置](docs/ui-and-network.md#自定义主题)。状态栏安全区与 Toolbar 共用 `base_url_toolbar_bg_color`，系统栏图标随实际背景明暗适配。完整属性见 [attrs.xml](library-android/src/main/res/values/attrs.xml)；保留的 `base_url_btn_add_*` 属性名现用于底部保存主按钮，以兼容旧主题。
 
 </details>
 
 ## 从旧版升级
 
-从 1.2.0 升到 1.3.0，已有选择和自定义地址继续保留。带 `schemaVersion` 的 JSON 会严格检查字段类型；请使用真正的布尔值和整数，避免把它们写成字符串。旧数组配置和旧持久化数据继续兼容读取。默认配置更新实际地址后，恢复的旧草稿会报告版本冲突，请重新加载再编辑。
+从 1.3.0 升到 1.3.1 无需修改业务代码或清空配置；使用自定义主题时，可按需覆盖新增的选中态属性。
+
+从 1.2.0 升到 1.3.x，已有选择和自定义地址继续保留。带 `schemaVersion` 的 JSON 会严格检查字段类型；请使用真正的布尔值和整数，避免把它们写成字符串。旧数组配置和旧持久化数据继续兼容读取。默认配置更新实际地址后，恢复的旧草稿会报告版本冲突，请重新加载再编辑。
 
 1.1.x 升级后的普通模式继续保留已有选择；固定模式需要宿主主动启用。完整变化见[更新记录](CHANGELOG.md)。
 

@@ -1,6 +1,8 @@
 # 文档索引
 
-当前稳定版 **1.3.0** 已发布到 Maven Central，提供核心 `multiurlmanager` 和可选网络制品 `multiurlmanager-okhttp`。第一次接入从 [README 快速接入](../README.md#快速接入)开始，按步骤完成配置、初始化、打开页面和切换验证；英文入口见 [English README](../README_EN.md)。
+当前稳定版 **1.3.1** 已发布到 Maven Central，提供核心 `multiurlmanager` 和可选网络制品 `multiurlmanager-okhttp`。第一次接入从 [README 快速接入](../README.md#快速接入)开始，按步骤完成配置、初始化、打开页面和切换验证；英文入口见 [English README](../README_EN.md)。
+
+1.3.1 改善深色样式与选中态，支持[自定义选中底色和边框](ui-and-network.md#自定义主题)。
 
 1.3.0 新增 [JSON 文件交换](configuration-transfer.md)，支持导出、导入预览、合并与选定环境替换；开发与验收过程见[版本计划](plans/v1.3.0-implementation-plan.md)。
 
@@ -20,6 +22,6 @@
 ## 参与开发与维护
 
 - [开发](development.md)：工具链、本地测试、真实 AAR / R8 消费验证。
-- [CI 与发布](ci-and-release.md)：检查门槛、产物身份、发布与失败恢复；[1.3.0 发布记录](ci-and-release.md#130-上传与正式发布记录)包含 CI、公开制品与签名核验结果。
+- [CI 与发布](ci-and-release.md)：检查门槛、产物身份、发布与失败恢复；[1.3.1 发布记录](ci-and-release.md#131-上传与正式发布记录)包含 CI、公开制品与签名核验结果。
 - [贡献要求](../CONTRIBUTING.md)与[更新记录](../CHANGELOG.md)：提交变更前的要求，以及各版本实际变化。
 - [1.2.0 实现方案](plans/v1.2.0-implementation-plan.md)与[1.1.0 历史方案](plans/v1.1.0-implementation-plan.md)：设计范围与验收记录；接入时以当前配置和 API 文档为准。

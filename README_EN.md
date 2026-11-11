@@ -1,16 +1,14 @@
 # MultiUrlManager
 
-[中文](README.md) · [Documentation](docs/README.md) · [Changelog](CHANGELOG.md) · [1.3.0 Release](https://github.com/logan0817/MultiUrlManager/releases/tag/v1.3.0)
+[中文](README.md) · [Documentation](docs/README.md) · [Changelog](CHANGELOG.md) · [1.3.1 Release](https://github.com/logan0817/MultiUrlManager/releases/tag/v1.3.1)
 
 **Switch development, testing and production environments in your Android app, with separate server addresses for each service.** Use the built-in screen to choose addresses and save the entire configuration together. Selections survive app restarts.
 
 For example, your app calls both order and sign-in services. Switch to development to change both at once, or select a backup for the order service while leaving sign-in unchanged.
 
-The current stable version is **1.3.0**, available from Maven Central. The core has no Retrofit or OkHttp dependency. This release adds JSON file import/export and change previews, and fixes reliability issues in default configuration upgrades and editing.
+The current stable version is **1.3.1**, available from Maven Central. The core has no Retrofit or OkHttp dependency. This release improves dark-theme readability and selection contrast, with custom selected backgrounds and borders.
 
 Exchange configuration files with teammates through the system file picker, using merge by default or replacing selected environments. See [team configuration exchange](#exchange-team-configurations).
-
-The source is preparing **1.3.1 (unreleased)** with dark-theme fixes and selected-item theme attributes. The candidate core coordinate is `io.github.logan0817:multiurlmanager:1.3.1`; the installation examples below continue to use the published `1.3.0`.
 
 ## Start here
 
@@ -73,7 +71,7 @@ Add the core dependency to `app/build.gradle.kts`, then run **Sync Project with 
 
 ```kotlin
 dependencies {
-    implementation("io.github.logan0817:multiurlmanager:1.3.0")
+    implementation("io.github.logan0817:multiurlmanager:1.3.1")
 }
 ```
 
@@ -116,7 +114,7 @@ This defines production and development environments, each with order and sign-i
 
 | Field | What to enter |
 | --- | --- |
-| `schemaVersion` | Use `1`, the configuration format version, which differs from library version `1.3.0` |
+| `schemaVersion` | Use `1`, the configuration format version, which differs from library version `1.3.1` |
 | `defaultEnvironment` | Environment id for first use; `production` here, or `dev` to default new installations to development |
 | `id` / `name` | Stable environment id / display name; ids must be unique and references must match |
 | `businessNames` | Optional display-name mapping; show `order` as Order service in the editor while code still uses `order` |
@@ -232,7 +230,7 @@ For the second option, add this alongside the core dependency:
 
 ```kotlin
 dependencies {
-    implementation("io.github.logan0817:multiurlmanager-okhttp:1.3.0")
+    implementation("io.github.logan0817:multiurlmanager-okhttp:1.3.1")
 }
 ```
 
@@ -504,13 +502,15 @@ Override the library Activity's theme in the host manifest:
 </manifest>
 ```
 
-Provide matching dark colors in `values-night`. The 1.3.1 source adds `base_url_item_selected_bg_color` (selected background) and `base_url_item_selected_stroke_color` (selected border); URL and remark text retain their existing colors. The default dark theme uses neutral grays, keeps selected cards dark, and shares screen colors with dialogs, menus and dropdowns. See the [theme configuration](docs/ui-and-network.md#自定义主题) for light/dark examples. The status-bar safe area and toolbar share `base_url_toolbar_bg_color`; system-bar icons adapt to the actual background. See [attrs.xml](library-android/src/main/res/values/attrs.xml) for all attributes. Existing `base_url_btn_add_*` names now style the bottom Save button, preserving theme compatibility.
+Provide matching dark colors in `values-night`. Version 1.3.1 adds `base_url_item_selected_bg_color` (selected background) and `base_url_item_selected_stroke_color` (selected border); URL and remark text retain their existing colors. The default dark theme uses neutral grays, keeps selected cards dark, and shares screen colors with dialogs, menus and dropdowns. See the [theme configuration](docs/ui-and-network.md#自定义主题) for light/dark examples. The status-bar safe area and toolbar share `base_url_toolbar_bg_color`; system-bar icons adapt to the actual background. See [attrs.xml](library-android/src/main/res/values/attrs.xml) for all attributes. Existing `base_url_btn_add_*` names now style the bottom Save button, preserving theme compatibility.
 
 </details>
 
 ## Upgrade from an older version
 
-Upgrading from 1.2.0 to 1.3.0 preserves saved selections and custom URLs. JSON with `schemaVersion` now requires exact field types: use actual booleans and integers rather than strings. Legacy array configurations and persisted data remain readable. When default updates change the effective configuration, a restored older draft reports a revision conflict; reload before editing again.
+Upgrading from 1.3.0 to 1.3.1 requires no business-code changes or configuration reset. Custom themes can optionally override the new selected-item attributes.
+
+Upgrading from 1.2.0 to 1.3.x preserves saved selections and custom URLs. JSON with `schemaVersion` now requires exact field types: use actual booleans and integers rather than strings. Legacy array configurations and persisted data remain readable. When default updates change the effective configuration, a restored older draft reports a revision conflict; reload before editing again.
 
 Ordinary mode also preserves saved selections when upgrading from 1.1.x. Fixed mode requires explicit host opt-in. See the [changelog](CHANGELOG.md) for the full changes.
 

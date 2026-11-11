@@ -1,10 +1,10 @@
 # CI 与发布
 
-工作流源文件：[ci.yml](../.github/workflows/ci.yml)、[release.yml](../.github/workflows/release.yml)。当前 1.3.0 已通过 [main CI #28](https://github.com/logan0817/MultiUrlManager/actions/runs/42978138859)，并在本机签名、上传和正式发布到 Central，两个制品的公开文件与签名核对通过，见[本次记录](#130-上传与正式发布记录)。1.2.0 和 1.1.0 的历史记录保留在下文。本项目采用本机发布方式：普通 CI 验证候选，本机 GPG 签名后上传并在 Central 正式发布。`release.yml` 保留为可选云端入口，尚未启用；无需为本机发布创建 GitHub release environment 或上传发布凭据。
+工作流源文件：[ci.yml](../.github/workflows/ci.yml)、[release.yml](../.github/workflows/release.yml)。当前 1.3.1 已通过 [main CI #31](https://github.com/logan0817/MultiUrlManager/actions/runs/43001113961)，并在本机签名、上传和正式发布到 Central，两个制品的公开文件与签名核对通过，见[本次记录](#131-上传与正式发布记录)。1.3.0、1.2.0 和 1.1.0 的历史记录保留在下文。本项目采用本机发布方式：普通 CI 验证候选，本机 GPG 签名后上传并在 Central 正式发布。`release.yml` 保留为可选云端入口，尚未启用；无需为本机发布创建 GitHub release environment 或上传发布凭据。
 
 ## 普通验证
 
-当前源码准备 `1.3.1`（尚未发布），Demo versionCode 为 `10`；Maven Central 当前稳定版仍为 `1.3.0`。下述 1.3.0 CI 与发布记录属于历史发行证据，不能代替 1.3.1 的候选验收。1.3.0 正式候选提交 `1825626` 的开发分支 [CI #27](https://github.com/logan0817/MultiUrlManager/actions/runs/42975843616) 与 [main CI #28](https://github.com/logan0817/MultiUrlManager/actions/runs/42978138859) 均完整通过 quality、API 24/36 和 required。此前 `1.3.0-SNAPSHOT` 的开发验收与历史边界见 [1.3.0 计划](plans/v1.3.0-implementation-plan.md)。
+当前源码与 Maven Central 稳定版均为 `1.3.1`，Demo versionCode 为 `10`。正式候选 `b207937` 的 [main CI #31 / attempt 1](https://github.com/logan0817/MultiUrlManager/actions/runs/43001113961) 完整通过 quality、API 24/36 和 required；两端各 64 项测试、36 个升级阶段、零跳过。下述 1.3.0 CI 与发布记录属于历史发行证据。1.3.0 正式候选提交 `1825626` 的开发分支 [CI #27](https://github.com/logan0817/MultiUrlManager/actions/runs/42975843616) 与 [main CI #28](https://github.com/logan0817/MultiUrlManager/actions/runs/42978138859) 均完整通过 quality、API 24/36 和 required。此前 `1.3.0-SNAPSHOT` 的开发验收与历史边界见 [1.3.0 计划](plans/v1.3.0-implementation-plan.md)。
 
 CI 覆盖 PR、main push、merge_group 与手动验证，使用标准 Ubuntu 24.04、JDK 17。1.3.0 工作流另配置 `feat/v1.3.0-development` 分支 push，便于获授权后收集 API 24/36 结果；配置触发条件不等于本轮已获推送或云端执行授权。使用开发分支 push 验收时避免同时触发等价 PR 验证。PR 新提交取消该 PR 旧运行；非 PR 按 run ID 独立分组，避免同一 main 分支的后续提交替换此前 pending 验证。发布单独串行，不取消正在执行的发布。
 
@@ -102,6 +102,22 @@ bash ./gradlew prepareCentralBundle \
 本机发布的留存材料为候选身份、签名指纹、deployment ID、公开文件摘要和验证结果；原始设备日志及本机操作辅助文件放在忽略目录。凭据不进入源码、日志或发布包。1.1.0 已完成这条流程，无需再次上传或正式发布。可选云端流程的 `action`、environment 和 secrets 要求不适用于上述 Portal 手动操作。
 
 本机入口使用 GPG agent，不读取传统 `signing.keyId`、`signing.password`、`signing.secretKeyRingFile`，也不把 `signing.gnupg.passphrase` 当作口令来源。云端口令仅经 stdin 传入隔离签名进程，不写入命令行或日志。[Gradle 签名文档](https://docs.gradle.org/8.14.3/userguide/signing_plugin.html) 说明了标准 GPG 配置与 agent 的关系。
+
+## 1.3.1 上传与正式发布记录
+
+2026-11-11，使用成功 main CI 的原始候选完成本机签名、Central 上传验收及正式发布，未重新构建替换受测 Maven 文件。
+
+- tag `v1.3.1` 固定提交 `b2079375762c6dbfc8d83dfec0ea60e753461cb1`，对应 [main CI #31 / attempt 1](https://github.com/logan0817/MultiUrlManager/actions/runs/43001113961)。quality、API 24/36 和 required 全部成功；每端 64 项测试、36 个升级阶段通过，零跳过。首轮 #30 的 API 24 输入可视性失败及修复见[开发记录](development.md#131-本地发布准备2026-11-11)。
+- 原始候选 `candidate-43001113961-1` 的 ZIP SHA-256 为 `dab30a361ddba15ed2676f110c4c6383bba87482ff757fe7feb022a62a4de5d9`；本机核对 80 个文件摘要、10 套件、30 APK 和两个 1.3.1 Maven 制品通过。
+- 复用完整签名指纹 `8BB25F160F45FD8919DC985A152B32281C3E9240`。签名包 `build/central/multiurlmanager-1.3.1.zip` 的 SHA-256 为 `bb23da9c4175161205b93fba79789e1b6ea2493c1af6e91dae26c8a4047c2737`；10 份签名验签通过，共 100 个条目。
+- 批次为 `io.github.logan0817-MultiUrlManager-1.3.1`，采用 USER_MANAGED，原部署 ID 为 `fa460f2d-ea24-452b-8096-c6279fe07b61`。VALIDATED 阶段坐标与版本匹配，全部 100 个部署文件与签名包逐字节一致。
+- 对同一部署执行一次正式 publish，最终状态 PUBLISHED。公开[核心](https://repo.maven.apache.org/maven2/io/github/logan0817/multiurlmanager/1.3.1/)与 [OkHttp](https://repo.maven.apache.org/maven2/io/github/logan0817/multiurlmanager-okhttp/1.3.1/) 的 100 个文件与原签名包逐字节一致，10 份公开签名验签通过。[GitHub v1.3.1 Release](https://github.com/logan0817/MultiUrlManager/releases/tag/v1.3.1) 已公开并标记 Latest。
+
+PUBLISHED 查询返回空 purls 和 `Deployment components info not found`，延续历史发布后的元数据表现。结果依据原部署 ID、PUBLISHED 终态及完整公开文件与签名核验，未放宽 VALIDATED 阶段的坐标要求。原始记录在忽略目录 `build/verification/release-1.3.1/` 与 `build/verification/v1.3.1-release-candidate/`；恢复只查询原部署，不重复上传版本。
+
+公开文件独立消费使用从官方 Maven Central 下载且逐字节核验的两个 1.3.1 AAR；核心 SHA-256 为 `01e95041f68a5e504bf3443dfb4c3317edb435ab572b87b9cdab88eb45b2c792`，OkHttp 为 `de6a423019da48c6bb0b2b8221627ad6b8da78f4ea82e3afc76c45d8c017da13`，与同轮候选一致。Debug、R8、测试 APK、14 份完整文档 Kotlin 示例及 Java 交换调用构建通过（113 项任务，111 执行、2 增量复用，1 分 48 秒）。Android 16 / API 36 真机完整消费 1 项通过、零跳过（2.937 秒），覆盖混淆后的持久化重读、空配置兼容、配置交换、实际路由及管理页启动；测试后停止专用消费包并返回桌面。
+
+本轮直接 Gradle HTTPS 解析遭遇 CDN 限流（404 及 Retry-After），未作为联网解析成功记录。发布制品使用已核验的官方公开下载暂存目录，其他 Central 依赖经临时本机只读 curl 转发下载；远端 HTTPS 证书校验保持开启，未使用源码工程或本地构建 AAR 替代。转发仅用于本轮忽略目录中的验收工程，测试后已停止，不修改项目或全局仓库配置。
 
 ## 1.3.0 上传与正式发布记录
 
