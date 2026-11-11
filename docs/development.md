@@ -49,6 +49,12 @@ JVM 测试关注 URL、单选、环境和失败结果，并直接用真实配置
 
 新增逻辑应提供行为测试，明确预期和错误路径，不依赖公网真实站点、设备已有数据或集合遍历顺序。版本升级同步迁移文档与 [变更记录](../CHANGELOG.md)。CI 的实际执行路径与报告见 [CI 与发布](ci-and-release.md)。1.2.0 在 API 24/36 上收集 8 套必需设备套件（app、library、okhttp、R8 consumer、1.0.6/1.1.0 Debug/Release 升级），候选共 22 个 APK 和两个同版本 Maven 坐标；候选 schema 2 保留旧 schema 1 / 1.1 发布恢复读取能力。
 
+## 1.3.0 开发版本云端验收（2026-11-11）
+
+功能提交 `7c21dbe` 的[完整 CI #25](https://github.com/logan0817/MultiUrlManager/actions/runs/42970920750)首轮通过 quality、API 24、API 36 和 required。两端各执行页面 34 项、核心 26 项、网络 2 项、真实 AAR/R8 消费 1 项，共 63 项测试；真实 1.0.6/1.1.0/1.2.0 的 Debug/Release 升级共 36 阶段全部通过。包括新文件回调、容量保护、预览冲突与恢复、Java/Kotlin 接入和固定模式隔离。
+
+本机红米验证、截图采样不稳定性、候选身份和浏览器归档下载限制见 [1.3.0 验收记录](plans/v1.3.0-implementation-plan.md)。开发版本保持 `1.3.0-SNAPSHOT`，本次验收不包含合并、tag、签名或正式发布。
+
 ## 1.2.0 正式版本候选准备（2026-11-10）
 
 开发验收收尾提交 `0bc3fa5` 的 [完整 CI #20](https://github.com/logan0817/MultiUrlManager/actions/runs/42771730604) 已通过 quality、API 24、API 36 和 required，两端原始报告均核对为 42 项测试、24 个升级阶段通过、零跳过。此前功能提交 #19 的详细范围保留在下文。
