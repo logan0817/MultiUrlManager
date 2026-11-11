@@ -32,6 +32,49 @@
 
 管理页顶部状态栏安全区与 Toolbar 共用 `base_url_toolbar_bg_color`，形成连续的顶部背景；列表内容仍使用 `base_url_bg_color`。状态栏图标明暗依据 Toolbar 背景，导航栏图标明暗依据页面底色分别计算。宿主自定义深色 Toolbar、浅色页面时，两处图标也会分别适配。
 
+## 自定义主题
+
+继承 `BaseUrlManagerTheme`，再按 [README 中的 Manifest 示例](../README.md#自定义页面主题)把主题应用到库 Activity。库会按深浅色资源选择默认配色；宿主不需要新增 Activity 或复制库布局。
+
+1.3.1 源码的深色默认采用中性灰阶。选中候选保留浅色文字和深灰底，通过略亮的底色、细边框及勾选图标区分；弹窗、菜单和下拉列表使用页面的表面与文字颜色。输入框聚焦时显示强调色描边，下拉列表显示当前项单选标记。1.3.1 尚未发布，以下新增属性不适用于 Central 的 1.3.0。
+
+| 属性 | 作用 |
+| --- | --- |
+| `base_url_bg_color` | 页面与输入框底色 |
+| `base_url_toolbar_bg_color` / `base_url_page_title_text_color` | 工具栏和标题颜色 |
+| `base_url_item_bg_color` | 普通卡片、默认弹窗和菜单表面色 |
+| `base_url_item_url_text_color` / `base_url_item_url_remark_text_color` | 候选正文、备注及默认浮层文字颜色 |
+| `base_url_edit_url_text_color` | 输入文字颜色 |
+| `base_url_btn_add_bg_color` / `base_url_btn_add_text_color` | 底部保存按钮背景与文字颜色 |
+| `base_url_item_header_key_bg_color` / `base_url_item_header_key_text_color` | 分组标题背景与文字颜色 |
+| `base_url_item_selected_bg_color` | 1.3.1 新增：选中候选底色 |
+| `base_url_item_selected_stroke_color` | 1.3.1 新增：选中候选边框颜色 |
+| `colorAccent` | 勾选图标、复选框、输入焦点及弹窗操作强调色 |
+
+例如，在宿主 `res/values/styles.xml` 中设置浅色主题：
+
+```xml
+<resources>
+    <style name="AppUrlManagerTheme" parent="BaseUrlManagerTheme">
+        <item name="base_url_item_selected_bg_color">#EBF1FF</item>
+        <item name="base_url_item_selected_stroke_color">#245DE8</item>
+    </style>
+</resources>
+```
+
+在宿主 `res/values-night/styles.xml` 中为同名主题提供对应深色值：
+
+```xml
+<resources>
+    <style name="AppUrlManagerTheme" parent="BaseUrlManagerTheme">
+        <item name="base_url_item_selected_bg_color">#303030</item>
+        <item name="base_url_item_selected_stroke_color">#B8B8B8</item>
+    </style>
+</resources>
+```
+
+选中底色不会反转正文与备注文字，请一起核对普通和选中状态的可读性。浅色选中边框默认跟随 `colorAccent`，深色默认使用浅灰描边；已有宿主若覆盖 `base_url_selected_surface` 颜色资源，仍会影响未另行设置主题属性的选中底色。圆角、间距与边框宽度没有新增主题属性；需要替换整体布局时，应自行实现页面并调用管理器 API。
+
 ## Activity Result
 
 ```kotlin

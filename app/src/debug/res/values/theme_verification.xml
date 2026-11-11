@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 仅 Debug 验证宿主题属性覆盖，不进入 Release 示例。 -->
+    <style
+        name="SelectionThemeVerification"
+        parent="BaseUrlManagerTheme">
+        <item name="base_url_item_selected_bg_color">#383838</item>
+        <item name="base_url_item_selected_stroke_color">#DADADA</item>
+    </style>
+</resources>

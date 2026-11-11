@@ -499,7 +499,7 @@ class BaseUrlManagerActivity : AppCompatActivity() {
     }
 
     private fun spinnerAdapter(items: List<String>) = ArrayAdapter(this, android.R.layout.simple_spinner_item, items).apply {
-        setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        setDropDownViewResource(R.layout.base_url_spinner_dropdown_item)
     }
 
     private fun changeUrls(update: (List<BaseUrl>) -> List<BaseUrl>): Boolean {

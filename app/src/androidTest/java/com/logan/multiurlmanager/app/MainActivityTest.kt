@@ -345,6 +345,7 @@ class MainActivityTest {
                 save.getLocationOnScreen(savePosition)
                 assertTrue(addPosition[1] < savePosition[1])
             }
+            assertCandidateContrast(scenario, night = false)
             capture("editor-light")
         }
     }
@@ -366,7 +367,27 @@ class MainActivityTest {
                     assertTrue(!androidx.core.view.WindowCompat.getInsetsController(activity.window, activity.window.decorView).isAppearanceLightStatusBars)
                 }
                 assertEditorTopSurface(scenario)
+                assertCandidateContrast(scenario, night = true)
                 capture("editor-dark")
+                onView(withId(LibraryR.id.environmentSpinner)).perform(click())
+                onView(withText("Development"))
+                    .inRoot(androidx.test.espresso.matcher.RootMatchers.isPlatformPopup())
+                    .check(matches(androidx.test.espresso.matcher.ViewMatchers.isChecked()))
+                capture("environment-dark")
+                pressBack()
+                androidx.test.espresso.Espresso.openActionBarOverflowOrOptionsMenu(instrumentation.targetContext)
+                capture("menu-dark")
+                onView(withText(LibraryR.string.base_url_export)).perform(click())
+                onView(withId(android.R.id.button2)).inRoot(isDialog()).check(matches(isDisplayed()))
+                capture("export-dark")
+                onView(withId(android.R.id.button2)).inRoot(isDialog()).perform(click())
+                onView(withText("https://order.dev.example.com/")).perform(longClick())
+                capture("actions-dark")
+                onView(withText(LibraryR.string.base_url_edit)).inRoot(isDialog()).perform(click())
+                onView(withId(LibraryR.id.configKeySpinner)).inRoot(isDialog())
+                    .check(matches(org.hamcrest.Matchers.not(androidx.test.espresso.matcher.ViewMatchers.isEnabled())))
+                capture("edit-dark")
+                onView(withId(android.R.id.button2)).inRoot(isDialog()).perform(click())
                 onView(withId(LibraryR.id.actionAdd)).perform(click())
                 onView(withId(LibraryR.id.etUrl)).perform(replaceText("https://night.example.com/"), closeSoftKeyboard())
                 capture("form-dark")
@@ -395,6 +416,77 @@ class MainActivityTest {
             assertEditorTopSurface(scenario)
             capture("editor-landscape")
         }
+    }
+
+    @Test fun selectedCardColorsFollowHostThemeInBothModes() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        for (mode in listOf(AppCompatDelegate.MODE_NIGHT_NO, AppCompatDelegate.MODE_NIGHT_YES)) {
+            instrumentation.runOnMainSync { AppCompatDelegate.setDefaultNightMode(mode) }
+            ActivityScenario.launch(BaseUrlManagerActivity::class.java).use { scenario ->
+                scenario.onActivity { activity ->
+                    val context = androidx.appcompat.view.ContextThemeWrapper(activity, R.style.SelectionThemeVerification)
+                    val card = requireNotNull(androidx.appcompat.content.res.AppCompatResources.getDrawable(
+                        context, LibraryR.drawable.base_url_candidate
+                    )).mutate()
+                    val density = activity.resources.displayMetrics.density
+                    val width = (240 * density).toInt()
+                    val height = (64 * density).toInt()
+                    val bitmap = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
+                    try {
+                        card.setBounds(0, 0, width, height)
+                        card.state = intArrayOf(android.R.attr.state_selected, android.R.attr.state_enabled)
+                        card.draw(android.graphics.Canvas(bitmap))
+                        assertEquals("选中底色应采用宿主题属性", android.graphics.Color.rgb(56, 56, 56), bitmap.getPixel(width / 2, height / 2))
+                        assertEquals("选中描边应采用宿主题属性", android.graphics.Color.rgb(218, 218, 218), bitmap.getPixel(1, height / 2))
+                        bitmap.eraseColor(android.graphics.Color.TRANSPARENT)
+                        card.state = intArrayOf(android.R.attr.state_enabled)
+                        card.draw(android.graphics.Canvas(bitmap))
+                        val normal = android.util.TypedValue().also {
+                            context.theme.resolveAttribute(LibraryR.attr.base_url_item_bg_color, it, true)
+                        }.data
+                        assertEquals("取消选中后应恢复普通卡片底色", normal, bitmap.getPixel(width / 2, height / 2))
+                    } finally { bitmap.recycle() }
+                }
+            }
+        }
+    }
+
+    private fun assertCandidateContrast(scenario: ActivityScenario<BaseUrlManagerActivity>, night: Boolean) {
+        waitForWindowIdle()
+        val bitmap = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        try {
+            scenario.onActivity { activity ->
+                val list = activity.findViewById<androidx.recyclerview.widget.RecyclerView>(LibraryR.id.recyclerView)
+                val surfaces = mutableMapOf<Boolean, Int>()
+                val borders = mutableMapOf<Boolean, Int>()
+                for (index in 0 until list.childCount) {
+                    val row = list.getChildAt(index)
+                    val title = row.findViewById<android.widget.TextView>(LibraryR.id.tvUrl) ?: continue
+                    val point = IntArray(2)
+                    row.getLocationOnScreen(point)
+                    val visible = android.graphics.Rect()
+                    val sampleY = point[1] + row.height / 2
+                    if (!row.getGlobalVisibleRect(visible) || sampleY !in visible.top until visible.bottom) continue
+                    // 在文字左侧、圆角和描边以内采样真实卡片底色。
+                    val surface = bitmap.getPixel(point[0] + (8 * row.resources.displayMetrics.density).toInt(), sampleY)
+                    surfaces[row.isSelected] = surface
+                    borders[row.isSelected] = bitmap.getPixel(point[0] + 1, sampleY)
+                    for (text in listOf(title, row.findViewById<android.widget.TextView>(LibraryR.id.tvUrlRemark),
+                            row.findViewById<android.widget.TextView>(LibraryR.id.tvSource))) {
+                        assertTrue("候选正文与备注对比度至少为 4.5:1",
+                            androidx.core.graphics.ColorUtils.calculateContrast(text.currentTextColor, surface) >= 4.5)
+                    }
+                }
+                assertTrue("视口应包含选中和未选中的候选", surfaces.keys.containsAll(listOf(true, false)))
+                if (night) {
+                    assertTrue("选中卡片仍应保持深色底",
+                        androidx.core.graphics.ColorUtils.calculateLuminance(surfaces.getValue(true)) < 0.1)
+                    assertTrue("选中与未选中的底色应有区别", surfaces.getValue(true) != surfaces.getValue(false))
+                    assertTrue("选中描边与卡片底色对比度至少为 3:1",
+                        androidx.core.graphics.ColorUtils.calculateContrast(borders.getValue(true), surfaces.getValue(true)) >= 3.0)
+                }
+            }
+        } finally { bitmap.recycle() }
     }
 
     private fun assertEditorTopSurface(scenario: ActivityScenario<BaseUrlManagerActivity>) {

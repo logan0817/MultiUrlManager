@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style
-        name="BaseUrlManagerTheme"
+        name="BaseUrlManagerBaseTheme"
         parent="Theme.AppCompat.DayNight.DarkActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
@@ -9,6 +9,16 @@
         <item name="colorPrimary">@color/base_url_color_primary</item>
         <item name="colorPrimaryDark">@color/base_url_color_primaryDark</item>
         <item name="colorAccent">@color/base_url_color_accent</item>
+        <item name="android:colorBackground">?attr/base_url_bg_color</item>
+        <item name="colorBackgroundFloating">?attr/base_url_item_bg_color</item>
+        <item name="android:textColorPrimary">?attr/base_url_item_url_text_color</item>
+        <item name="android:textColorSecondary">?attr/base_url_item_url_remark_text_color</item>
+        <item name="android:textColorHint">?attr/base_url_item_url_remark_text_color</item>
+        <item name="colorControlNormal">?attr/base_url_item_url_remark_text_color</item>
+        <item name="alertDialogTheme">@style/BaseUrlManagerTheme.Dialog</item>
+        <item name="popupMenuStyle">@style/BaseUrlManagerPopupMenu</item>
+        <item name="actionOverflowMenuStyle">@style/BaseUrlManagerOverflowMenu</item>
+        <item name="spinnerStyle">@style/BaseUrlManagerSpinner</item>
         <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
         <item name="base_url_bg_color">@color/base_url_bg_color</item>
         <item name="base_url_page_title_text_color">@color/base_url_page_title_text_color</item>
@@ -17,14 +27,51 @@
         <item name="base_url_btn_add_text_color">@color/base_url_btn_add_text_color</item>
         <item name="base_url_btn_add_bg_color">@color/base_url_btn_add_bg_color</item>
         <item name="base_url_item_bg_color">@color/base_url_item_bg_color</item>
+        <item name="base_url_item_selected_bg_color">@color/base_url_selected_surface</item>
+        <item name="base_url_item_selected_stroke_color">?attr/colorAccent</item>
         <item name="base_url_item_url_text_color">@color/base_url_item_url_text_color</item>
         <item name="base_url_item_url_remark_text_color">@color/base_url_item_url_remark_text_color</item>
         <item name="base_url_item_header_key_bg_color">@color/base_url_item_header_key_bg_color</item>
         <item name="base_url_item_header_key_text_color">@color/base_url_item_header_key_text_color</item>
     </style>
     <style
+        name="BaseUrlManagerTheme"
+        parent="BaseUrlManagerBaseTheme">
+        <item name="android:windowBackground">@null</item>
+    </style>
+    <style
         name="BaseUrlManagerTheme.Toolbar"
         parent="ThemeOverlay.AppCompat.DayNight.ActionBar">
         <item name="android:textColorPrimary">?attr/base_url_page_title_text_color</item>
+    </style>
+    <style
+        name="BaseUrlManagerTheme.Dialog"
+        parent="ThemeOverlay.AppCompat.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/base_url_dialog</item>
+        <item name="android:colorBackground">?attr/base_url_item_bg_color</item>
+        <item name="android:textColorPrimary">?attr/base_url_item_url_text_color</item>
+        <item name="android:textColorSecondary">?attr/base_url_item_url_remark_text_color</item>
+    </style>
+    <style
+        name="BaseUrlManagerTheme.Popup"
+        parent="ThemeOverlay.AppCompat">
+        <item name="android:textColorPrimary">?attr/base_url_item_url_text_color</item>
+        <item name="android:textColorSecondary">?attr/base_url_item_url_remark_text_color</item>
+        <item name="colorBackgroundFloating">?attr/base_url_item_bg_color</item>
+    </style>
+    <style
+        name="BaseUrlManagerPopupMenu"
+        parent="Widget.AppCompat.PopupMenu">
+        <item name="android:popupBackground">@drawable/base_url_popup</item>
+    </style>
+    <style
+        name="BaseUrlManagerOverflowMenu"
+        parent="Widget.AppCompat.PopupMenu.Overflow">
+        <item name="android:popupBackground">@drawable/base_url_popup</item>
+    </style>
+    <style
+        name="BaseUrlManagerSpinner"
+        parent="Widget.AppCompat.Spinner">
+        <item name="android:popupBackground">@drawable/base_url_popup</item>
     </style>
 </resources>

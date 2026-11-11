@@ -45,4 +45,11 @@
     <attr
         name="base_url_item_header_key_text_color"
         format="color" />
+    <!-- 选中候选的底色与描边；文字继续使用候选正文和备注颜色。 -->
+    <attr
+        name="base_url_item_selected_bg_color"
+        format="color" />
+    <attr
+        name="base_url_item_selected_stroke_color"
+        format="color" />
 </resources>

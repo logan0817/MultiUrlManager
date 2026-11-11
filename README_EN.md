@@ -10,6 +10,8 @@ The current stable version is **1.3.0**, available from Maven Central. The core 
 
 Exchange configuration files with teammates through the system file picker, using merge by default or replacing selected environments. See [team configuration exchange](#exchange-team-configurations).
 
+The source is preparing **1.3.1 (unreleased)** with dark-theme fixes and selected-item theme attributes. The candidate core coordinate is `io.github.logan0817:multiurlmanager:1.3.1`; the installation examples below continue to use the published `1.3.0`.
+
 ## Start here
 
 - **First integration**: follow the [quick start](#quick-start) to configure, initialize, open the screen and verify a switch.
@@ -502,7 +504,7 @@ Override the library Activity's theme in the host manifest:
 </manifest>
 ```
 
-Provide matching dark colors in `values-night`. The status-bar safe area and toolbar share `base_url_toolbar_bg_color`; system-bar icons adapt to the actual background. See [attrs.xml](library-android/src/main/res/values/attrs.xml) for all attributes. Existing `base_url_btn_add_*` names now style the bottom Save button, preserving theme compatibility.
+Provide matching dark colors in `values-night`. The 1.3.1 source adds `base_url_item_selected_bg_color` (selected background) and `base_url_item_selected_stroke_color` (selected border); URL and remark text retain their existing colors. The default dark theme uses neutral grays, keeps selected cards dark, and shares screen colors with dialogs, menus and dropdowns. See the [theme configuration](docs/ui-and-network.md#自定义主题) for light/dark examples. The status-bar safe area and toolbar share `base_url_toolbar_bg_color`; system-bar icons adapt to the actual background. See [attrs.xml](library-android/src/main/res/values/attrs.xml) for all attributes. Existing `base_url_btn_add_*` names now style the bottom Save button, preserving theme compatibility.
 
 </details>
 

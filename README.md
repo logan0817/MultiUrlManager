@@ -8,6 +8,8 @@
 
 当前稳定版 **1.3.0**，已发布到 Maven Central。核心库不依赖 Retrofit 或 OkHttp；本版新增 JSON 文件导入导出、差异预览，并修复默认配置升级和页面编辑的可靠性问题。
 
+当前源码准备 **1.3.1（尚未发布）**，包含深色样式修正和选中态主题属性；候选核心坐标为 `io.github.logan0817:multiurlmanager:1.3.1`。下方安装示例继续使用已发布的 `1.3.0`。
+
 配置文件可通过系统文件选择器在同事之间交换，支持默认合并和选定环境替换，操作步骤见[团队交换配置](#团队交换配置)。
 
 ## 从这里开始
@@ -502,7 +504,7 @@ Java 调用见 [Java 示例](app/src/main/java/com/logan/multiurlmanager/JavaInt
 </manifest>
 ```
 
-为 `values-night` 提供对应深色主题颜色。状态栏安全区与 Toolbar 共用 `base_url_toolbar_bg_color`，系统栏图标随实际背景明暗适配。完整属性见 [attrs.xml](library-android/src/main/res/values/attrs.xml)；保留的 `base_url_btn_add_*` 属性名现用于底部保存主按钮，以兼容旧主题。
+为 `values-night` 提供对应深色主题颜色。1.3.1 源码新增 `base_url_item_selected_bg_color`（选中底色）和 `base_url_item_selected_stroke_color`（选中边框），可在自定义主题中覆盖；正文与备注沿用原颜色。深色默认使用灰阶，选中卡片保持深底浅字，弹窗、菜单和下拉列表沿用页面主题。完整深浅色示例见[主题配置](docs/ui-and-network.md#自定义主题)。状态栏安全区与 Toolbar 共用 `base_url_toolbar_bg_color`，系统栏图标随实际背景明暗适配。完整属性见 [attrs.xml](library-android/src/main/res/values/attrs.xml)；保留的 `base_url_btn_add_*` 属性名现用于底部保存主按钮，以兼容旧主题。
 
 </details>
 

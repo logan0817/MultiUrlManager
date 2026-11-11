@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#91B5FF</color>
-    <color name="colorPrimaryDark">#7FA6F6</color>
-    <color name="colorAccent">#91B5FF</color>
-    <color name="app_page">#101722</color>
-    <color name="app_surface">#1A2433</color>
-    <color name="app_text">#E8EFFA</color>
-    <color name="app_secondary">#B0BED2</color>
-    <color name="app_border">#334156</color>
-    <color name="app_accent_soft">#233759</color>
-    <color name="app_on_accent">#10234A</color>
+    <color name="colorPrimary">#EEEEEE</color>
+    <color name="colorPrimaryDark">#D6D6D6</color>
+    <color name="colorAccent">#EEEEEE</color>
+    <color name="app_page">#121212</color>
+    <color name="app_surface">#202020</color>
+    <color name="app_text">#F5F5F5</color>
+    <color name="app_secondary">#C6C6C6</color>
+    <color name="app_border">#626262</color>
+    <color name="app_accent_soft">#363636</color>
+    <color name="app_on_accent">#202020</color>
 </resources>

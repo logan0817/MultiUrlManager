@@ -4,7 +4,7 @@
 
 ## 普通验证
 
-当前源码版本为已发布的 `1.3.0`，Demo versionCode 为 `9`。正式候选提交 `1825626` 的开发分支 [CI #27](https://github.com/logan0817/MultiUrlManager/actions/runs/42975843616) 与 [main CI #28](https://github.com/logan0817/MultiUrlManager/actions/runs/42978138859) 均完整通过 quality、API 24/36 和 required。此前 `1.3.0-SNAPSHOT` 的开发验收与历史边界见 [1.3.0 计划](plans/v1.3.0-implementation-plan.md)。
+当前源码准备 `1.3.1`（尚未发布），Demo versionCode 为 `10`；Maven Central 当前稳定版仍为 `1.3.0`。下述 1.3.0 CI 与发布记录属于历史发行证据，不能代替 1.3.1 的候选验收。1.3.0 正式候选提交 `1825626` 的开发分支 [CI #27](https://github.com/logan0817/MultiUrlManager/actions/runs/42975843616) 与 [main CI #28](https://github.com/logan0817/MultiUrlManager/actions/runs/42978138859) 均完整通过 quality、API 24/36 和 required。此前 `1.3.0-SNAPSHOT` 的开发验收与历史边界见 [1.3.0 计划](plans/v1.3.0-implementation-plan.md)。
 
 CI 覆盖 PR、main push、merge_group 与手动验证，使用标准 Ubuntu 24.04、JDK 17。1.3.0 工作流另配置 `feat/v1.3.0-development` 分支 push，便于获授权后收集 API 24/36 结果；配置触发条件不等于本轮已获推送或云端执行授权。使用开发分支 push 验收时避免同时触发等价 PR 验证。PR 新提交取消该 PR 旧运行；非 PR 按 run ID 独立分组，避免同一 main 分支的后续提交替换此前 pending 验证。发布单独串行，不取消正在执行的发布。
 

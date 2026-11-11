@@ -19,6 +19,7 @@
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/base_url_toolbar_bg_color"
             app:theme="@style/BaseUrlManagerTheme.Toolbar"
+            app:popupTheme="@style/BaseUrlManagerTheme.Popup"
             app:titleTextColor="?attr/base_url_page_title_text_color" />
     </LinearLayout>
     <LinearLayout
