@@ -1,25 +1,14 @@
 # MultiUrlManager
 
-[English](README_EN.md) · [详细文档](docs/README.md) · [更新记录](CHANGELOG.md) · [1.2.0 Release](https://github.com/logan0817/MultiUrlManager/releases/tag/v1.2.0)
+[English](README_EN.md) · [详细文档](docs/README.md) · [更新记录](CHANGELOG.md) · [1.3.0 Release](https://github.com/logan0817/MultiUrlManager/releases/tag/v1.3.0)
 
 **在 Android 应用内切换开发、测试、生产环境，并为不同业务管理各自的服务器地址。** 自带管理页面，选择地址后点击“保存”，整套配置一起生效，重启应用后保留选择。
 
 例如：你的 App 同时调用订单和登录服务。联调时切到开发环境，两项业务一起切换；开发环境的订单主服务不可用时，也可以只选择订单备用地址，登录服务保持原样。
 
-当前稳定版 **1.2.0**，已发布到 Maven Central。核心库不依赖 Retrofit 或 OkHttp；本版新增固定环境模式、业务展示名、配置变更摘要和可选 OkHttp 路由。
+当前稳定版 **1.3.0**，已发布到 Maven Central。核心库不依赖 Retrofit 或 OkHttp；本版新增 JSON 文件导入导出、差异预览，并修复默认配置升级和页面编辑的可靠性问题。
 
-
-> 当前分支正在准备 **1.3.0 正式候选**，尚未正式发布。新增文件导入导出及可靠性修复，完整规则见[配置交换](docs/configuration-transfer.md)，进度见[1.3.0 计划](docs/plans/v1.3.0-implementation-plan.md)。下方稳定接入仍使用 Maven Central 的 1.2.0。
-
-开发者验证当前源码的本地 Maven 候选时使用以下坐标；本地仓库生成方式见[开发说明](docs/development.md)，不能仅配置 Maven Central 就假定此候选已公开：
-
-```kotlin
-dependencies {
-    implementation("io.github.logan0817:multiurlmanager:1.3.0")
-    // 需要路由时添加同版本网络制品。
-    implementation("io.github.logan0817:multiurlmanager-okhttp:1.3.0")
-}
-```
+配置文件可通过系统文件选择器在同事之间交换，支持默认合并和选定环境替换，操作步骤见[团队交换配置](#团队交换配置)。
 
 ## 从这里开始
 
@@ -82,7 +71,7 @@ dependencyResolutionManagement {
 
 ```kotlin
 dependencies {
-    implementation("io.github.logan0817:multiurlmanager:1.2.0")
+    implementation("io.github.logan0817:multiurlmanager:1.3.0")
 }
 ```
 
@@ -125,7 +114,7 @@ dependencies {
 
 | 字段 | 如何填写 |
 | --- | --- |
-| `schemaVersion` | 当前填 `1`，表示配置格式版本，与库版本 `1.2.0` 不同 |
+| `schemaVersion` | 当前填 `1`，表示配置格式版本，与库版本 `1.3.0` 不同 |
 | `defaultEnvironment` | 首次使用的环境 id；示例为 `production`，改为 `dev` 可让新安装默认开发环境 |
 | `id` / `name` | 环境的稳定标识 / 页面显示名称；`id` 必须唯一，其他字段引用它时保持一致 |
 | `businessNames` | 可选的业务展示名映射；例如让 `order` 在页面显示为 Order service，代码仍使用 `order` |
@@ -235,13 +224,13 @@ override fun onResume() {
 | 你的接入方式 | 保存后还要做什么 |
 | --- | --- |
 | 仅使用核心库，自己创建 Retrofit / 其他网络对象 | 在监听或页面结果回调中读取有效地址，重建受影响的 Service 并替换引用，见[监听示例](#监听配置变化) |
-| 使用 1.2.0 可选 OkHttp 路由 | 配置 `UrlRoutingInterceptor`、来源 Base URL 和 `RouteKey`，后续受管请求进入拦截器时读取已保存地址，无需重建 Service |
+| 使用可选 OkHttp 路由 | 配置 `UrlRoutingInterceptor`、来源 Base URL 和 `RouteKey`，后续受管请求进入拦截器时读取已保存地址，无需重建 Service |
 
 需要第二种方式时，在核心依赖之外添加：
 
 ```kotlin
 dependencies {
-    implementation("io.github.logan0817:multiurlmanager-okhttp:1.2.0")
+    implementation("io.github.logan0817:multiurlmanager-okhttp:1.3.0")
 }
 ```
 
@@ -290,9 +279,9 @@ android {
 
 要让 Release APK 仅包含生产配置，再将生产专用的完整 JSON 放入 `app/src/release/assets/base_urls_config.json`，它会整文件覆盖 main 同名文件，不合并环境数组。普通模式下，单独覆盖此文件仍不会清除设备已存选择。固定模式也不负责裁剪其他源码中的测试地址，详见[配置与打包说明](docs/configuration.md#debug--release-打包使用哪份配置)。
 
-## 团队交换配置（1.3.0 候选）
+## 团队交换配置
 
-此功能需要当前 1.3.0 候选版本，稳定版 1.2.0 尚不支持。无需相机或存储权限，直接使用系统文件选择器：
+此功能从 1.3.0 开始提供。无需相机或存储权限，直接使用系统文件选择器：
 
 1. 发送方在管理页菜单选择“导出配置”，勾选环境并保存 JSON；导出的是已保存状态，不含当前草稿。
 2. 接收方选择“导入配置”，打开同事提供的文件，选择环境和“合并”或“替换选定环境”。
@@ -519,7 +508,9 @@ Java 调用见 [Java 示例](app/src/main/java/com/logan/multiurlmanager/JavaInt
 
 ## 从旧版升级
 
-1.1.x 升到 1.2.0，普通模式继续保留已有选择；固定模式需要宿主主动启用。1.2.0 新能力见[更新记录](CHANGELOG.md)。
+从 1.2.0 升到 1.3.0，已有选择和自定义地址继续保留。带 `schemaVersion` 的 JSON 会严格检查字段类型；请使用真正的布尔值和整数，避免把它们写成字符串。旧数组配置和旧持久化数据继续兼容读取。默认配置更新实际地址后，恢复的旧草稿会报告版本冲突，请重新加载再编辑。
+
+1.1.x 升级后的普通模式继续保留已有选择；固定模式需要宿主主动启用。完整变化见[更新记录](CHANGELOG.md)。
 
 从 1.0.x 升级时，有效旧地址会迁入当前 `legacy` 历史环境（重名时使用 `legacy-1` 等可用 id），首次保持旧地址。新版默认值不会自动覆盖旧选择或重命名业务键。旧数组 JSON、`setFileConfigKey` 和旧 Activity 结果解析入口继续保留；`dynamicUrls` getter 现为副本，直接修改集合不再生效。
 

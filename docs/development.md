@@ -65,6 +65,16 @@ JVM 测试关注 URL、单选、环境和失败结果，并直接用真实配置
 
 本地记录在忽略目录 `build/verification/v1.3.0-release-candidate/`。本轮未重复设备安装，正式版本设备与升级验证交由同轮完整 CI；开发版本既有测试不冒充正式候选结果。签名与发布须取得授权，并使用满足 main CI 来源门槛的原始候选。
 
+## 1.3.0 正式发布与公开消费（2026-11-11）
+
+正式候选 `1825626` 的开发分支 CI #27 与 [main CI #28](https://github.com/logan0817/MultiUrlManager/actions/runs/42978138859) 首轮完整通过，两端各 63 项测试和 36 个升级阶段通过。`v1.3.0` tag 固定同一提交。main 原始候选在本机校验归档及 80 个文件摘要通过，签名后共 100 个条目。对原 Central 部署完成一次正式 publish 后返回 PUBLISHED；两个制品的公开 100 个文件与签名包逐字节一致、10 份签名通过，身份见[发布记录](ci-and-release.md#130-上传与正式发布记录)。
+
+发布后独立宿主对 `io.github.logan0817` 仅使用公开 Maven Central，不配置本地 Maven 或源码工程替代。实际解析的核心 1.3.0 AAR SHA-256 为 `3c9aef8ce63b57f460cb8c8b0ea4bf9e3740cb5b8878bb151e88dc5463a1d75f`，OkHttp AAR 为 `de6a423019da48c6bb0b2b8221627ad6b8da78f4ea82e3afc76c45d8c017da13`，均与原 CI 候选一致。Debug、R8 minified、测试 APK 以及中英文和进阶文档的 14 份完整 Kotlin 示例、Java 配置交换调用构建通过；113 项任务实际执行，耗时 1 分 44 秒。
+
+红米 Android 16 / API 36 真机公开依赖消费完整测试 1 项通过，零跳过，仪器摘要耗时 2.221 秒；覆盖混淆后的持久化重读、兼容空配置、JSON 交换预览、实际路由和管理页启动。安装两个专用消费包后按原测试直接运行，未改变 Activity 导出设置或系统安全策略。验证结束已停止专用进程并返回桌面。
+
+原始候选、部署和公开文件核验、消费工程与构建日志保存在忽略目录 `build/verification/release-1.3.0/` 及 `build/verification/v1.3.0-release-candidate/`。本机未启动模拟器；发布后完整 API 24/36 套件不重复执行，对应范围由同一 Maven 产物的原始 main CI 证明。
+
 ## 1.2.0 正式版本候选准备（2026-11-10）
 
 开发验收收尾提交 `0bc3fa5` 的 [完整 CI #20](https://github.com/logan0817/MultiUrlManager/actions/runs/42771730604) 已通过 quality、API 24、API 36 和 required，两端原始报告均核对为 42 项测试、24 个升级阶段通过、零跳过。此前功能提交 #19 的详细范围保留在下文。

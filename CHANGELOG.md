@@ -1,6 +1,6 @@
 # 更新记录
 
-## 1.3.0（候选准备，未发布）
+## 1.3.0（2026-11-11）
 
 - 默认配置升级纳入原子保存和 revision 管理，避免恢复的旧草稿覆盖升级地址。
 - 新格式配置严格校验类型与字段路径，旧数组和旧存储继续兼容读取。
@@ -8,6 +8,8 @@
 - 增加导入容量保护，保留已知业务键以支持删除最后候选后重新添加。
 - 补充 1.2.0 双制品 ABI、源码/二进制消费与覆盖升级验收。
 - [完整开发 CI #25](https://github.com/logan0817/MultiUrlManager/actions/runs/42970920750) 首轮通过；API 24/36 每端 63 项测试、36 个升级阶段通过。实际验证与正式发布边界见 [1.3.0 开发计划](docs/plans/v1.3.0-implementation-plan.md)。
+
+正式版本 `1.3.0` / Demo versionCode `9` 已发布到 Maven Central。tag `v1.3.0` 固定 main 提交 `1825626`，[main CI #28](https://github.com/logan0817/MultiUrlManager/actions/runs/42978138859) 首轮通过 quality、API 24/36 和 required，两端各 63 项测试、36 个升级阶段通过。原始候选已在本机签名，Central 原部署正式发布到 PUBLISHED；公开 100 个文件逐字节一致、10 份签名验签通过。身份与恢复信息见[发布记录](docs/ci-and-release.md#130-上传与正式发布记录)。
 
 ## 1.2.0（2026-11-10）
 

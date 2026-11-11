@@ -1,25 +1,14 @@
 # MultiUrlManager
 
-[中文](README.md) · [Documentation](docs/README.md) · [Changelog](CHANGELOG.md) · [1.2.0 Release](https://github.com/logan0817/MultiUrlManager/releases/tag/v1.2.0)
+[中文](README.md) · [Documentation](docs/README.md) · [Changelog](CHANGELOG.md) · [1.3.0 Release](https://github.com/logan0817/MultiUrlManager/releases/tag/v1.3.0)
 
 **Switch development, testing and production environments in your Android app, with separate server addresses for each service.** Use the built-in screen to choose addresses and save the entire configuration together. Selections survive app restarts.
 
 For example, your app calls both order and sign-in services. Switch to development to change both at once, or select a backup for the order service while leaving sign-in unchanged.
 
-The current stable version is **1.2.0**, available from Maven Central. The core has no Retrofit or OkHttp dependency. This release adds fixed environment mode, service display names, draft change summaries and optional OkHttp routing.
+The current stable version is **1.3.0**, available from Maven Central. The core has no Retrofit or OkHttp dependency. This release adds JSON file import/export and change previews, and fixes reliability issues in default configuration upgrades and editing.
 
-
-> This branch prepares the **1.3.0 release candidate**, which has not been published. It adds JSON file exchange and reliability fixes; see the [exchange guide](docs/configuration-transfer.md) and [1.3.0 plan](docs/plans/v1.3.0-implementation-plan.md). The stable quick start below continues to use 1.2.0 from Maven Central.
-
-To verify the current source against a locally published Maven candidate, use these coordinates and the repository setup in [development](docs/development.md). Do not assume this candidate is available from Maven Central:
-
-```kotlin
-dependencies {
-    implementation("io.github.logan0817:multiurlmanager:1.3.0")
-    // Add the matching networking artifact when routing is needed.
-    implementation("io.github.logan0817:multiurlmanager-okhttp:1.3.0")
-}
-```
+Exchange configuration files with teammates through the system file picker, using merge by default or replacing selected environments. See [team configuration exchange](#exchange-team-configurations).
 
 ## Start here
 
@@ -82,7 +71,7 @@ Add the core dependency to `app/build.gradle.kts`, then run **Sync Project with 
 
 ```kotlin
 dependencies {
-    implementation("io.github.logan0817:multiurlmanager:1.2.0")
+    implementation("io.github.logan0817:multiurlmanager:1.3.0")
 }
 ```
 
@@ -125,7 +114,7 @@ This defines production and development environments, each with order and sign-i
 
 | Field | What to enter |
 | --- | --- |
-| `schemaVersion` | Use `1`, the configuration format version, which differs from library version `1.2.0` |
+| `schemaVersion` | Use `1`, the configuration format version, which differs from library version `1.3.0` |
 | `defaultEnvironment` | Environment id for first use; `production` here, or `dev` to default new installations to development |
 | `id` / `name` | Stable environment id / display name; ids must be unique and references must match |
 | `businessNames` | Optional display-name mapping; show `order` as Order service in the editor while code still uses `order` |
@@ -235,13 +224,13 @@ URL management is now verified. Next, pass these addresses to your network layer
 | Integration | What happens after saving |
 | --- | --- |
 | Core only, creating Retrofit or other networking objects yourself | Read effective URLs in a listener or screen result callback, rebuild affected services and replace their references; see the [listener example](#observe-configuration-changes) |
-| Optional 1.2.0 OkHttp routing | Configure `UrlRoutingInterceptor`, source base URLs and `RouteKey`; subsequent managed calls read saved URLs when entering the interceptor, without rebuilding services |
+| Optional OkHttp routing | Configure `UrlRoutingInterceptor`, source base URLs and `RouteKey`; subsequent managed calls read saved URLs when entering the interceptor, without rebuilding services |
 
 For the second option, add this alongside the core dependency:
 
 ```kotlin
 dependencies {
-    implementation("io.github.logan0817:multiurlmanager-okhttp:1.2.0")
+    implementation("io.github.logan0817:multiurlmanager-okhttp:1.3.0")
 }
 ```
 
@@ -290,9 +279,9 @@ Fixed mode uses only that environment's packaged definitions; `production` must 
 
 To package only production definitions in the Release APK, also place a complete production-only JSON in `app/src/release/assets/base_urls_config.json`. It replaces the entire main asset rather than merging environment arrays. In ordinary mode, this override alone still preserves saved device selections. Fixed mode does not remove test addresses from other source code; see [configuration and packaging](docs/configuration.md#debug--release-打包使用哪份配置).
 
-## Exchange team configurations (1.3.0 candidate)
+## Exchange team configurations
 
-This requires the current 1.3.0 candidate; stable 1.2.0 does not include it. The system file picker needs no camera or storage permission:
+Available starting with 1.3.0. The system file picker needs no camera or storage permission:
 
 1. On the sending device, choose **Export configuration**, select environments, and save JSON. Export contains committed state, not the current draft.
 2. On the receiving device, choose **Import configuration**, open the file, select environments, and choose **Merge** or **Replace selected environments**.
@@ -519,7 +508,9 @@ Provide matching dark colors in `values-night`. The status-bar safe area and too
 
 ## Upgrade from an older version
 
-Ordinary mode preserves saved selections when upgrading from 1.1.x to 1.2.0. Fixed mode requires explicit host opt-in. See the [changelog](CHANGELOG.md) for 1.2.0 features.
+Upgrading from 1.2.0 to 1.3.0 preserves saved selections and custom URLs. JSON with `schemaVersion` now requires exact field types: use actual booleans and integers rather than strings. Legacy array configurations and persisted data remain readable. When default updates change the effective configuration, a restored older draft reports a revision conflict; reload before editing again.
+
+Ordinary mode also preserves saved selections when upgrading from 1.1.x. Fixed mode requires explicit host opt-in. See the [changelog](CHANGELOG.md) for the full changes.
 
 When upgrading from 1.0.x, valid saved addresses move into the active `legacy` environment (or an available id such as `legacy-1` on a name conflict), initially keeping the old addresses. New defaults do not overwrite selections or rename service keys. Legacy array JSON, `setFileConfigKey` and Activity result parsing remain supported; `dynamicUrls` now returns a copy, so mutating it no longer updates configuration.
 

@@ -14,7 +14,7 @@
 
 ```kotlin
 dependencies {
-    implementation("io.github.logan0817:multiurlmanager-okhttp:1.2.0")
+    implementation("io.github.logan0817:multiurlmanager-okhttp:1.3.0")
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
 }
 ```
